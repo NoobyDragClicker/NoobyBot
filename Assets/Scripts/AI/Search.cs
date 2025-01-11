@@ -11,6 +11,7 @@ public class Search
     Move bestMoveThisIteration;
     Evaluation evaluation;
     int bestEval;
+    //Debug
     ulong bottomNodesSearched;
     ulong prunedTimes;
 
@@ -19,25 +20,24 @@ public class Search
     const int negativeInfinity = -99999;
     const int checkmate = -99999;
     public event Action<Move> onSearchComplete;
-    System.Random rnd;
+    System.Diagnostics.Stopwatch generatingStopwatch = new System.Diagnostics.Stopwatch();
 
     public Search(Board board){
         this.board = board;
         evaluation = new Evaluation();
-        rnd = new System.Random();
     }
 
     public void StartSearch(){
         //Init a bunch of stuff, iterative deepening, etc
         System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
-        bestEval = SearchMoves(7, 0, negativeInfinity, positiveInfinity);
+        bestEval = SearchMoves(5, 0, negativeInfinity, positiveInfinity);
         Debug.Log(stopwatch.Elapsed);
         stopwatch.Stop();  
         Debug.Log("Bottom nodes searched: " + bottomNodesSearched); 
-        Debug.Log("Times pruned: " + prunedTimes); 
         Debug.Log("Best eval: " + bestEval);
         Debug.Log("Time spent evaluating: " + evaluation.stopwatch.Elapsed);
+        Debug.Log("Time spent generating moves: " + generatingStopwatch.Elapsed);
         bestMove = bestMoveThisIteration;
 
         onSearchComplete?.Invoke(bestMove);
@@ -64,7 +64,9 @@ public class Search
         for(int i = 0; i<legalMoves.Count; i++){
             //Debug.Log(depth);
             board.Move(legalMoves[i], true);
+            generatingStopwatch.Start();
             int eval = -SearchMoves(depth - 1, plyFromRoot + 1, -beta, -alpha);
+            generatingStopwatch.Stop();
             board.UndoMove(legalMoves[i]);
 
             //Move is too good, would be prevented by a previous move

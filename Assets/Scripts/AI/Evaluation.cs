@@ -14,6 +14,83 @@ public class Evaluation
     const int rookValue = 500;
     const int queenValue = 900;
 
+    int[] pawnPieceTable = {
+        0, 0, 0, 0, 0, 0, 0, 0,
+        75, 75, 70, 70, 70, 70, 75, 75,
+        60, 60, 60, 60, 60, 60, 60, 60,
+        40, 40, 40, 50, 50, 40, 40, 40,
+        20, 20, 40, 45, 45, 45, 20, 20,
+        15, 15, 20, 15, 15, 20, 15, 15,
+        15, 20, -5, -10, -10, 10, 30, 20,
+        0, 0, 0, 0, 0, 0, 0, 0,
+    };
+    int[] kingPieceTable_mg = {
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -30, -30, -40, -45, -45, -45, -30, -30,
+        -15, -20, -25, -30, -30, -25, -20, -15,
+        0, 0, -5, -10, -10, 10, 0, 0,
+        5, 15, -10, -20, -20, -10, 20, 30,
+    };
+    int[] kingPieceTable_eg = {
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -40, -40, -40, -40, -40, -40, -40, -40,
+        -30, -30, -40, -45, -45, -45, -30, -30,
+        -15, -20, -25, -30, -30, -25, -20, -15,
+        0, 0, -5, -10, -10, 10, 0, 0,
+        5, 15, -10, -20, -20, -10, 20, 30,
+    };
+
+    int[] knightPieceTable = {
+		-50,-40,-30,-30,-30,-30,-40,-50,
+		-40,-20,  0,  0,  0,  0,-20,-40,
+		-30,  0, 10, 15, 15, 10,  0,-30,
+		-30,  5, 15, 20, 20, 15,  5,-30,
+		-30,  0, 15, 20, 20, 15,  0,-30,
+		-30,  5, 10, 15, 15, 10,  5,-30,
+		-40,-20,  0,  5,  5,  0,-20,-40,
+		-50,-40,-30,-30,-30,-30,-40,-50,
+	};
+
+    int[] bishopPieceTable = {
+		-20,-10,-10,-10,-10,-10,-10,-20,
+		-10,  0,  0,  0,  0,  0,  0,-10,
+		-10,  0,  5, 10, 10,  5,  0,-10,
+		-10,  5,  5, 10, 10,  5,  5,-10,
+		-10,  0, 10, 10, 10, 10,  0,-10,
+		-10, 10, 10, 10, 10, 10, 10,-10,
+		-10,  5,  0,  0,  0,  0,  5,-10,
+		-20,-10,-10,-10,-10,-10,-10,-20,
+	};
+
+	int[] rookPieceTable = {
+		0,  0,  0,  0,  0,  0,  0,  0,
+		5, 10, 10, 10, 10, 10, 10,  5,
+		-5,  0,  0,  0,  0,  0,  0, -5,
+		-5,  0,  0,  0,  0,  0,  0, -5,
+		-5,  0,  0,  0,  0,  0,  0, -5,
+		-5,  0,  0,  0,  0,  0,  0, -5,
+		-5,  0,  0,  0,  0,  0,  0, -5,
+		0,  0,  0,  5,  5,  0,  0,  0
+    };
+
+	int[] queenPieceTable = {
+		-20,-10,-10, -5, -5,-10,-10,-20,
+		-10,  0,  0,  0,  0,  0,  0,-10,
+		-10,  0,  5,  5,  5,  5,  0,-10,
+		-5,  0,  5,  5,  5,  5,  0, -5,
+		0,  0,  5,  5,  5,  5,  0, -5,
+		-10,  5,  5,  5,  5,  5,  0,-10,
+		-10,  0,  5,  0,  0,  0,  0,-10,
+		-20,-10,-10, -5, -5,-10,-10,-20
+	};
+
+
+
     int playerTurnMultiplier;
     public System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
     public int EvaluatePosition(Board board){
@@ -26,41 +103,25 @@ public class Evaluation
     int CountMaterial(Board board){
         stopwatch.Start();
         int materialCount = 0;
-        List<int> whitePawnIndex = new List<int>();
-        List<int> blackPawnIndex = new List<int>();
-        List<int> whiteKnightIndex = new List<int>();
-        List<int> blackKnightIndex = new List<int>();
-        List<int> whiteBishopIndex = new List<int>();
-        List<int> blackBishopIndex = new List<int>();
-        List<int> whiteRookIndex = new List<int>();
-        List<int> blackRookIndex = new List<int>();
-        List<int> whiteQueenIndex = new List<int>();
-        List<int> blackQueenIndex = new List<int>();
-        int blackKingIndex;
-        int whiteKingIndex;
-
-
+        //Loops through each index on the board
         for(int x = 0; x< 64; x++){
             int pieceType = Piece.PieceType(board.board[x]);
             int pieceColor = Piece.Color(board.board[x]);
             if(board.board[x] != 0){
                 switch (pieceType){
-                    case Piece.Pawn: if(pieceColor == Piece.White){whitePawnIndex.Add(x);} else{blackPawnIndex.Add(x);} break;
-                    case Piece.Knight: if(pieceColor == Piece.White){whiteKnightIndex.Add(x);} else{blackKnightIndex.Add(x);} break;
-                    case Piece.Bishop: if(pieceColor == Piece.White){whiteBishopIndex.Add(x);} else{blackBishopIndex.Add(x);} break;
-                    case Piece.Rook: if(pieceColor == Piece.White){whiteRookIndex.Add(x);} else{blackRookIndex.Add(x);} break;
-                    case Piece.Queen: if(pieceColor == Piece.White){whiteQueenIndex.Add(x);} else{blackQueenIndex.Add(x);} break;
-                    case Piece.King: if(pieceColor == Piece.White){whiteKingIndex = x;} else{blackKingIndex = x;} break;
+                    case Piece.Pawn: if(pieceColor == Piece.White){materialCount += pawnValue + pawnPieceTable[x];} else{materialCount -= pawnValue + pawnPieceTable[63-x];} break;
+                    case Piece.Knight: if(pieceColor == Piece.White){materialCount += knightValue + knightPieceTable[x];} else{materialCount -= knightValue + knightPieceTable[63-x];} break;
+                    case Piece.Bishop: if(pieceColor == Piece.White){materialCount += bishopValue + bishopPieceTable[x];} else{materialCount -= bishopValue + bishopPieceTable[63-x];} break;
+                    case Piece.Rook: if(pieceColor == Piece.White){materialCount += rookValue + rookPieceTable[x];} else{materialCount -= rookValue + rookPieceTable[63-x];} break;
+                    case Piece.Queen: if(pieceColor == Piece.White){materialCount += queenValue + queenPieceTable[x];} else{materialCount -= queenValue + queenPieceTable[63-x];} break;
+                    case Piece.King: if(pieceColor == Piece.White){materialCount +=kingPieceTable_mg[x];} else{materialCount -=kingPieceTable_mg[63-x];} break;
                 }
             }
         }
-        materialCount += (whitePawnIndex.Count * pawnValue) - (blackPawnIndex.Count * pawnValue);
-        materialCount += (whiteBishopIndex.Count * bishopValue) - (blackBishopIndex.Count * bishopValue);
-        materialCount += (whiteKnightIndex.Count * knightValue) - (blackKnightIndex.Count * knightValue);
-        materialCount += (whiteRookIndex.Count * rookValue) - (whiteRookIndex.Count * rookValue);
-        materialCount += (whiteQueenIndex.Count * queenValue) - (blackQueenIndex.Count * queenValue);
-        stopwatch.Stop();
 
+        stopwatch.Stop();
         return materialCount * playerTurnMultiplier;
     }
+
+
 }

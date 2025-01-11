@@ -105,19 +105,7 @@ public class BoardManager : MonoBehaviour
             board = new Board(inputtedCustomStr, new MoveGenerator());
             searchBoard = new Board(inputtedCustomStr, new MoveGenerator());
         }
-
-        //Syncing OnMoveChosen
-        whitePlayer = (whitePlayerType.value == 0) ? new HumanPlayer() : new AIPlayer(searchBoard);
-        whitePlayer.onMoveChosen += OnMoveChosen;
-        blackPlayer = (blackPlayerType.value == 0) ? new HumanPlayer() : new AIPlayer(searchBoard);
-        blackPlayer.onMoveChosen += OnMoveChosen;
-        
-        if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
-        if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
-
-        //Turn off starting UI
-        startScreen.SetActive(false);
-
+        UpdateBoard();
         //Generates actual tiles
         for(int x = 0; x< 8; x++){
             for(int y = 0; y < 8; y++){
@@ -128,8 +116,18 @@ public class BoardManager : MonoBehaviour
                 spawnedTile.Init(isOffset);
             }
         }
+        //Turn off starting UI
+        startScreen.SetActive(false);
 
-        UpdateBoard();
+        //Syncing OnMoveChosen
+        whitePlayer = (whitePlayerType.value == 0) ? new HumanPlayer() : new AIPlayer(searchBoard);
+        whitePlayer.onMoveChosen += OnMoveChosen;
+        blackPlayer = (blackPlayerType.value == 0) ? new HumanPlayer() : new AIPlayer(searchBoard);
+        blackPlayer.onMoveChosen += OnMoveChosen;
+        
+        if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
+        if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
+
         playerToMove.NotifyToMove();
     }
 

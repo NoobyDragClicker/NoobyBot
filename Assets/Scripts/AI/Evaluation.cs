@@ -15,13 +15,16 @@ public class Evaluation
     const int queenValue = 900;
 
     int playerTurnMultiplier;
+    public System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
     public int EvaluatePosition(Board board){
         colorTurn = board.colorTurn;
         playerTurnMultiplier = (colorTurn == Piece.White) ? 1 : -1;
         return CountMaterial(board);
+
     }
 
     int CountMaterial(Board board){
+        stopwatch.Start();
         int materialCount = 0;
         List<int> whitePawnIndex = new List<int>();
         List<int> blackPawnIndex = new List<int>();
@@ -56,6 +59,7 @@ public class Evaluation
         materialCount += (whiteKnightIndex.Count * knightValue) - (blackKnightIndex.Count * knightValue);
         materialCount += (whiteRookIndex.Count * rookValue) - (whiteRookIndex.Count * rookValue);
         materialCount += (whiteQueenIndex.Count * queenValue) - (blackQueenIndex.Count * queenValue);
+        stopwatch.Stop();
 
         return materialCount * playerTurnMultiplier;
     }

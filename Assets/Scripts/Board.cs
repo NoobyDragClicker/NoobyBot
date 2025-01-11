@@ -414,7 +414,6 @@ public class Board
             blockableIndexes.Clear();
             isCurrentPlayerInCheck = true;
             isCurrentPlayerInDoubleCheck = true;
-            Debug.Log("double check");
         } else if(checkingPieces.Count == 1){
             isCurrentPlayerInCheck = true;
             isCurrentPlayerInDoubleCheck = false;

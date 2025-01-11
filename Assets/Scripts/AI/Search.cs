@@ -31,12 +31,13 @@ public class Search
         //Init a bunch of stuff, iterative deepening, etc
         System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
-        bestEval = SearchMoves(6, 0, negativeInfinity, positiveInfinity);
+        bestEval = SearchMoves(7, 0, negativeInfinity, positiveInfinity);
         Debug.Log(stopwatch.Elapsed);
         stopwatch.Stop();  
         Debug.Log("Bottom nodes searched: " + bottomNodesSearched); 
         Debug.Log("Times pruned: " + prunedTimes); 
         Debug.Log("Best eval: " + bestEval);
+        Debug.Log("Time spent evaluating: " + evaluation.stopwatch.Elapsed);
         bestMove = bestMoveThisIteration;
 
         onSearchComplete?.Invoke(bestMove);

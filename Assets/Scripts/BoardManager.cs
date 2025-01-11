@@ -134,17 +134,15 @@ public class BoardManager : MonoBehaviour
     }
 
     void OnMoveChosen(Move move){
-        board.Move(move);
-        searchBoard.Move(move);
+        board.Move(move, false);
+        searchBoard.Move(move, true);
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
         if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
+        //Updates the main board display
+        UpdateBoard();
         if(!hasGameEnded){
             playerToMove.NotifyToMove();
         }
-        
-
-        //Updates the main board display
-        UpdateBoard();
     }
 
     void Update(){

@@ -59,7 +59,7 @@ public class Board
     }
 
     //Moves the pieces
-    public void Move(Move move){
+    public void Move(Move move, bool isSearch){
         int castlingRights = GetCastlingRights(gameStateHistory.Peek());
         int enPassantFile = 0;
         //Captured piece gets removed, ep file gets removed, need to save castling rights and fiftymoverule
@@ -211,8 +211,8 @@ public class Board
         UpdateCheckingInfo();
         UpdatePinnedInfo();
 
-        if(IsCheckmate(colorTurn)){boardManager.EndGame(oppositeColor, false);}
-        else if(IsDraw()){boardManager.EndGame(0, true);}
+        if(IsCheckmate(colorTurn) && !isSearch){boardManager.EndGame(oppositeColor, false);}
+        else if(IsDraw() && !isSearch){boardManager.EndGame(0, true);}
         
     }
 
@@ -312,8 +312,6 @@ public class Board
         }
         UpdateCheckingInfo();
         UpdatePinnedInfo();
-        //DebugGameState(currentGameState);
-        boardManager.UpdateBoard();
     }
 
 

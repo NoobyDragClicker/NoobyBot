@@ -174,8 +174,14 @@ public class Board
             if(move.isCapture()){
                 //capture
                 capturedPiece = board[newPos];
+                
                 board[newPos] = movedPiece;
                 board[startPos] = 0;
+
+                if(Piece.PieceType(capturedPiece) == Piece.King){
+                    Debug.Log("King captured");
+                    boardManager.EndGame(0, false);
+                }
 
                 //Capture resets counter
                 fiftyMoveCounter = 0;
@@ -207,7 +213,6 @@ public class Board
 
         if(IsCheckmate(colorTurn)){boardManager.EndGame(oppositeColor, false);}
         else if(IsDraw()){boardManager.EndGame(0, true);}
-        boardManager.UpdateBoard();
         
     }
 
@@ -307,7 +312,7 @@ public class Board
         }
         UpdateCheckingInfo();
         UpdatePinnedInfo();
-        DebugGameState(currentGameState);
+        //DebugGameState(currentGameState);
         boardManager.UpdateBoard();
     }
 

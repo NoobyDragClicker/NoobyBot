@@ -509,17 +509,17 @@ public class MoveGenerator
         List<Move> knightChecks = GenerateKnightMoves(kingIndex, kingColor, board, false, false);
         List<int> pawnCheckIndexes = new List<int>();
         if(kingColor == Piece.White){
-            if(board.IndexToFile(kingIndex) != 1 && (kingIndex +7 < 64)){
-                pawnCheckIndexes.Add(kingIndex + 7);
-            }if(board.IndexToFile(kingIndex) != 8 && (kingIndex +9 < 64)){
-                pawnCheckIndexes.Add(kingIndex + 9);
+            if(board.IndexToFile(kingIndex) != 1 && (kingIndex -7 > -1)){
+                pawnCheckIndexes.Add(kingIndex - 7);
+            }if(board.IndexToFile(kingIndex) != 8 && (kingIndex - 9 > -1)){
+                pawnCheckIndexes.Add(kingIndex - 9);
             }
             
         } else{
-            if(board.IndexToFile(kingIndex) != 1 && (kingIndex - 9 > -1)){
-                pawnCheckIndexes.Add(kingIndex - 9);
-            }if(board.IndexToFile(kingIndex) != 8 && (kingIndex -7 > -1)){
-                pawnCheckIndexes.Add(kingIndex - 7);
+            if(board.IndexToFile(kingIndex) != 1 && (kingIndex + 7 < 64)){
+                pawnCheckIndexes.Add(kingIndex + 7);
+            }if(board.IndexToFile(kingIndex) != 8 && (kingIndex + 9 <64)){
+                pawnCheckIndexes.Add(kingIndex + 9);
             }
         }
         //Bishop

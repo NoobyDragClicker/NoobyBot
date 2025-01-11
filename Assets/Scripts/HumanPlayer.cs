@@ -12,6 +12,11 @@ public class HumanPlayer : Player
     {
         return;
     }
+    public override void NotifyGameOver()
+    {
+        return;
+    }
+
 
     public void ChooseSelectedMove(Move move){
         ChoseMove(move);

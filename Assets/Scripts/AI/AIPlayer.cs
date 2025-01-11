@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
+using System.Threading.Tasks;
 
 public class AIPlayer : Player
 {
@@ -9,11 +10,12 @@ public class AIPlayer : Player
     Move move;
     bool moveFound;
     Search search;
+    System.Diagnostics.Stopwatch generatingStopwatch = new System.Diagnostics.Stopwatch();
 
 
-    public AIPlayer(Board board){
+    public AIPlayer(Board board, bool useTestFeature){
         this.board = board;
-        search = new Search(this.board);
+        search = new Search(this.board, useTestFeature, generatingStopwatch);
         search.onSearchComplete += OnSearchComplete;
         moveFound = false;
     }
@@ -29,7 +31,13 @@ public class AIPlayer : Player
     //Called when it is our turn to move
     public override void NotifyToMove(){
         moveFound = false;
-        search.StartSearch();
+        Task.Factory.StartNew (() => search.StartSearch (), TaskCreationOptions.LongRunning);
+        //search.StartSearch();
+    }
+    
+    //Called when it is our turn to move
+    public override void NotifyGameOver(){
+        Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
     }
 
     //Triggered by the onSearchComplete event

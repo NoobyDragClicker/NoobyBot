@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
@@ -10,36 +12,41 @@ public class Search
     Move bestMove;
     Move bestMoveThisIteration;
     Evaluation evaluation;
+    MoveOrder moveOrder;
     int bestEval;
     //Debug
     ulong bottomNodesSearched;
     ulong prunedTimes;
 
-
+    bool useMoveSorting;
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
     const int checkmate = -99999;
     public event Action<Move> onSearchComplete;
-    System.Diagnostics.Stopwatch generatingStopwatch = new System.Diagnostics.Stopwatch();
+    Stopwatch generatingStopwatch;
 
-    public Search(Board board){
+    public Search(Board board, bool useTestFeature, Stopwatch genStopwatch){
         this.board = board;
         evaluation = new Evaluation();
+        useMoveSorting = useTestFeature;
+        moveOrder = new MoveOrder();
+        generatingStopwatch = genStopwatch;
     }
 
     public void StartSearch(){
         //Init a bunch of stuff, iterative deepening, etc
-        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
         bestEval = SearchMoves(5, 0, negativeInfinity, positiveInfinity);
-        Debug.Log(stopwatch.Elapsed);
-        stopwatch.Stop();  
-        Debug.Log("Bottom nodes searched: " + bottomNodesSearched); 
-        Debug.Log("Best eval: " + bestEval);
-        Debug.Log("Time spent evaluating: " + evaluation.stopwatch.Elapsed);
-        Debug.Log("Time spent generating moves: " + generatingStopwatch.Elapsed);
-        bestMove = bestMoveThisIteration;
+        UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
+        stopwatch.Stop();
+        if(useMoveSorting){
+            UnityEngine.Debug.Log("Bottom nodes searched: " + bottomNodesSearched); 
+            UnityEngine.Debug.Log("Times pruned: " + prunedTimes); 
+            UnityEngine.Debug.Log("Best eval: " + bestEval);
+        }  
 
+        bestMove = bestMoveThisIteration;
         onSearchComplete?.Invoke(bestMove);
     }
     
@@ -52,6 +59,7 @@ public class Search
 
         List<Move> legalMoves = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn);
         
+
         //Check for mate or stalemate
         if(legalMoves.Count == 0){
             if(board.isCurrentPlayerInCheck){
@@ -61,8 +69,8 @@ public class Search
             }
         }
 
+        if(useMoveSorting){ legalMoves = moveOrder.OrderMoves(board, legalMoves);}
         for(int i = 0; i<legalMoves.Count; i++){
-            //Debug.Log(depth);
             board.Move(legalMoves[i], true);
             generatingStopwatch.Start();
             int eval = -SearchMoves(depth - 1, plyFromRoot + 1, -beta, -alpha);

@@ -8,21 +8,21 @@ public class Evaluation
 {
     
     int colorTurn;
-    const int pawnValue = 100;
-    const int knightValue = 300;
-    const int bishopValue = 310;
-    const int rookValue = 500;
-    const int queenValue = 900;
+    public const int pawnValue = 100;
+    public const int knightValue = 300;
+    public const int bishopValue = 310;
+    public const int rookValue = 500;
+    public const int queenValue = 900;
 
     int[] pawnPieceTable = {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        75, 75, 70, 70, 70, 70, 75, 75,
-        60, 60, 60, 60, 60, 60, 60, 60,
-        40, 40, 40, 50, 50, 40, 40, 40,
-        20, 20, 40, 45, 45, 45, 20, 20,
-        15, 15, 20, 15, 15, 20, 15, 15,
-        15, 20, -5, -10, -10, 10, 30, 20,
-        0, 0, 0, 0, 0, 0, 0, 0,
+		0,  0,  0,  0,  0,  0,  0,  0,
+		50, 50, 50, 50, 50, 50, 50, 50,
+		10, 10, 20, 30, 30, 20, 10, 10,
+		5,  5, 10, 25, 25, 10,  5,  5,
+		0,  0,  0, 20, 20,  0,  0,  0,
+		5, -5,-10,  0,  0,-10, -5,  5,
+		5, 10, 10,-20,-20, 10, 10,  5,
+		0,  0,  0,  0,  0,  0,  0,  0
     };
     int[] kingPieceTable_mg = {
         -40, -40, -40, -40, -40, -40, -40, -40,
@@ -44,7 +44,6 @@ public class Evaluation
         0, 0, -5, -10, -10, 10, 0, 0,
         5, 15, -10, -20, -20, -10, 20, 30,
     };
-
     int[] knightPieceTable = {
 		-50,-40,-30,-30,-30,-30,-40,-50,
 		-40,-20,  0,  0,  0,  0,-20,-40,

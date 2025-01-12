@@ -10,13 +10,6 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-/*
-    System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-    stopwatch.Start();
-    Debug.Log(stopwatch.Elapsed);
-    stopwatch.Stop();   
-*/
-
 public class Board
 {
 
@@ -48,11 +41,9 @@ public class Board
     Stack<uint> gameStateHistory = new Stack<uint>();
     public uint currentGameState;
 
-
     //Constructor
     public Board(string fenPosition, MoveGenerator generator){
         moveGenerator = generator;
-        boardManager = GameObject.Find("BoardManager").GetComponent<BoardManager>();
         board = ConvertFromFEN(fenPosition);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
@@ -180,6 +171,8 @@ public class Board
 
                 if(Piece.PieceType(capturedPiece) == Piece.King){
                     Debug.Log("King captured");
+
+                    Debug.Log(move.oldIndex + " " + move.newIndex + " " + move.isCapture());
                     boardManager.EndGame(0, false);
                 }
 
@@ -211,8 +204,8 @@ public class Board
         UpdateCheckingInfo();
         UpdatePinnedInfo();
 
-        if(IsCheckmate(colorTurn) && !isSearch){boardManager.EndGame(oppositeColor, false);}
-        else if(IsDraw() && !isSearch){boardManager.EndGame(0, true);}
+        if(IsCheckmate(colorTurn) && !isSearch){boardManager = GameObject.Find("BoardManager").GetComponent<BoardManager>(); boardManager.EndGame(oppositeColor, false);}
+        else if(IsDraw() && !isSearch){boardManager = GameObject.Find("BoardManager").GetComponent<BoardManager>(); boardManager.EndGame(0, true);}
         
     }
 
@@ -313,7 +306,6 @@ public class Board
         UpdateCheckingInfo();
         UpdatePinnedInfo();
     }
-
 
     public int[] ConvertFromFEN(string fenPosition){
         currentGameState = 0;
@@ -499,7 +491,6 @@ public class Board
     public int GetCastlingRights(uint gameState){
         return (int) (gameState & 0b001111);
     }
-
     public int EnPassantFileToIndex(int pieceColor, int epFile){
         if(pieceColor == Piece.White){
             return 39 + epFile;

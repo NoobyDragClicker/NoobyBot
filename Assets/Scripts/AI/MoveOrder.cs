@@ -12,7 +12,6 @@ public class MoveOrder
     float[] moveScores = new float[maxMoves];
     public List<Move> OrderMoves(Board board, List<Move> legalMoves){
         List<Move> moves = legalMoves;
-        List<Move> bestMoves = new List<Move>();
         for(int x = 0; x< legalMoves.Count; x++){
             Move move = legalMoves[x];
             float score = 0;
@@ -38,10 +37,10 @@ public class MoveOrder
                 }
                 //Adds one to differentiate from the non captures
                 score = 1+ capturedPieceValue - movedPieceValue ;
-                //Castle
+            //Castle
             } else if(move.flag == 5){
                 score = 3;
-            }/* else{
+            } else{
                 if(move.isPromotion()){
                     movedPieceValue = GetPieceValue(move.PromotedPieceType());
                 } 
@@ -50,26 +49,18 @@ public class MoveOrder
                 }
                 //Bigger piece value = higher ordering
                 score = movedPieceValue / 10;
-            }*/
-            if(score >= 2){
-                bestMoves.Add(move);
             }
+
+            moveScores[x] = score;
         }
 
-        //Remove the moves we are moving to the front
-        for(int x = 0; x<bestMoves.Count; x++){
-            moves.Remove(bestMoves[x]);
-        }
-
-        //Move the best moves to the front
-        bestMoves.AddRange(moves);
-        
-        
-
-        return bestMoves;
+        moves = Sort(moves);
+        Array.Clear(moveScores, 0, moveScores.Length);
+        return moves;
     }
+    
 
-    /*List<Move> Sort(List<Move> moves){
+    List<Move> Sort(List<Move> moves){
         for(int i = 0; i< moves.Count - 1; i++){
             for(int j = i + 1; j > 0; j--){
                 int swapIndex = j -1;
@@ -80,7 +71,7 @@ public class MoveOrder
             }
         }
         return moves;
-    }*/
+    }
 
     static int GetPieceValue (int pieceType) {
 		switch (pieceType) {

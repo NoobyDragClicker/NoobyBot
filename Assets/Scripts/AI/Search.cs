@@ -21,7 +21,7 @@ public class Search
     bool useMoveSorting;
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
-    const int checkmate = -99999;
+    const int checkmate = -99998;
     public event Action<Move> onSearchComplete;
     Stopwatch generatingStopwatch;
 
@@ -37,7 +37,7 @@ public class Search
         //Init a bunch of stuff, iterative deepening, etc
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        bestEval = SearchMoves(5, 0, negativeInfinity, positiveInfinity);
+        bestEval = SearchMoves(6, 0, negativeInfinity, positiveInfinity);
         UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
         stopwatch.Stop();
         if(useMoveSorting){
@@ -63,7 +63,7 @@ public class Search
         //Check for mate or stalemate
         if(legalMoves.Count == 0){
             if(board.isCurrentPlayerInCheck){
-                return checkmate;
+                return checkmate + plyFromRoot;
             } else {
                 return 0;
             }

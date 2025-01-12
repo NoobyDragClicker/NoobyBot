@@ -143,9 +143,59 @@ public class MoveGenerator
             }
         }
 
-        int flag;
+
         //Captures
-        //On side of board
+        List<int> attackedIndexes = new List<int>();
+        if(pieceColor == Piece.White){
+            //On the right side
+            if(board.IndexToFile(index) == 8){
+                attackedIndexes.Add(index - 9);
+            } 
+            //On the right side
+            else if(board.IndexToFile(index) == 1){
+                attackedIndexes.Add(index -7);
+            }
+            //Not on the side
+            else {
+                attackedIndexes.Add(index -7);
+                attackedIndexes.Add(index - 9);
+            }
+
+        } else if(pieceColor == Piece.Black){
+            //On the right side
+            if(board.IndexToFile(index) == 8){
+                attackedIndexes.Add(index - 7);
+            } 
+            //On the right side
+            else if(board.IndexToFile(index) == 1){
+                attackedIndexes.Add(index + 7);
+            }
+            //Not on the side
+            else {
+                attackedIndexes.Add(index +7);
+                attackedIndexes.Add(index + 9);
+            }
+        }
+
+        //Loops through the squares where the pawn can capture
+        for(int x = 0; x< attackedIndexes.Count; x++){
+            //If there's a piece or we are getting the attacked squares
+            if(board.board[attackedIndexes[x]] != 0 || squaresAttacked){
+                //Regular capturing
+                if(Piece.Color(board.board[attackedIndexes[x]]) != pieceColor || squaresAttacked){
+                    legalMoves.Add(new Move(index, attackedIndexes[x], true, 0));
+                }
+            } //En passant
+            else if(attackedIndexes[x] == board.enPassantIndex){
+                int enPassantAttackedIndex = (pieceColor == Piece.White) ? (board.enPassantIndex + 8) : (board.enPassantIndex - 8);
+                if(!InCheckAfterEnPassant(board, index, attackedIndexes[x], enPassantAttackedIndex)){
+                    legalMoves.Add(new Move(index, attackedIndexes[x], true, 7));
+                }
+            }
+        }
+
+        
+        /*
         if(board.IndexToFile(index) == 8 && pieceColor == Piece.White && ((board.board[index-9] != 0 && Piece.Color(board.board[index-9]) != pieceColor) || squaresAttacked || board.enPassantIndex == index-9)){
             flag = (board.enPassantIndex == index-9) ? 7:0;
             
@@ -175,7 +225,7 @@ public class MoveGenerator
                 
                 legalMoves.Add(new Move(index, index + (7*dirVal), true, flag));
             }
-        }
+        }*/
 
         if(isInCheck){
             legalMoves = PruneIllegalMoves(legalMoves, board.blockableIndexes);
@@ -489,6 +539,29 @@ public class MoveGenerator
         }
         return pieces;
     }
+
+    //Changes the board to see what it would be like after en passant
+    bool InCheckAfterEnPassant (Board board, int startSquare, int targetSquare, int epCapturedPawnSquare) {
+
+		// Update board to reflect en-passant capture
+        int movedPiece = board.board[startSquare];
+		board.board[targetSquare] = board.board[startSquare];
+		board.board[startSquare] = Piece.None;
+        int capturedPiece = board.board[epCapturedPawnSquare];
+		board.board[epCapturedPawnSquare] = Piece.None;
+
+		bool inCheckAfterEpCapture = false;
+        //Check if there are pieces checking the king
+		if (KingCheckIndexes(Piece.Color(movedPiece), board).Count != 0) {
+			inCheckAfterEpCapture = true;
+		}
+
+		// Undo change to board
+		board.board[targetSquare] = Piece.None;
+		board.board[startSquare] = movedPiece;
+		board.board[epCapturedPawnSquare] = capturedPiece;
+		return inCheckAfterEpCapture;
+	}
 
     //Returns king's position
     public int GetKingIndex(int kingColor, Board board){

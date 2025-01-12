@@ -141,6 +141,15 @@ public class BoardManager : MonoBehaviour
         if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
         //Updates the main board display
         UpdateBoard();
+
+        //Checking if there is a draw or mate
+        if(board.IsCheckmate(board.colorTurn)){
+            if(board.colorTurn == Piece.White){EndGame(Piece.Black, false);}
+            if(board.colorTurn == Piece.Black){EndGame(Piece.White, false);}
+        }
+        if(board.IsDraw()){EndGame(0, true);}
+
+
         if(!hasGameEnded){
             playerToMove.NotifyToMove();
         }

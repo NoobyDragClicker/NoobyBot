@@ -173,7 +173,6 @@ public class Board
                     Debug.Log("King captured");
 
                     Debug.Log(move.oldIndex + " " + move.newIndex + " " + move.isCapture());
-                    boardManager.EndGame(0, false);
                 }
 
                 //Capture resets counter
@@ -189,7 +188,6 @@ public class Board
                 }
             }
         }
-        
 
         int oppositeColor = colorTurn;
         colorTurn = (colorTurn == Piece.White)? Piece.Black : Piece.White;
@@ -202,11 +200,7 @@ public class Board
         gameStateHistory.Push(currentGameState);
 
         UpdateCheckingInfo();
-        UpdatePinnedInfo();
-
-        if(IsCheckmate(colorTurn) && !isSearch){boardManager = GameObject.Find("BoardManager").GetComponent<BoardManager>(); boardManager.EndGame(oppositeColor, false);}
-        else if(IsDraw() && !isSearch){boardManager = GameObject.Find("BoardManager").GetComponent<BoardManager>(); boardManager.EndGame(0, true);}
-        
+        UpdatePinnedInfo();   
     }
 
     public void UndoMove(Move move){
@@ -410,7 +404,6 @@ public class Board
             isCurrentPlayerInCheck = true;
             isCurrentPlayerInDoubleCheck = false;
             blockableIndexes = moveGenerator.BlockableIndexes(moveGenerator.GetKingIndex(colorTurn, this), checkingPieces[0], this);
-            //boardManager.ShowBlockableSquares(blockableIndexes);
         } else{
             isCurrentPlayerInCheck = false;
             isCurrentPlayerInDoubleCheck = false;

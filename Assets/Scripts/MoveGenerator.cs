@@ -164,11 +164,11 @@ public class MoveGenerator
         } else if(pieceColor == Piece.Black){
             //On the right side
             if(board.IndexToFile(index) == 8){
-                attackedIndexes.Add(index - 7);
+                attackedIndexes.Add(index + 7);
             } 
             //On the right side
             else if(board.IndexToFile(index) == 1){
-                attackedIndexes.Add(index + 7);
+                attackedIndexes.Add(index + 9);
             }
             //Not on the side
             else {
@@ -193,39 +193,6 @@ public class MoveGenerator
                 }
             }
         }
-
-        
-        /*
-        if(board.IndexToFile(index) == 8 && pieceColor == Piece.White && ((board.board[index-9] != 0 && Piece.Color(board.board[index-9]) != pieceColor) || squaresAttacked || board.enPassantIndex == index-9)){
-            flag = (board.enPassantIndex == index-9) ? 7:0;
-            
-            legalMoves.Add(new Move(index, index-9, true, flag));
-        } else if(board.IndexToFile(index) == 1 && pieceColor == Piece.White && ((board.board[index-7] != 0 && Piece.Color(board.board[index-7]) != pieceColor) || squaresAttacked || board.enPassantIndex == index-7)){
-            flag = (board.enPassantIndex == index-7) ? 7:0;
-            
-            legalMoves.Add(new Move(index, index-7, true, flag));
-        } else if (board.IndexToFile(index) == 8 && pieceColor == Piece.Black && ((board.board[index+7] != 0 && Piece.Color(board.board[index+7]) != pieceColor) || squaresAttacked) || board.enPassantIndex == index+7){
-            flag = (board.enPassantIndex == index+7) ? 7:0;
-            
-            legalMoves.Add(new Move(index, index+7, true, flag));
-        } else if(board.IndexToFile(index) == 1 && pieceColor == Piece.Black && ((board.board[index+9] != 0 && Piece.Color(board.board[index+9]) != pieceColor) || squaresAttacked || board.enPassantIndex == index+9)){
-            flag = (board.enPassantIndex == index+9) ? 7:0;
-            
-            legalMoves.Add(new Move(index, index+9, true, flag));
-        } 
-        //Not on side of board
-        else if (board.IndexToFile(index) != 8 && board.IndexToFile(index) != 1){
-            if((board.board[index+ (9*dirVal)] != 0 && Piece.Color(board.board[index+(9*dirVal)]) != pieceColor) || squaresAttacked || board.enPassantIndex == index+(9*dirVal)){
-                flag = (board.enPassantIndex == index+(9*dirVal)) ? 7:0;
-                
-                legalMoves.Add(new Move(index, index + (9*dirVal), true, flag));
-            }
-            if((board.board[index+ (7*dirVal)] != 0 && Piece.Color(board.board[index+(7*dirVal)]) != pieceColor) || squaresAttacked || board.enPassantIndex == index+(7*dirVal)){
-                flag = (board.enPassantIndex == index+(7*dirVal)) ? 7:0;
-                
-                legalMoves.Add(new Move(index, index + (7*dirVal), true, flag));
-            }
-        }*/
 
         if(isInCheck){
             legalMoves = PruneIllegalMoves(legalMoves, board.blockableIndexes);

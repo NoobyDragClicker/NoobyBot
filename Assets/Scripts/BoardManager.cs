@@ -290,7 +290,7 @@ public class BoardManager : MonoBehaviour
         }
         debugPrefabs.Clear();
 
-        int[] attackedSquares = board.moveGenerator.GenerateAttackedSquares(Piece.White, board);
+        int[] attackedSquares = board.moveGenerator.GenerateAttackedSquares(board.colorTurn, board);
         for(int x = 0; x<64; x++){
             int rank = board.IndexToRank(x);
             int file = board.IndexToFile(x);

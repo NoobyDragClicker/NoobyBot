@@ -25,12 +25,12 @@ public class Perft : MonoBehaviour
         "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ -", //Pos 5
         "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - -" //Pos 6
     };
-    int[] pos1Expected = {20, 400, 8,902, 197,281, 4,865,609, 119,060,324};
+    int[] pos1Expected = {20, 400, 8902, 197281, 4865609, 119060324};
     int[] pos2Expected = {48, 2039, 97862, 4085603, 193690690}; //Max length: five
     int[] pos3Expected = {14, 191, 2812, 43238, 674624, 11030083};
     int[] pos4Expected = {6, 264, 9467, 422333, 15833292, 706045033};
     int[] pos5Expected = {44, 1486, 62379, 2103487, 89941194}; //Max length: five
-    int[] pos6Expected = {46, 2,079, 89890, 3894594, 164075551, 6,923,051,137};
+    long[] pos6Expected = {46, 2079, 89890, 3894594, 164075551, 6923051137};
 
 
     /*public const string startingFEN = "";
@@ -46,6 +46,14 @@ public class Perft : MonoBehaviour
     public bool test5Passed;
     public bool test6Passed;
 
+    int captures;
+    int ep;
+    int castles;
+    int promotions;
+    int checks;
+    int doubleChecks;
+    int checkmates;
+
 
     void Start(){
         test1Passed = true;
@@ -58,7 +66,17 @@ public class Perft : MonoBehaviour
         hasSuiteFinished = false;
 
         moveGenTimer.Start();
-        Task.Factory.StartNew (() => RunSuite(5), TaskCreationOptions.LongRunning);
+        
+        //Task.Factory.StartNew (() => RunSuite(4), TaskCreationOptions.LongRunning);
+        UnityEngine.Debug.Log("Total: " + Search(5, new Board(testFens[1], moveGenerator)));
+        UnityEngine.Debug.Log("Captures: " +  captures);
+        UnityEngine.Debug.Log("EP: " +  ep);
+        UnityEngine.Debug.Log("Castles: " +  castles);
+        UnityEngine.Debug.Log("promotions: " +  promotions);
+        UnityEngine.Debug.Log("Checks: " +  checks);
+        UnityEngine.Debug.Log("Double checks: " +  doubleChecks);
+        UnityEngine.Debug.Log("Checkmates: " + checkmates);
+
     }
 
     public void Update(){
@@ -88,7 +106,7 @@ public class Perft : MonoBehaviour
         hasFailed = false;
         
         //Test 2
-        for(int depth = 1; depth < maxDepth; depth ++){
+        for(int depth = 1; depth <= maxDepth; depth ++){
             var result = Search(depth, new Board(testFens[1], moveGenerator));
             if(result != pos2Expected[depth-1]){ hasFailed = true;}
         }
@@ -96,7 +114,7 @@ public class Perft : MonoBehaviour
         hasFailed = false;
         
         //Test 3
-        for(int depth = 1; depth < maxDepth; depth ++){
+        for(int depth = 1; depth <= maxDepth; depth ++){
             var result = Search(depth, new Board(testFens[2], moveGenerator));
             if(result != pos3Expected[depth-1]){ hasFailed = true;}
         }
@@ -104,7 +122,7 @@ public class Perft : MonoBehaviour
         hasFailed = false;
 
         //Test 4
-        for(int depth = 1; depth < maxDepth; depth ++){
+        for(int depth = 1; depth <= maxDepth; depth ++){
             var result = Search(depth, new Board(testFens[3], moveGenerator));
             if(result != pos4Expected[depth-1]){ hasFailed = true;}
         }
@@ -112,7 +130,7 @@ public class Perft : MonoBehaviour
         hasFailed = false;
 
         //Test 5
-        for(int depth = 1; depth < maxDepth; depth ++){
+        for(int depth = 1; depth <= maxDepth; depth ++){
             var result = Search(depth, new Board(testFens[4], moveGenerator));
             if(result != pos5Expected[depth-1]){ hasFailed = true;}
         }
@@ -120,7 +138,7 @@ public class Perft : MonoBehaviour
         hasFailed = false;
 
         //Test 6
-        for(int depth = 1; depth < maxDepth; depth ++){
+        for(int depth = 1; depth <= maxDepth; depth ++){
             var result = Search(depth, new Board(testFens[5], moveGenerator));
             if(result != pos6Expected[depth-1]){ hasFailed = true;}
         }
@@ -132,8 +150,19 @@ public class Perft : MonoBehaviour
 
     int Search (int depth, Board board) {
 		var moves = moveGenerator.GenerateLegalMoves(board, board.colorTurn);
-		if (depth == 1) {
-			return moves.Count;
+        if(moves.Count == 0){
+            if(board.isCurrentPlayerInCheck){
+                checkmates++;
+            }
+        }
+        for (int i = 0; i < moves.Count; i++) {
+			if(moves[i].isCapture()){captures ++;}
+            if(moves[i].flag == 7){ep++;}
+            if(moves[i].flag == 5){castles++;}
+            if(moves[i].isPromotion()){promotions++;}
+		}
+		if (depth == 0) {
+			return 1;
 		}
 
 		int numLocalNodes = 0;
@@ -142,8 +171,33 @@ public class Perft : MonoBehaviour
 			board.Move(moves[i], true);
 			int numNodesFromThisPosition = Search (depth - 1, board);
 			numLocalNodes += numNodesFromThisPosition;
+            if(board.isCurrentPlayerInCheck){checks++;}
+            if(board.isCurrentPlayerInDoubleCheck){doubleChecks++;}
 			board.UndoMove (moves[i]);
 		}
 		return numLocalNodes;
 	}
+
+    //Prints the start index and how many moves stem from it
+    int SearchDivide (int startDepth, int currentDepth, Board board) {
+        var moves = moveGenerator.GenerateLegalMoves(board, board.colorTurn);
+
+			if (currentDepth == 1) {
+				return moves.Count;
+			}
+
+			int numLocalNodes = 0;
+
+		for (int i = 0; i < moves.Count; i++) {
+			board.Move(moves[i], true);
+			int numMovesForThisNode = SearchDivide(startDepth, currentDepth - 1, board);
+			numLocalNodes += numMovesForThisNode;
+			board.UndoMove (moves[i]);
+
+			if (currentDepth == startDepth) {
+			    UnityEngine.Debug.Log(moves[i].oldIndex + " " + numMovesForThisNode);
+			}
+		}
+		return numLocalNodes;
+    }
 }

@@ -1169,7 +1169,7 @@ MonoBehaviour:
   useClock: 0
   useCustomPos: 0
   displayPieces: []
-  isDebugMode: 1
+  isDebugMode: 0
   hasGameStarted: 0
   hasGameEnded: 0
   inputtedCustomStr: 

@@ -51,7 +51,7 @@ public class Board
 
     //Moves the pieces
     public void Move(Move move, bool isSearch){
-        int castlingRights = GetCastlingRights(gameStateHistory.Peek());
+        uint castlingRights = GetCastlingRights(gameStateHistory.Peek());
         int enPassantFile = 0;
         //Captured piece gets removed, ep file gets removed, need to save castling rights and fiftymoverule
         currentGameState = 0;
@@ -165,6 +165,16 @@ public class Board
             if(move.isCapture()){
                 //capture
                 capturedPiece = board[newPos];
+                //Removing capturing rights 
+                if(Piece.PieceType(capturedPiece) == Piece.Rook){
+                    if(colorTurn == Piece.White){
+                        if(newPos == 56){castlingRights &= 0b1101;}
+                        if(newPos == 63){castlingRights &= 0b1110;}
+                    } else if(colorTurn == Piece.Black){
+                        if(newPos == 0){castlingRights &= 0b0111;}
+                        if(newPos == 7){castlingRights &= 0b1011;}
+                    }
+                }
                 
                 board[newPos] = movedPiece;
                 board[startPos] = 0;
@@ -188,11 +198,9 @@ public class Board
                 }
             }
         }
-
-        int oppositeColor = colorTurn;
         colorTurn = (colorTurn == Piece.White)? Piece.Black : Piece.White;
         //Adds captured piece to gamestate
-        currentGameState = currentGameState | (uint) castlingRights;
+        currentGameState = currentGameState | castlingRights;
         currentGameState = currentGameState | (uint) enPassantFile  << 4;
         currentGameState = currentGameState | (uint) capturedPiece << 8;
         currentGameState = currentGameState | (uint) fiftyMoveCounter << 13;
@@ -340,7 +348,6 @@ public class Board
 
         string castling = fenPosition.Split(' ')[2];
 
-        //TODO
         int castlingRights = 0;
         if(castling.Contains("K")){castlingRights += 1;}
         if(castling.Contains("Q")){castlingRights += 2;}
@@ -481,8 +488,8 @@ public class Board
     }
 
     //Returns the int in the form of the gamestate
-    public int GetCastlingRights(uint gameState){
-        return (int) (gameState & 0b001111);
+    public uint GetCastlingRights(uint gameState){
+        return gameState & 0b001111;
     }
     public int EnPassantFileToIndex(int pieceColor, int epFile){
         if(pieceColor == Piece.White){

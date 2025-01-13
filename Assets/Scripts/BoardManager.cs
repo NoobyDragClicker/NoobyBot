@@ -216,7 +216,7 @@ public class BoardManager : MonoBehaviour
 
         //checking if it is already selected, and if yes, deselect
         if (selectedPiece == board.RankFileToIndex(x, y)){
-            selectedPiece = 0;
+            selectedPiece = -1;
             return;
         }
 

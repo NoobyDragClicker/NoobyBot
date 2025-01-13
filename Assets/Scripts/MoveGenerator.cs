@@ -430,22 +430,22 @@ public class MoveGenerator
         if(!squaresAttacked){
             illegalSquares = GenerateAttackedSquares(oppositeColor, board);
         }
-        
 
+        if(!squaresAttacked){
+            //Loads generic castling data
+            bool canCastleShort = board.HasKingsideRight(pieceColor);
+            bool canCastleLong = board.HasQueensideRight(pieceColor);
 
-        //Loads generic castling data
-        bool canCastleShort = board.HasKingsideRight(pieceColor);
-        bool canCastleLong = board.HasQueensideRight(pieceColor);
-
-        //Castling
-        if(!squaresAttacked && (canCastleLong || canCastleShort)){
-            //Empty squares to the right and rook of the same color and not in check and square about to be moved to is not in check
-            if(canCastleShort && board.board[index + 1] == 0 && board.board[index + 2] == 0 && board.board[index + 3] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index + 2] == 0 && illegalSquares[index + 1] == 0){
-                legalMoves.Add(new Move(index, index + 2, false, 5));
-            }
-            //Empty squares to the left and rook of the same color and not in check and square about to be moved to is not in check
-            if(canCastleShort && board.board[index - 1] == 0 && board.board[index - 2] == 0 && board.board[index - 3] == 0 && board.board[index - 4] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index - 2] == 0 && illegalSquares[index - 1] == 0){
-                legalMoves.Add(new Move(index, index - 2, false, 5));
+            //Castling
+            if(canCastleLong || canCastleShort){
+                //Empty squares to the right and rook of the same color and not in check and square about to be moved to is not in check
+                if(canCastleShort && board.board[index + 1] == 0 && board.board[index + 2] == 0 && board.board[index + 3] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index + 2] == 0 && illegalSquares[index + 1] == 0){
+                    legalMoves.Add(new Move(index, index + 2, false, 5));
+                }
+                //Empty squares to the left and rook of the same color and not in check and square about to be moved to is not in check
+                if(canCastleLong && board.board[index - 1] == 0 && board.board[index - 2] == 0 && board.board[index - 3] == 0 && board.board[index - 4] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index - 2] == 0 && illegalSquares[index - 1] == 0){
+                    legalMoves.Add(new Move(index, index - 2, false, 5));
+                }
             }
         }
         
@@ -480,10 +480,7 @@ public class MoveGenerator
                 legalMoves.Add(new Move(index, potentialIndexes[x], false));
             }
             return legalMoves;
-
         }
-        
-
         
         for(int x = 0; x< potentialIndexes.Count; x++){
             if(board.board[potentialIndexes[x]] == 0 && illegalSquares[potentialIndexes[x]] == 0){
@@ -491,7 +488,6 @@ public class MoveGenerator
             } else if(!Piece.IsColour(board.board[potentialIndexes[x]], pieceColor) && illegalSquares[potentialIndexes[x]] == 0){
                 legalMoves.Add(new Move(index, potentialIndexes[x], true));
             }
-
         }
         return legalMoves;
     }

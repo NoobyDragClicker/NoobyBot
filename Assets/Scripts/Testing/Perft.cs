@@ -4,13 +4,11 @@ using System.Diagnostics;
 using Unity.Collections;
 using UnityEngine;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 
 public class Perft : MonoBehaviour
 {   
-    //Passed position 5 and 6 so far
-    //Failed all others thus far
-
     //BUG NO1: Pawn taking en passant after a pawn has blocked its pin, exposing the king - use position 3 to test
     //BUG NO2: castling problem? not sure, must rerun after fixing en passant
     MoveGenerator moveGenerator;
@@ -20,9 +18,9 @@ public class Perft : MonoBehaviour
     string[] testFens = {
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",  //Starting pos
         "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", //Pos 2
-        "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - ", //Pos 3
+        "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -", //Pos 3
         "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq -", //Pos 4
-        "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ -", //Pos 5
+        "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", //Pos 5
         "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - -" //Pos 6
     };
     int[] pos1Expected = {20, 400, 8902, 197281, 4865609, 119060324};
@@ -67,16 +65,7 @@ public class Perft : MonoBehaviour
 
         moveGenTimer.Start();
         
-        //Task.Factory.StartNew (() => RunSuite(4), TaskCreationOptions.LongRunning);
-        UnityEngine.Debug.Log("Total: " + Search(5, new Board(testFens[1], moveGenerator)));
-        UnityEngine.Debug.Log("Captures: " +  captures);
-        UnityEngine.Debug.Log("EP: " +  ep);
-        UnityEngine.Debug.Log("Castles: " +  castles);
-        UnityEngine.Debug.Log("promotions: " +  promotions);
-        UnityEngine.Debug.Log("Checks: " +  checks);
-        UnityEngine.Debug.Log("Double checks: " +  doubleChecks);
-        UnityEngine.Debug.Log("Checkmates: " + checkmates);
-
+        Task.Factory.StartNew (() => RunSuite(5), TaskCreationOptions.LongRunning);
     }
 
     public void Update(){
@@ -93,7 +82,16 @@ public class Perft : MonoBehaviour
         }
     }
 
-
+    public void RunExtraInfo(int maxDepth, string testFen){
+        UnityEngine.Debug.Log(Search(maxDepth, new Board(testFen, moveGenerator)));
+        UnityEngine.Debug.Log("Captures: " +  captures);
+        UnityEngine.Debug.Log("EP: " +  ep);
+        UnityEngine.Debug.Log("Castles: " +  castles);
+        UnityEngine.Debug.Log("promotions: " +  promotions);
+        UnityEngine.Debug.Log("Checks: " +  checks);
+        UnityEngine.Debug.Log("Double checks: " +  doubleChecks);
+        UnityEngine.Debug.Log("Checkmates: " + checkmates);
+    }
 
     void RunSuite(int maxDepth){
         bool hasFailed = false;
@@ -147,32 +145,31 @@ public class Perft : MonoBehaviour
         return;
     }
 
-
     int Search (int depth, Board board) {
 		var moves = moveGenerator.GenerateLegalMoves(board, board.colorTurn);
-        if(moves.Count == 0){
+        /*if(moves.Count == 0){
             if(board.isCurrentPlayerInCheck){
                 checkmates++;
+                return 1;
             }
-        }
-        for (int i = 0; i < moves.Count; i++) {
+        }*/
+        if (depth == 1) {
+			return moves.Count;
+		}
+        /*for (int i = 0; i < moves.Count; i++) {
 			if(moves[i].isCapture()){captures ++;}
             if(moves[i].flag == 7){ep++;}
             if(moves[i].flag == 5){castles++;}
             if(moves[i].isPromotion()){promotions++;}
-		}
-		if (depth == 0) {
-			return 1;
-		}
-
+		}*/
 		int numLocalNodes = 0;
 
 		for (int i = 0; i < moves.Count; i++) {
 			board.Move(moves[i], true);
 			int numNodesFromThisPosition = Search (depth - 1, board);
 			numLocalNodes += numNodesFromThisPosition;
-            if(board.isCurrentPlayerInCheck){checks++;}
-            if(board.isCurrentPlayerInDoubleCheck){doubleChecks++;}
+            /*if(board.isCurrentPlayerInCheck){checks++;}
+            if(board.isCurrentPlayerInDoubleCheck){doubleChecks++;}*/
 			board.UndoMove (moves[i]);
 		}
 		return numLocalNodes;
@@ -182,12 +179,10 @@ public class Perft : MonoBehaviour
     int SearchDivide (int startDepth, int currentDepth, Board board) {
         var moves = moveGenerator.GenerateLegalMoves(board, board.colorTurn);
 
-			if (currentDepth == 1) {
-				return moves.Count;
-			}
-
-			int numLocalNodes = 0;
-
+		if (currentDepth == 1) {
+			return moves.Count;
+		}
+		int numLocalNodes = 0;
 		for (int i = 0; i < moves.Count; i++) {
 			board.Move(moves[i], true);
 			int numMovesForThisNode = SearchDivide(startDepth, currentDepth - 1, board);
@@ -195,7 +190,7 @@ public class Perft : MonoBehaviour
 			board.UndoMove (moves[i]);
 
 			if (currentDepth == startDepth) {
-			    UnityEngine.Debug.Log(moves[i].oldIndex + " " + numMovesForThisNode);
+			    UnityEngine.Debug.Log(moves[i].oldIndex + " " + " " + moves[i].newIndex + " " + numMovesForThisNode);
 			}
 		}
 		return numLocalNodes;

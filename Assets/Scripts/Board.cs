@@ -224,7 +224,12 @@ public class Board
         fiftyMoveCounter = (int) (currentGameState >> 13);
 
         //Setting the ep index to what it used to be
-        enPassantIndex = (colorTurn == Piece.White) ? (15 + enPassantFile) : (39 + enPassantFile);
+        if(enPassantFile != 0){
+            enPassantIndex = (colorTurn == Piece.White) ? (15 + enPassantFile) : (39 + enPassantFile);
+        } else{
+            enPassantIndex = -1;
+        }
+        
 
         //Testing only
         moveHistory.Pop();
@@ -354,6 +359,7 @@ public class Board
         if(castling.Contains("k")){castlingRights += 4;}
         if(castling.Contains("q")){castlingRights += 8;}
         currentGameState |= (uint) castlingRights;
+        enPassantIndex = -1;
         gameStateHistory.Push(currentGameState);
         return position;
     }

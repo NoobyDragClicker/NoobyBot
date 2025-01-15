@@ -176,7 +176,7 @@ public class MoveGenerator
                 attackedIndexes.Add(index + 9);
             }
         }
-
+        List<Move> enPassantLegal = new List<Move>();
         //Loops through the squares where the pawn can capture
         for(int x = 0; x< attackedIndexes.Count; x++){
             //If there's a piece or we are getting the attacked squares
@@ -187,16 +187,18 @@ public class MoveGenerator
                 }
             } //En passant
             else if(attackedIndexes[x] == board.enPassantIndex){
+                
                 int enPassantAttackedIndex = (pieceColor == Piece.White) ? (board.enPassantIndex + 8) : (board.enPassantIndex - 8);
                 if(!InCheckAfterEnPassant(board, index, attackedIndexes[x], enPassantAttackedIndex)){
-                    legalMoves.Add(new Move(index, attackedIndexes[x], true, 7));
+                    enPassantLegal.Add(new Move(index, attackedIndexes[x], true, 7));
                 }
             }
         }
 
         if(isInCheck){
             legalMoves = PruneIllegalMoves(legalMoves, board.blockableIndexes);
-        }
+        } 
+        legalMoves.AddRange(enPassantLegal);
 
         if(board.pinnedPieceIndexes.Contains(index) && !squaresAttacked){
             int pinningPieceIndex = GetPinningPiece(index, board.pinnedIndexes);
@@ -515,8 +517,9 @@ public class MoveGenerator
 
 		bool inCheckAfterEpCapture = false;
         //Check if there are pieces checking the king
-		if (KingCheckIndexes(Piece.Color(movedPiece), board).Count != 0) {
-			inCheckAfterEpCapture = true;
+        var checkIndexes = KingCheckIndexes(Piece.Color(movedPiece), board);
+		if (checkIndexes.Count > 0) {
+			inCheckAfterEpCapture = true; 
 		}
 
 		// Undo change to board
@@ -545,10 +548,10 @@ public class MoveGenerator
         List<Move> knightChecks = GenerateKnightMoves(kingIndex, kingColor, board, false, false);
         List<int> pawnCheckIndexes = new List<int>();
         if(kingColor == Piece.White){
-            if(board.IndexToFile(kingIndex) != 1 && (kingIndex -7 > -1)){
-                pawnCheckIndexes.Add(kingIndex - 7);
-            }if(board.IndexToFile(kingIndex) != 8 && (kingIndex - 9 > -1)){
+            if(board.IndexToFile(kingIndex) != 1 && (kingIndex -9 > -1)){
                 pawnCheckIndexes.Add(kingIndex - 9);
+            }if(board.IndexToFile(kingIndex) != 8 && (kingIndex - 7 > -1)){
+                pawnCheckIndexes.Add(kingIndex - 7);
             }
             
         } else{

@@ -12,7 +12,7 @@ using System.Linq;
 
 public class Perft : MonoBehaviour
 {   
-    //Last total time: 3:35(questionable)
+    //Last total time: 49:22
     //BUG NO2: castling problem? not sure, must rerun after fixing en passant
     MoveGenerator moveGenerator;
     
@@ -20,6 +20,8 @@ public class Perft : MonoBehaviour
 	Stopwatch moveGenTimer = new Stopwatch();
 
     const string fileName = "./Assets/Scripts/Testing/standard.txt";
+    const string depth6File = "./Assets/Scripts/Testing/depth6only.txt";
+
 
 
     public bool hasSuiteFinished;
@@ -32,9 +34,8 @@ public class Perft : MonoBehaviour
     void Start(){
         moveGenerator = new MoveGenerator();
         hasSuiteFinished = false;
-        
-        //UnityEngine.Debug.Log(SearchDivide(2, 2, new Board("k7/8/6P1/7p/8/8/K7/8 b - - 0 1", moveGenerator)));
         Task.Factory.StartNew (() => RunSuite(), TaskCreationOptions.LongRunning);
+        //RunSuite();
     }
 
     public void Update(){
@@ -58,7 +59,7 @@ public class Perft : MonoBehaviour
         {
             string fenString = fenAndExpectedResult.ElementAt(x).Key;
             ulong expected = fenAndExpectedResult.ElementAt(x).Value;
-            var result = Search(5, new Board(fenString, moveGenerator));
+            var result = Search(6, new Board(fenString, moveGenerator));
             if(result != expected){failedFenPositions.Add(fenString);}
             else{numPassed ++;}
         }
@@ -107,10 +108,10 @@ public class Perft : MonoBehaviour
     }
 
     void GetDepthDict(){
-        string[] lines = File.ReadAllLines(fileName);
+        string[] lines = File.ReadAllLines(depth6File);
         for(int x = 0; x < lines.Length; x++){
             string[] info = lines[x].Split(";");
-            ulong depth = ulong.Parse(info[5].Replace("D5 ", ""));
+            ulong depth = ulong.Parse(info[6].Replace("D6 ", ""));
             fenAndExpectedResult.Add(info[0], depth);
         }
     }

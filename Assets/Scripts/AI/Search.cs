@@ -37,7 +37,7 @@ public class Search
         //Init a bunch of stuff, iterative deepening, etc
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        bestEval = SearchMoves(5, 0, negativeInfinity, positiveInfinity);
+        bestEval = SearchMoves(6, 0, negativeInfinity, positiveInfinity);
         UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
         stopwatch.Stop();
 

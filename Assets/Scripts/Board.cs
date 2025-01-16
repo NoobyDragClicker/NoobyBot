@@ -12,6 +12,9 @@ using UnityEngine.UIElements;
 
 public class Board
 {
+    public const int WhiteIndex = 0;
+    public const int BlackIndex = 0;
+
 
     public bool isCurrentPlayerInCheck;
     public bool isCurrentPlayerInDoubleCheck;
@@ -33,18 +36,19 @@ public class Board
     public MoveGenerator moveGenerator;
     BoardManager boardManager;
     public int[] board;
-    //White = 1, Black = 2
 
-    //Stores castling rights, en passant square, and captured piece
-    //Necessary to be able to unmake moves multiple times
-    //Bits from L to R: whiteKingside, whiteQueenside, blackKingside, blackQueenside, en passant file (next 4), 50 move counter for the rest
+    //Bits from L to R: whiteKingside, whiteQueenside, blackKingside, blackQueenside, en passant file (next 4), piece captured (5 bits),50 move counter for the rest
     Stack<uint> gameStateHistory = new Stack<uint>();
     public uint currentGameState;
+
+    Stack<ulong> zobristHistory = new Stack<ulong>();
+    public ulong zobristKey;
 
     //Constructor
     public Board(string fenPosition, MoveGenerator generator){
         moveGenerator = generator;
         board = ConvertFromFEN(fenPosition);
+        Zobrist.CalculateZobrist(this);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
     }

@@ -321,7 +321,6 @@ public class BoardManager : MonoBehaviour
         }
 
     }
-
     //UI
     public void UpdateUseClock(bool input){
         useClock = input;
@@ -333,6 +332,7 @@ public class BoardManager : MonoBehaviour
     //Testing
     public void UseUndoMoveButton(){
         board.UndoMove(board.lastMove);
+        UpdateBoard();
     }
 
 }

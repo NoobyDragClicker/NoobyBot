@@ -37,11 +37,11 @@ public class Board
     BoardManager boardManager;
     public int[] board;
 
-    //Bits from L to R: whiteKingside, whiteQueenside, blackKingside, blackQueenside, en passant file (next 4), piece captured (5 bits),50 move counter for the rest
+    //Bits from L to R: wShort, wLong, bShort, bLong, en passant file (next 4), piece captured (5 bits),50 move counter for the rest
     Stack<uint> gameStateHistory = new Stack<uint>();
     public uint currentGameState;
 
-    Stack<ulong> zobristHistory = new Stack<ulong>();
+    public Stack<ulong> zobristHistory = new Stack<ulong>();
     public ulong zobristKey;
 
     //Constructor
@@ -53,17 +53,24 @@ public class Board
         UpdatePinnedInfo();
     }
 
+    
     //Moves the pieces
     public void Move(Move move, bool isSearch){
         uint castlingRights = GetCastlingRights(gameStateHistory.Peek());
+        int oldCastlingRights = (int)castlingRights;
         int enPassantFile = 0;
         //Captured piece gets removed, ep file gets removed, need to save castling rights and fiftymoverule
         currentGameState = 0;
 
+        
         int startPos = move.oldIndex;
         int newPos = move.newIndex;
         int movedPiece;
+        int newPiece; //Used for promotions
         int capturedPiece = 0;
+
+        int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
+        int oppositeColorIndex = 1-currentColorIndex;
 
 
         //Testing only
@@ -76,13 +83,17 @@ public class Board
         if(move.isPromotion()){
             fiftyMoveCounter = 0;
             //Sets the new piece to be the same color but whatever the new piece type is
-            movedPiece = Piece.Color(board[startPos]) | move.PromotedPieceType();
+            movedPiece = board[startPos];
+            newPiece = Piece.Color(board[startPos]) | move.PromotedPieceType();
         } else {
             movedPiece = board[startPos];
+            newPiece = movedPiece;
         }
 
         //castle
         if(move.flag == 5){
+            int oldRookIndex = 0;
+            int newRookIndex = 0;
             fiftyMoveCounter++;
             //Once castles, you can't castle again
             if(colorTurn == Piece.White) {
@@ -90,15 +101,19 @@ public class Board
                 castlingRights &= 0b1100;
                 //Short castles
                 if(newPos == 62){
-                    int rook = board[63];
-                    board[61] = rook;
-                    board[63] = 0;
+                    oldRookIndex = 63;
+                    newRookIndex = 61;
+                    int rook = board[oldRookIndex];
+                    board[newRookIndex] = rook;
+                    board[oldRookIndex] = 0;
                 } 
                 //Long castles
                 else if(newPos == 58){
-                    int rook = board[56];
-                    board[59] = rook;
-                    board[56] = 0;
+                    oldRookIndex = 56;
+                    newRookIndex = 59;
+                    int rook = board[oldRookIndex];
+                    board[newRookIndex] = rook;
+                    board[oldRookIndex] = 0;
                 }
                 board[newPos] = movedPiece;
                 board[startPos] = 0;
@@ -108,20 +123,25 @@ public class Board
                 castlingRights &= 0b0011;
                 //Short castles
                 if(newPos == 6){
-                    int rook = board[7];
-                    board[5] = rook;
-                    board[7] = 0;
+                    oldRookIndex = 7;
+                    newRookIndex = 5;
+                    int rook = board[oldRookIndex];
+                    board[newRookIndex] = rook;
+                    board[oldRookIndex] = 0;
                 } 
                 //Long castles
                 else if(newPos == 2){
-                    int rook = board[0];
-                    board[3] = rook;
-                    board[0] = 0;
+                    oldRookIndex = 0;
+                    newRookIndex = 3;
+                    int rook = board[oldRookIndex];
+                    board[newRookIndex] = rook;
+                    board[oldRookIndex] = 0;
                 }
                 board[newPos] = movedPiece;
                 board[startPos] = 0;
             }
-
+            zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, oldRookIndex];
+            zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, newRookIndex];
         }
         //en passant
         else if(move.flag == 7){
@@ -179,7 +199,9 @@ public class Board
                         if(newPos == 7){castlingRights &= 0b1011;}
                     }
                 }
-                
+
+                zobristKey ^= Zobrist.piecesArray[Piece.PieceType(capturedPiece), oppositeColorIndex, newPos];
+
                 board[newPos] = movedPiece;
                 board[startPos] = 0;
 
@@ -202,19 +224,28 @@ public class Board
                 }
             }
         }
-        colorTurn = (colorTurn == Piece.White)? Piece.Black : Piece.White;
-        //Adds captured piece to gamestate
-        currentGameState = currentGameState | castlingRights;
-        currentGameState = currentGameState | (uint) enPassantFile  << 4;
-        currentGameState = currentGameState | (uint) capturedPiece << 8;
-        currentGameState = currentGameState | (uint) fiftyMoveCounter << 13;
         
+        colorTurn = (colorTurn == Piece.White)? Piece.Black : Piece.White;
+
+        //Adds captured piece to gamestate
+        currentGameState = currentGameState | castlingRights | (uint) enPassantFile  << 4 | (uint) capturedPiece << 8 | (uint) fiftyMoveCounter << 13;  
         gameStateHistory.Push(currentGameState);
 
-        UpdateCheckingInfo();
-        UpdatePinnedInfo();   
-    }
+        //Moving friendly piece
+        zobristKey ^= Zobrist.piecesArray[Piece.PieceType(movedPiece), currentColorIndex, startPos];
+        zobristKey ^= Zobrist.piecesArray[Piece.PieceType(newPiece), currentColorIndex, newPos];
 
+        //Castling, ep, side to move
+        zobristKey ^= Zobrist.castlingRights[oldCastlingRights];
+        zobristKey ^= Zobrist.castlingRights[castlingRights];
+        zobristKey ^= Zobrist.sideToMove;
+        zobristKey ^= Zobrist.enPassantFile[enPassantFile];
+
+        zobristHistory.Push(zobristKey);
+
+        UpdateCheckingInfo();
+        UpdatePinnedInfo();
+    }
     public void UndoMove(Move move){
         colorTurn = (colorTurn == Piece.White)? Piece.Black : Piece.White;
         //Removing the current one and getting the required info
@@ -226,6 +257,9 @@ public class Board
         int enPassantFile = (int)((currentGameState >> 4) & 0b01111);
 
         fiftyMoveCounter = (int) (currentGameState >> 13);
+
+        zobristHistory.Pop();
+        zobristKey = zobristHistory.Peek();
 
         //Setting the ep index to what it used to be
         if(enPassantFile != 0){
@@ -317,7 +351,6 @@ public class Board
         UpdateCheckingInfo();
         UpdatePinnedInfo();
     }
-
     public int[] ConvertFromFEN(string fenPosition){
         currentGameState = 0;
         Dictionary<char, int> pieceTypeFromSymbol = new Dictionary<char, int>(){
@@ -374,6 +407,7 @@ public class Board
         if(moveGenerator.GenerateLegalMoves(this, colorTurn).Count == 0 && !isCurrentPlayerInCheck){return true;}
         //50 move rule
         if(fiftyMoveCounter >= 100){return true;}
+        if(IsRepetitionDraw()){return true;}
 
         //Can be improved with dedicated function
         int numQueens = moveGenerator.GetPosByPieceType(Piece.Queen, Piece.Black, this).Count + moveGenerator.GetPosByPieceType(Piece.Queen, Piece.White, this).Count;
@@ -392,6 +426,17 @@ public class Board
         }
     }
 
+    public bool IsRepetitionDraw(){
+        int repCount = zobristHistory.Count(x => x == zobristKey);
+        Debug.Log(repCount);
+		if (repCount >= 3)
+		{
+			return true;
+		} else{
+            return false;
+        }
+
+    }
     public bool IsCheckmate(int color){
         int kingIndex = moveGenerator.GetKingIndex(color, this);
         if(isCurrentPlayerInCheck){

@@ -46,6 +46,9 @@ public class Search
     }
     
     int SearchMoves(int depth, int plyFromRoot, int alpha, int beta){
+        if(board.IsRepetitionDraw()){return 0;}
+        if(board.fiftyMoveCounter >= 100){return 0;}
+        
         //Returns the actual eval of the position
         if(depth <= 0){
             bottomNodesSearched ++;
@@ -53,7 +56,6 @@ public class Search
         }
 
         List<Move> legalMoves = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn);
-        
 
         //Check for mate or stalemate
         if(legalMoves.Count == 0){
@@ -63,7 +65,7 @@ public class Search
                 return 0;
             }
         }
-
+        
         if(useMoveSorting){ legalMoves = moveOrder.OrderMoves(board, legalMoves);}
         for(int i = 0; i<legalMoves.Count; i++){
             board.Move(legalMoves[i], true);

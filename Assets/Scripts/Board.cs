@@ -49,6 +49,7 @@ public class Board
         moveGenerator = generator;
         board = ConvertFromFEN(fenPosition);
         Zobrist.CalculateZobrist(this);
+        zobristHistory.Push(zobristKey);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
     }
@@ -202,7 +203,7 @@ public class Board
 
                 zobristKey ^= Zobrist.piecesArray[Piece.PieceType(capturedPiece), oppositeColorIndex, newPos];
 
-                board[newPos] = movedPiece;
+                board[newPos] = newPiece;
                 board[startPos] = 0;
 
                 if(Piece.PieceType(capturedPiece) == Piece.King){
@@ -214,7 +215,7 @@ public class Board
                 //Capture resets counter
                 fiftyMoveCounter = 0;
             } else{
-                board[newPos] = movedPiece;
+                board[newPos] = newPiece;
                 board[startPos] = 0;
                 //Pawn push resets counter
                 if(Piece.PieceType(movedPiece) == Piece.Pawn){
@@ -428,7 +429,6 @@ public class Board
 
     public bool IsRepetitionDraw(){
         int repCount = zobristHistory.Count(x => x == zobristKey);
-        Debug.Log(repCount);
 		if (repCount >= 3)
 		{
 			return true;

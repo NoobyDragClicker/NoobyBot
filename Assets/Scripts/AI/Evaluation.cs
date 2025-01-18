@@ -10,7 +10,7 @@ public class Evaluation
     int colorTurn;
     public const int pawnValue = 100;
     public const int knightValue = 300;
-    public const int bishopValue = 310;
+    public const int bishopValue = 330;
     public const int rookValue = 500;
     public const int queenValue = 900;
 
@@ -58,10 +58,10 @@ public class Evaluation
     int[] bishopPieceTable = {
 		-20,-10,-10,-10,-10,-10,-10,-20,
 		-10,  0,  0,  0,  0,  0,  0,-10,
-		-10,  0,  5, 10, 10,  5,  0,-10,
-		-10,  5,  5, 10, 10,  5,  5,-10,
-		-10,  0, 10, 10, 10, 10,  0,-10,
-		-10, 10, 10, 10, 10, 10, 10,-10,
+		-10,  0,  5, 15, 15,  5,  0,-10,
+		-10,  5,  5, 15, 15,  5,  5,-10,
+		-10,  0, 15, 15, 15, 15,  0,-10,
+		-10, 15, 15, 15, 15, 15, 15,-10,
 		-10,  5,  0,  0,  0,  0,  5,-10,
 		-20,-10,-10,-10,-10,-10,-10,-20,
 	};
@@ -96,7 +96,6 @@ public class Evaluation
         colorTurn = board.colorTurn;
         playerTurnMultiplier = (colorTurn == Piece.White) ? 1 : -1;
         return CountMaterial(board);
-
     }
 
     int CountMaterial(Board board){

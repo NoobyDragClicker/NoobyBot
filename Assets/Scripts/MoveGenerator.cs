@@ -148,32 +148,40 @@ public class MoveGenerator
         List<int> attackedIndexes = new List<int>();
         if(pieceColor == Piece.White){
             //On the right side
-            if(board.IndexToFile(index) == 8){
+            if(board.IndexToFile(index) == 8 && index - 9 > -1){
                 attackedIndexes.Add(index - 9);
             } 
             //On the right side
-            else if(board.IndexToFile(index) == 1){
+            else if(board.IndexToFile(index) == 1 && index - 7 > -1){
                 attackedIndexes.Add(index -7);
             }
             //Not on the side
             else {
-                attackedIndexes.Add(index -7);
-                attackedIndexes.Add(index - 9);
+                if(index - 7 > -1){
+                    attackedIndexes.Add(index -7);
+                }
+                if(index-9 > -1){
+                    attackedIndexes.Add(index - 9);
+                }
             }
 
         } else if(pieceColor == Piece.Black){
             //On the right side
-            if(board.IndexToFile(index) == 8){
+            if(board.IndexToFile(index) == 8 && index + 7 < 64){
                 attackedIndexes.Add(index + 7);
             } 
             //On the right side
-            else if(board.IndexToFile(index) == 1){
+            else if(board.IndexToFile(index) == 1 && index + 9 < 64){
                 attackedIndexes.Add(index + 9);
             }
             //Not on the side
             else {
-                attackedIndexes.Add(index +7);
-                attackedIndexes.Add(index + 9);
+                if(index + 7 < 64){
+                    attackedIndexes.Add(index +7);
+                }
+                if(index + 9 < 64){
+                    attackedIndexes.Add(index + 9);
+                }
             }
         }
         List<Move> enPassantLegal = new List<Move>();

@@ -26,14 +26,14 @@ public static class Zobrist
 		}
 
 		for (int i = 0; i < 16; i++) {
-			castlingRights[i] = randomNumbers.Dequeue ();
+			castlingRights[i] = randomNumbers.Dequeue();
 		}
 
 		for (int i = 0; i < enPassantFile.Length; i++) {
-			enPassantFile[i] = randomNumbers.Dequeue ();
+			enPassantFile[i] = randomNumbers.Dequeue();
 		}
 
-		sideToMove = randomNumbers.Dequeue ();
+		sideToMove = randomNumbers.Dequeue();
     }
 
     //Only used at start of game, all other changes done in Move and Unmove
@@ -60,8 +60,6 @@ public static class Zobrist
 		}
 
 		zobristKey ^= castlingRights[board.currentGameState & 0b1111];
-
-        Debug.Log(zobristKey);
 		return zobristKey;
     }
 

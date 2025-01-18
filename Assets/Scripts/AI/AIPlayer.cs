@@ -11,11 +11,14 @@ public class AIPlayer : Player
     bool moveFound;
     Search search;
     System.Diagnostics.Stopwatch generatingStopwatch = new System.Diagnostics.Stopwatch();
+    System.Diagnostics.Stopwatch makeMoveWatch = new System.Diagnostics.Stopwatch();
+    System.Diagnostics.Stopwatch unmakeMoveWatch = new System.Diagnostics.Stopwatch();
+
 
 
     public AIPlayer(Board board, bool useTestFeature){
         this.board = board;
-        search = new Search(this.board, useTestFeature, generatingStopwatch);
+        search = new Search(this.board, useTestFeature, generatingStopwatch, makeMoveWatch, unmakeMoveWatch);
         search.onSearchComplete += OnSearchComplete;
         moveFound = false;
     }
@@ -31,13 +34,16 @@ public class AIPlayer : Player
     //Called when it is our turn to move
     public override void NotifyToMove(){
         moveFound = false;
-        Task.Factory.StartNew (() => search.StartSearch (), TaskCreationOptions.LongRunning);
+        Task.Factory.StartNew (() => search.StartSearch(), TaskCreationOptions.LongRunning);
         //search.StartSearch();
     }
+
     
     //Called when it is our turn to move
     public override void NotifyGameOver(){
         Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
+        Debug.Log("Total time making moves: " + makeMoveWatch.Elapsed);
+        Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);
     }
 
     //Triggered by the onSearchComplete event

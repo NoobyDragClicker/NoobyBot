@@ -16,9 +16,9 @@ public class AIPlayer : Player
 
 
 
-    public AIPlayer(Board board, bool useTestFeature){
+    public AIPlayer(Board board, bool useTestFeature, int depth){
         this.board = board;
-        search = new Search(this.board, useTestFeature, generatingStopwatch, makeMoveWatch, unmakeMoveWatch);
+        search = new Search(this.board, useTestFeature, generatingStopwatch, makeMoveWatch, unmakeMoveWatch, depth);
         search.onSearchComplete += OnSearchComplete;
         moveFound = false;
     }

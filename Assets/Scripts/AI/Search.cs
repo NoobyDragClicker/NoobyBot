@@ -9,18 +9,17 @@ using UnityEngine;
 public class Search
 {
     Board board;
-    Move bestMove;
+    Move bestMove = null;
     Move bestMoveThisIteration;
+    int bestEvalThisIteration;
     Evaluation evaluation;
     MoveOrder moveOrder;
     TranspositionTable tt;
     int bestEval;
-    //Debug
-    ulong bottomNodesSearched;
-    ulong prunedTimes;
-    ulong ttUsed;
 
-    bool useMoveSorting;
+    int maxDepth;
+    bool useTT;
+    bool abortSearch = false;
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
@@ -29,51 +28,62 @@ public class Search
     Stopwatch makeMoveWatch;
     Stopwatch unmakeMoveWatch;
 
-    public Search(Board board, bool useTestFeature, Stopwatch genStopwatch, Stopwatch makeMoveWatch, Stopwatch unmakeMoveStopwatch){
+    public Search(Board board, bool useTestFeature, Stopwatch genStopwatch, Stopwatch makeMoveWatch, Stopwatch unmakeMoveStopwatch, int maxDepth){
         this.board = board;
         evaluation = new Evaluation();
         tt = new TranspositionTable(board, 512);
-        useMoveSorting = useTestFeature;
+        useTT = useTestFeature;
         moveOrder = new MoveOrder();
         generatingStopwatch = genStopwatch;
         this.makeMoveWatch = makeMoveWatch;
-        this.unmakeMoveWatch = unmakeMoveStopwatch;
+        unmakeMoveWatch = unmakeMoveStopwatch;
+        this.maxDepth = maxDepth;
     }
 
     public void StartSearch(){
         //Init a bunch of stuff, iterative deepening, etc
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        bestEval = SearchMoves(6, 0, negativeInfinity, positiveInfinity);
+        bestEval = SearchMoves(maxDepth, 0, negativeInfinity, positiveInfinity); //StartIterativeDeepening(maxDepth);
         stopwatch.Stop();
-        /*UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
-        UnityEngine.Debug.Log("Transposition used: " + ttUsed);
-        UnityEngine.Debug.Log("Transpositions stored: " + tt.numStored);
-        UnityEngine.Debug.Log("Percent used: " + ((float) tt.numStored/tt.count * 100));*/
+        /*UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);*/
         UnityEngine.Debug.Log("Best eval: " + bestEval);
-
-        bestMove = bestMoveThisIteration;
         onSearchComplete?.Invoke(bestMove);
+    }
+
+    int StartIterativeDeepening(int maxDepth){
+        for(int depth = 1; depth <= maxDepth; depth++){
+            if(abortSearch){
+                break;
+            } 
+            else{
+                UnityEngine.Debug.Log("started next depth: " + depth);
+                bestEvalThisIteration = SearchMoves(depth, 0, negativeInfinity, positiveInfinity);
+                bestMove = bestMoveThisIteration;
+                if(IsMateScore(bestEvalThisIteration)){break;}
+            }
+        }
+        return bestEvalThisIteration;
     }
     
     int SearchMoves(int depth, int plyFromRoot, int alpha, int beta){
         if(board.IsRepetitionDraw()){return 0;}
         if(board.fiftyMoveCounter >= 100){return 0;}
 
-        int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
-        //TT score found
-        if(ttEval != TranspositionTable.LookupFailed){
-            ttUsed++;
-            //Set the best move
-            if(plyFromRoot == 0){
-                bestMoveThisIteration = tt.GetStoredMove();
+        if(useTT){
+            int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
+            //TT score found
+            if(ttEval != TranspositionTable.LookupFailed){
+                //Set the best move
+                if(plyFromRoot == 0){
+                    bestMoveThisIteration = tt.GetStoredMove();
+                }
+                return ttEval;
             }
-            return ttEval;
         }
         
         //Returns the actual eval of the position
         if(depth <= 0){
-            bottomNodesSearched ++;
             return evaluation.EvaluatePosition(board);
         }
 
@@ -88,8 +98,7 @@ public class Search
             }
         }
         
-        if(useMoveSorting){ legalMoves = moveOrder.OrderMoves(board, legalMoves);}
-
+        legalMoves = moveOrder.OrderMoves(board, legalMoves);
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
 
@@ -110,8 +119,7 @@ public class Search
             //Move is too good, would be prevented by a previous move
             if(eval >= beta){
                 //Exiting search early, so it is a lower bound
-                tt.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);
-                prunedTimes ++;
+                if(useTT){tt.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);}
                 return beta;
             }
             //This move is better than the current move
@@ -127,12 +135,12 @@ public class Search
             }
         }
 
-        tt.StoreEvaluation(depth, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);
+        if(useTT){tt.StoreEvaluation(depth, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
         return alpha;
     }
-
     public static bool IsMateScore(int score){
         const int maxMatePly = 150;
         return Math.Abs(score) > positiveInfinity - maxMatePly;
     }
+
 }

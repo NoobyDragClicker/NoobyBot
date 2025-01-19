@@ -39,6 +39,10 @@ public class Move
         return capture;
     }
 
+    public int GetIntValue(){
+        return oldIndex + (newIndex << 6) + (flag << 12);
+    }
+
     public bool isPromotion(){
         return (flag > 0 && flag < 5) ? true : false;
     }

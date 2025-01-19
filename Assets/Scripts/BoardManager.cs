@@ -123,9 +123,9 @@ public class BoardManager : MonoBehaviour
         bool whiteUsingTest = (whitePlayerType.value == 2)? true : false;
         bool blackUsingTest = (blackPlayerType.value == 2)? true : false;
         //Syncing OnMoveChosen
-        whitePlayer = (whitePlayerType.value == 0) ? new HumanPlayer() : new AIPlayer(searchBoard, whiteUsingTest);
+        whitePlayer = (whitePlayerType.value == 0) ? new HumanPlayer() : new AIPlayer(searchBoard, whiteUsingTest, whiteUsingTest? 6:4);
         whitePlayer.onMoveChosen += OnMoveChosen;
-        blackPlayer = (blackPlayerType.value == 0) ? new HumanPlayer() : new AIPlayer(searchBoard, blackUsingTest);
+        blackPlayer = (blackPlayerType.value == 0) ? new HumanPlayer() : new AIPlayer(searchBoard, blackUsingTest, blackUsingTest? 6:4);
         blackPlayer.onMoveChosen += OnMoveChosen;
         
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
@@ -256,7 +256,9 @@ public class BoardManager : MonoBehaviour
         if(winningColor == Piece.White){ Debug.Log("White won"); whiteIndicator.color = green; blackIndicator.color = red;}
         else if(winningColor == Piece.Black){ Debug.Log("Black won"); whiteIndicator.color = red; blackIndicator.color = green;}
         else if(isDraw){ Debug.Log("Draw"); whiteIndicator.color = yellow; blackIndicator.color = yellow;}
+        Debug.Log("Black: ");
         blackPlayer.NotifyGameOver();
+        Debug.Log("White: ");
         whitePlayer.NotifyGameOver();
     }
 

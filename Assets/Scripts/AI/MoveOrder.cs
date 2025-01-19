@@ -12,6 +12,7 @@ public class MoveOrder
     float[] moveScores = new float[maxMoves];
     public List<Move> OrderMoves(Board board, List<Move> legalMoves){
         List<Move> moves = legalMoves;
+
         for(int x = 0; x< legalMoves.Count; x++){
             Move move = legalMoves[x];
             float score = 0;
@@ -28,7 +29,7 @@ public class MoveOrder
                 } else{
                     capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex]));
                 }
-                
+                    
                 if(move.isPromotion()){
                     movedPieceValue = GetPieceValue(move.PromotedPieceType());
                 } 
@@ -39,7 +40,7 @@ public class MoveOrder
                 score = 1+ capturedPieceValue - movedPieceValue ;
             //Castle
             } else if(move.flag == 5){
-                score = 3;
+                    score = 3;
             } else{
                 if(move.isPromotion()){
                     movedPieceValue = GetPieceValue(move.PromotedPieceType());
@@ -50,7 +51,7 @@ public class MoveOrder
                 //Bigger piece value = higher ordering
                 score = movedPieceValue / 10;
             }
-
+            
             moveScores[x] = score;
         }
 

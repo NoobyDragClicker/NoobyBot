@@ -7,6 +7,7 @@ public class MoveSelected : MonoBehaviour
     public Move move;
     public bool isPromotion;
     public bool isPromoManager;
+    UIManager uiManager;
     BoardManager boardManager;
     [SerializeField] SpriteRenderer render;
     [SerializeField] Color white;
@@ -21,7 +22,7 @@ public class MoveSelected : MonoBehaviour
     [SerializeField] Transform pos;
 
     void Start(){
-        boardManager = GameObject.Find("BoardManager").GetComponent<BoardManager>();
+        uiManager = GameObject.Find("UIManager").GetComponent<UIManager>();
     }
 
     //Only used for promotion
@@ -46,13 +47,12 @@ public class MoveSelected : MonoBehaviour
         }
     }
 
-    
     void OnMouseDown(){
         if(!isPromoManager){
-            boardManager.playerToMove.ChoseMove(move);
+            uiManager.boardManager.playerToMove.ChoseMove(move);
         //First dot spawned, no specific piece affiliated, just forces player to promote once selected
         } else{
-            boardManager.SpawnPromotionPieces(move);
+            uiManager.SpawnPromotionPieces(move);
         }
     }
 }

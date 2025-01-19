@@ -16,15 +16,22 @@ public class AIPlayer : Player
 
 
 
-    public AIPlayer(Board board, bool useTestFeature, int depth){
+    public AIPlayer(Board board, AISettings aiSettings, float startTime, bool useClock){
         this.board = board;
-        search = new Search(this.board, useTestFeature, generatingStopwatch, makeMoveWatch, unmakeMoveWatch, depth);
+        this.useClock = useClock;
+        if(useClock){timeRemaining = startTime;}
+
+        search = new Search(this.board, generatingStopwatch, makeMoveWatch, unmakeMoveWatch, aiSettings);
         search.onSearchComplete += OnSearchComplete;
         moveFound = false;
     }
 
+
     //Allows us to remain synchronous with Unity, and still interact with the board
     public override void Update(){
+        if(useClock){
+            timeRemaining -= Time.deltaTime;
+        }
         if(moveFound){
             moveFound = false;
             ChoseMove(move);
@@ -38,7 +45,6 @@ public class AIPlayer : Player
         //search.StartSearch();
     }
 
-    
     //Called when it is our turn to move
     public override void NotifyGameOver(){
         Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
@@ -50,6 +56,19 @@ public class AIPlayer : Player
     void OnSearchComplete(Move move){
         moveFound = true;
         this.move = move;
+    }
+
+}
+
+public struct AISettings{
+    public bool useTT;
+    public bool useIterativeDeepening;
+    public int maxDepth;
+
+    public AISettings(bool useTT, bool useIterativeDeepening, int maxDepth){
+        this.useTT = useTT;
+        this.useIterativeDeepening  = useIterativeDeepening;
+        this.maxDepth = maxDepth;
     }
 
 }

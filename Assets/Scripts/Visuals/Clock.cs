@@ -22,7 +22,7 @@ public class Clock : MonoBehaviour
         if(isTurnToMove){
             secondsRemaining -= Time.deltaTime;
             //Sets it to zero if it is lower than 0
-            secondsRemaining = Mathf.Max(0, secondsRemaining);
+            
         }
         hasLost = (secondsRemaining == 0)? true : false;
         int numMinutes = (int) (secondsRemaining/60);

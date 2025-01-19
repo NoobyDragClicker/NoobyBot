@@ -4,6 +4,8 @@ using UnityEngine;
 
 public abstract class Player
 {
+    public float timeRemaining;
+    public bool useClock;
     public event System.Action<Move> onMoveChosen;
     public abstract void Update();
     public abstract void NotifyToMove();

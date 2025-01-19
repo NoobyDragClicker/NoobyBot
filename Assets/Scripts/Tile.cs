@@ -8,10 +8,10 @@ public class Tile : MonoBehaviour
     [SerializeField] private GameObject highlight;
     [SerializeField] private Color white, black, green, red;
     [SerializeField] private SpriteRenderer render;
-    private BoardManager boardManager;
+    private UIManager uiManager;
 
     public void Init(bool isOffset){
-        boardManager = GameObject.Find("BoardManager").GetComponent<BoardManager>();
+        uiManager = GameObject.Find("UIManager").GetComponent<UIManager>();
         render.color = isOffset ? white : black;
     }
 
@@ -34,6 +34,6 @@ public class Tile : MonoBehaviour
 
 
     void OnMouseDown(){
-        boardManager.SelectPiece(Mathf.RoundToInt(transform.position.x) + 1, Mathf.RoundToInt(transform.position.y) + 1);
+        uiManager.SelectPiece(Mathf.RoundToInt(transform.position.x) + 1, Mathf.RoundToInt(transform.position.y) + 1);
     }   
 }

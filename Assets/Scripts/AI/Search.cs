@@ -15,10 +15,10 @@ public class Search
     Evaluation evaluation;
     MoveOrder moveOrder;
     TranspositionTable tt;
+
+    AISettings aiSettings;
     int bestEval;
 
-    int maxDepth;
-    bool useTT;
     bool abortSearch = false;
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
@@ -28,25 +28,31 @@ public class Search
     Stopwatch makeMoveWatch;
     Stopwatch unmakeMoveWatch;
 
-    public Search(Board board, bool useTestFeature, Stopwatch genStopwatch, Stopwatch makeMoveWatch, Stopwatch unmakeMoveStopwatch, int maxDepth){
+    public Search(Board board, Stopwatch genStopwatch, Stopwatch makeMoveStopwatch, Stopwatch unmakeMoveStopwatch, AISettings aiSettings){
         this.board = board;
+        this.aiSettings = aiSettings;
         evaluation = new Evaluation();
         tt = new TranspositionTable(board, 512);
-        useTT = useTestFeature;
         moveOrder = new MoveOrder();
+
         generatingStopwatch = genStopwatch;
-        this.makeMoveWatch = makeMoveWatch;
+        makeMoveWatch = makeMoveStopwatch;
         unmakeMoveWatch = unmakeMoveStopwatch;
-        this.maxDepth = maxDepth;
     }
 
     public void StartSearch(){
         //Init a bunch of stuff, iterative deepening, etc
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        bestEval = SearchMoves(maxDepth, 0, negativeInfinity, positiveInfinity); //StartIterativeDeepening(maxDepth);
+        if(aiSettings.useIterativeDeepening){
+            bestEval = StartIterativeDeepening(aiSettings.maxDepth);
+        } else{
+            bestEval = SearchMoves(aiSettings.maxDepth, 0, negativeInfinity, positiveInfinity);
+            bestMove = bestMoveThisIteration;
+        }
         stopwatch.Stop();
-        /*UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);*/
+
+        UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
         UnityEngine.Debug.Log("Best eval: " + bestEval);
         onSearchComplete?.Invoke(bestMove);
     }
@@ -70,7 +76,7 @@ public class Search
         if(board.IsRepetitionDraw()){return 0;}
         if(board.fiftyMoveCounter >= 100){return 0;}
 
-        if(useTT){
+        if(aiSettings.useTT){
             int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
             //TT score found
             if(ttEval != TranspositionTable.LookupFailed){
@@ -119,7 +125,7 @@ public class Search
             //Move is too good, would be prevented by a previous move
             if(eval >= beta){
                 //Exiting search early, so it is a lower bound
-                if(useTT){tt.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);}
+                if(aiSettings.useTT){tt.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);}
                 return beta;
             }
             //This move is better than the current move
@@ -135,7 +141,7 @@ public class Search
             }
         }
 
-        if(useTT){tt.StoreEvaluation(depth, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
+        if(aiSettings.useTT){tt.StoreEvaluation(depth, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
         return alpha;
     }
     public static bool IsMateScore(int score){

@@ -62,7 +62,6 @@ public class Board
         int enPassantFile = 0;
         //Captured piece gets removed, ep file gets removed, need to save castling rights and fiftymoverule
         currentGameState = 0;
-
         
         int startPos = move.oldIndex;
         int newPos = move.newIndex;

@@ -9,10 +9,12 @@ public class AIPlayer : Player
     Board board;
     Move move;
     bool moveFound;
+    bool isTurnToMove;
     Search search;
     System.Diagnostics.Stopwatch generatingStopwatch = new System.Diagnostics.Stopwatch();
     System.Diagnostics.Stopwatch makeMoveWatch = new System.Diagnostics.Stopwatch();
     System.Diagnostics.Stopwatch unmakeMoveWatch = new System.Diagnostics.Stopwatch();
+    float timeHardCap;
 
 
 
@@ -26,11 +28,13 @@ public class AIPlayer : Player
         moveFound = false;
     }
 
-
     //Allows us to remain synchronous with Unity, and still interact with the board
     public override void Update(){
         if(useClock){
             timeRemaining -= Time.deltaTime;
+        }
+        if(isTurnToMove && timeRemaining <= timeHardCap){
+            search.EndSearch();
         }
         if(moveFound){
             moveFound = false;
@@ -40,7 +44,9 @@ public class AIPlayer : Player
 
     //Called when it is our turn to move
     public override void NotifyToMove(){
+        timeHardCap = timeRemaining - (timeRemaining / 20);
         moveFound = false;
+        isTurnToMove = true;
         Task.Factory.StartNew (() => search.StartSearch(), TaskCreationOptions.LongRunning);
         //search.StartSearch();
     }
@@ -54,6 +60,7 @@ public class AIPlayer : Player
 
     //Triggered by the onSearchComplete event
     void OnSearchComplete(Move move){
+        isTurnToMove = false;
         moveFound = true;
         this.move = move;
     }

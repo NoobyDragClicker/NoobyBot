@@ -273,9 +273,4 @@ public class UIManager : MonoBehaviour
     public void UpdateCustomPos(bool input){
         useCustomPos = input;
     }
-    public void UseUndoMoveButton(){        
-        boardManager.board.UndoMove(boardManager.board.lastMove);
-        UpdateBoard(boardManager.board);
-    }
-
 }

@@ -41,6 +41,8 @@ public class Search
     }
 
     public void StartSearch(){
+        bestMove = null;
+        abortSearch = false;
         //Init a bunch of stuff, iterative deepening, etc
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -59,14 +61,18 @@ public class Search
 
     int StartIterativeDeepening(int maxDepth){
         for(int depth = 1; depth <= maxDepth; depth++){
-            if(abortSearch){
-                break;
-            } 
-            else{
-                UnityEngine.Debug.Log("started next depth: " + depth);
-                bestEvalThisIteration = SearchMoves(depth, 0, negativeInfinity, positiveInfinity);
+            SearchMoves(depth, 0, negativeInfinity, positiveInfinity);
+            if(bestMoveThisIteration != null){
                 bestMove = bestMoveThisIteration;
-                if(IsMateScore(bestEvalThisIteration)){break;}
+                bestEval = bestEvalThisIteration;
+            }
+            
+            if(abortSearch){
+                UnityEngine.Debug.Log("Aborted search at depth " + depth);
+            }
+            //Suspicious about this
+            if(IsMateScore(bestEvalThisIteration)){
+                break;
             }
         }
         return bestEvalThisIteration;
@@ -104,16 +110,16 @@ public class Search
             }
         }
         
-        legalMoves = moveOrder.OrderMoves(board, legalMoves);
+        Move firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
+        legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove);
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
 
         for(int i = 0; i<legalMoves.Count; i++){
             makeMoveWatch.Start();
             board.Move(legalMoves[i], true);
-            makeMoveWatch.Stop();
-
-
+            makeMoveWatch.Stop(); 
+        
             generatingStopwatch.Start();
             int eval = -SearchMoves(depth - 1, plyFromRoot + 1, -beta, -alpha);
             generatingStopwatch.Stop();
@@ -121,6 +127,8 @@ public class Search
             unmakeMoveWatch.Start();
             board.UndoMove(legalMoves[i]);
             unmakeMoveWatch.Stop();
+
+            if(abortSearch){ return 0;}
 
             //Move is too good, would be prevented by a previous move
             if(eval >= beta){
@@ -136,7 +144,8 @@ public class Search
                 //If this is a root move, set it to the best move
                 if(plyFromRoot == 0){
                     bestMoveThisIteration = legalMoves[i];
-                    UnityEngine.Debug.Log(Coord.GetMoveNotation(bestMoveThisIteration.oldIndex, bestMoveThisIteration.newIndex));
+                    bestEvalThisIteration = eval;
+                    //UnityEngine.Debug.Log(Coord.GetMoveNotation(bestMoveThisIteration.oldIndex, bestMoveThisIteration.newIndex));
                 }
             }
         }
@@ -149,4 +158,7 @@ public class Search
         return Math.Abs(score) > positiveInfinity - maxMatePly;
     }
 
+    public void EndSearch(){
+        abortSearch = true;
+    }
 }

@@ -25,10 +25,10 @@ public class BoardManager
     const string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, true, 5);
+    AISettings testSettings = new AISettings(true, true, 9);
     
     [SerializeField]
-    AISettings regularSettings = new AISettings(false, false, 5); 
+    AISettings regularSettings = new AISettings(false, false, 9); 
 
     UIManager uiManager;
     public BoardManager(UIManager uiManager){

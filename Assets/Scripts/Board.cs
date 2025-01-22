@@ -24,11 +24,6 @@ public class Board
     public List<PinnedPair> pinnedIndexes = new List<PinnedPair>();
     public List<int> pinnedPieceIndexes = new List<int>();
     public int colorTurn;
-    
-
-    //TESTING PURPOSES ONLY
-    Stack<Move> moveHistory = new Stack<Move>();
-    public Move lastMove;
 
     //Saves the index where a pawn can capture
     public int enPassantIndex;
@@ -71,11 +66,6 @@ public class Board
 
         int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
         int oppositeColorIndex = 1-currentColorIndex;
-
-
-        //Testing only
-        lastMove = move;
-        moveHistory.Push(lastMove);
 
         //Set to none 
         enPassantIndex = -1;
@@ -266,16 +256,6 @@ public class Board
             enPassantIndex = (colorTurn == Piece.White) ? (15 + enPassantFile) : (39 + enPassantFile);
         } else{
             enPassantIndex = -1;
-        }
-        
-
-        //Testing only
-        moveHistory.Pop();
-        if(moveHistory.Count == 0){
-            lastMove = null;
-        }
-        else{
-            lastMove = moveHistory.Peek();
         }
 
         int startPos = move.oldIndex;

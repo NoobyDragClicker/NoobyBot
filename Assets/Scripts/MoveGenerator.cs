@@ -13,12 +13,6 @@ using UnityEngine;
 
 public class MoveGenerator
 {
-    /*
-    System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-    stopwatch.Start();
-    UnityEngine.Debug.Log(stopwatch.Elapsed);
-    stopwatch.Stop();   
-    */
 
     public MoveGenerator(){}
     //Used for a player when clicking on a piece
@@ -60,13 +54,29 @@ public class MoveGenerator
         List<Move> legalMoves = new List<Move>();
         int kingIndex = GetKingIndex(pieceColor, board);
         
+        legalMoves = GenerateKingMoves(kingIndex, pieceColor, board, false);
         //Double check
         if(board.isCurrentPlayerInDoubleCheck){
-            legalMoves = GenerateKingMoves(kingIndex, pieceColor, board, false);
             return legalMoves;
         }
 
-        List<int> pawnIndexes = GetPosByPieceType(Piece.Pawn, pieceColor, board);
+        for(int x = 0; x< 64; x++){
+            int piece = board.board[x];
+            if(Piece.IsColour(piece, pieceColor)){
+                int pieceType = Piece.PieceType(piece);
+                switch(pieceType){
+                    case Piece.Pawn: legalMoves.AddRange(GeneratePawnMoves(x, pieceColor, board, false, board.isCurrentPlayerInCheck)); break;
+                    case Piece.Knight: legalMoves.AddRange(GenerateKnightMoves(x, pieceColor, board, false, board.isCurrentPlayerInCheck)); break;
+                    case Piece.Bishop: legalMoves.AddRange(GenerateBishopMoves(x, pieceColor, board, false, board.isCurrentPlayerInCheck)); break;
+                    case Piece.Rook: legalMoves.AddRange(GenerateRookMoves(x, pieceColor, board, false, board.isCurrentPlayerInCheck)); break;
+                    case Piece.Queen: legalMoves.AddRange(GenerateQueenMoves(x, pieceColor, board, false, board.isCurrentPlayerInCheck)); break;
+                    case Piece.King: break;
+                    default: UnityEngine.Debug.Log("Unknown piece found"); break;
+                }
+            }
+        }
+
+        /*List<int> pawnIndexes = GetPosByPieceType(Piece.Pawn, pieceColor, board);
         List<int> bishopIndexes = GetPosByPieceType(Piece.Bishop, pieceColor, board);
         List<int> knightIndexes = GetPosByPieceType(Piece.Knight, pieceColor, board);
         List<int> rookIndexes = GetPosByPieceType(Piece.Rook, pieceColor, board);
@@ -77,7 +87,7 @@ public class MoveGenerator
         for(int x = 0; x< bishopIndexes.Count; x++){ legalMoves.AddRange(GenerateBishopMoves(bishopIndexes[x], pieceColor, board, false, board.isCurrentPlayerInCheck));}
         for(int x = 0; x< rookIndexes.Count; x++){ legalMoves.AddRange(GenerateRookMoves(rookIndexes[x], pieceColor, board, false, board.isCurrentPlayerInCheck));}
         for(int x = 0; x< queenIndexes.Count; x++){ legalMoves.AddRange(GenerateQueenMoves(queenIndexes[x], pieceColor, board, false, board.isCurrentPlayerInCheck));}
-        legalMoves.AddRange(GenerateKingMoves(kingIndex, pieceColor, board, false));
+        legalMoves.AddRange(GenerateKingMoves(kingIndex, pieceColor, board, false));*/
 
         return legalMoves;
     }

@@ -10,48 +10,45 @@ public class MoveOrder
 {
     const int maxMoves = 218;
     float[] moveScores = new float[maxMoves];
-    public List<Move> OrderMoves(Board board, List<Move> legalMoves){
+    public List<Move> OrderMoves(Board board, List<Move> legalMoves, Move firstSearch){
         List<Move> moves = legalMoves;
 
         for(int x = 0; x< legalMoves.Count; x++){
             Move move = legalMoves[x];
-            float score = 0;
-            int movedPieceValue = 0;
-            if(move.isCapture()){
-                int capturedPieceValue = 0;
-                //en passant
-                if(move.flag == 7){
-                    if(Piece.IsColour(board.board[legalMoves[x].oldIndex], Piece.White)){
-                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex + 8]));
-                    } else {
-                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex - 8]));
-                    }
-                } else{
-                    capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex]));
-                }
-                    
-                if(move.isPromotion()){
-                    movedPieceValue = GetPieceValue(move.PromotedPieceType());
-                } 
-                else {
-                    movedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].oldIndex]));
-                }
-                //Adds one to differentiate from the non captures
-                score = 1+ capturedPieceValue - movedPieceValue ;
-            //Castle
-            } else if(move.flag == 5){
-                    score = 3;
+            int score = 0;
+            if(firstSearch != null && move.GetIntValue() == firstSearch.GetIntValue()){
+                score = 100;
             } else{
-                if(move.isPromotion()){
-                    movedPieceValue = GetPieceValue(move.PromotedPieceType());
-                } 
-                else {
-                    movedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].oldIndex]));
+                int movedPieceValue = 0;
+                if(move.isCapture()){
+                    int capturedPieceValue = 0;
+                    //en passant
+                    if(move.flag == 7){
+                        if(Piece.IsColour(board.board[legalMoves[x].oldIndex], Piece.White)){
+                            capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex + 8]));
+                        } else {
+                            capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex - 8]));
+                        }
+                    } else{
+                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex]));
+                    }
+                    if(move.isPromotion()){
+                        movedPieceValue = GetPieceValue(move.PromotedPieceType());
+                    } 
+                    else {
+                        movedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].oldIndex]));
+                    }
+                    //Adds one to differentiate from the non captures
+                    score = 1+ capturedPieceValue - movedPieceValue ;
+                //Castle
+                } else if(move.flag == 5){
+                        score = 3;
+                } else{
+                    if(move.isPromotion()){
+                        movedPieceValue = GetPieceValue(move.PromotedPieceType());
+                    }
                 }
-                //Bigger piece value = higher ordering
-                score = movedPieceValue / 10;
             }
-            
             moveScores[x] = score;
         }
 

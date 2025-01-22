@@ -52,6 +52,7 @@ public class Perft : MonoBehaviour
     }
 
     void RunSuite(){
+        int totalRun = 0;
         moveGenTimer.Start();
         GetDepthDict();
         numTotal = fenAndExpectedResult.Count;
@@ -62,6 +63,8 @@ public class Perft : MonoBehaviour
             var result = Search(6, new Board(fenString, moveGenerator));
             if(result != expected){failedFenPositions.Add(fenString);}
             else{numPassed ++;}
+            totalRun++;
+            UnityEngine.Debug.Log(totalRun);
         }
         moveGenTimer.Stop();
         hasSuiteFinished = true;

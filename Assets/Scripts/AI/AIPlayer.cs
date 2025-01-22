@@ -54,8 +54,8 @@ public class AIPlayer : Player
     //Called when it is our turn to move
     public override void NotifyGameOver(){
         Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
-        Debug.Log("Total time making moves: " + makeMoveWatch.Elapsed);
-        Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);
+        /*Debug.Log("Total time making moves: " + makeMoveWatch.Elapsed);
+        Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);*/
     }
 
     //Triggered by the onSearchComplete event
@@ -69,12 +69,10 @@ public class AIPlayer : Player
 
 public struct AISettings{
     public bool useTT;
-    public bool useIterativeDeepening;
     public int maxDepth;
 
-    public AISettings(bool useTT, bool useIterativeDeepening, int maxDepth){
+    public AISettings(bool useTT, int maxDepth){
         this.useTT = useTT;
-        this.useIterativeDeepening  = useIterativeDeepening;
         this.maxDepth = maxDepth;
     }
 

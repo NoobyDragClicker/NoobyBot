@@ -63,13 +63,20 @@ public class UIManager : MonoBehaviour
     bool useClock = true;
     bool useCustomPos = false;
 
+    [SerializeField]
+    AISettings testSettings = new AISettings(true, 8);
+    [SerializeField]
+    AISettings oldSettings = new AISettings(false, 8);
+
     void Start(){
-        boardManager = new BoardManager(this);
+        boardManager = new BoardManager(0);
+        boardManager.moveMade += UpdateBoard;
+        boardManager.gameFinished += DisplayResult;
     }
 
     void Update(){
         boardManager.Update();
-        if(boardManager.hasGameStarted && !boardManager.hasGameEnded){
+        if(boardManager.gameStatus == BoardManager.GameStatus.Playing){
             UpdateClock();
         }
     }
@@ -89,7 +96,11 @@ public class UIManager : MonoBehaviour
     public void StartGame(){
         int startTime = Convert.ToInt32(clockStartTime.text);
         string inputtedCustomStr = customPosition.text;
-        boardManager.StartGame(useClock, startTime, useCustomPos, inputtedCustomStr, whitePlayerType.value, blackPlayerType.value);
+        bool whiteHuman = (whitePlayerType.value == 0) ? true: false;
+        bool blackHuman = (blackPlayerType.value == 0) ? true:false;
+        AISettings whiteSettings = (whitePlayerType.value == 2) ? testSettings : oldSettings;
+        AISettings blackSettings = (blackPlayerType.value == 2) ? testSettings : oldSettings;
+        boardManager.StartGame(useClock, startTime, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, whiteHuman:whiteHuman, blackHuman:blackHuman);
         
         if(useClock){
             whiteClock.gameObject.SetActive(true);
@@ -110,7 +121,8 @@ public class UIManager : MonoBehaviour
         startScreen.SetActive(false);
     }
     
-    public void UpdateBoard(Board board){   
+    public void UpdateBoard(int boardNumber){  
+        Board board = boardManager.board; 
         //Removing all displayed pieces
         for(int y = 0; y < displayPieces.Count; y++){
             Destroy(displayPieces[y].gameObject);
@@ -233,20 +245,19 @@ public class UIManager : MonoBehaviour
 
     }
 
-    public void DisplayResult(int winningColor){
+    public void DisplayResult(BoardManager.ResultStatus resultStatus, int boardNumber){
         whiteIndicator.gameObject.SetActive(true);
         blackIndicator.gameObject.SetActive(true);
-        if(winningColor == 0){
+        if(resultStatus == BoardManager.ResultStatus.Draw){
             blackIndicator.color = yellow;
             whiteIndicator.color = yellow;
-        } else if(winningColor == Piece.White){
+        } else if(resultStatus == BoardManager.ResultStatus.White_Won){
             whiteIndicator.color = green; 
             blackIndicator.color = red;
-        } else if(winningColor == Piece.Black){
+        } else if(resultStatus == BoardManager.ResultStatus.Black_Won){
             whiteIndicator.color = red; 
             blackIndicator.color = green;
         }
-
     }
 
     public void ShowDebugSquares(List<int> index){

@@ -46,16 +46,14 @@ public class Search
         //Init a bunch of stuff, iterative deepening, etc
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        if(aiSettings.useIterativeDeepening){
-            bestEval = StartIterativeDeepening(aiSettings.maxDepth);
-        } else{
-            bestEval = SearchMoves(aiSettings.maxDepth, 0, negativeInfinity, positiveInfinity);
-            bestMove = bestMoveThisIteration;
-        }
+        bestEval = StartIterativeDeepening(aiSettings.maxDepth);
         stopwatch.Stop();
+        if(bestMove == null){
+            bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
+        }
 
-        UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
-        UnityEngine.Debug.Log("Best eval: " + bestEval);
+        //UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
+        //UnityEngine.Debug.Log("Best eval: " + bestEval);
         onSearchComplete?.Invoke(bestMove);
     }
 
@@ -68,7 +66,8 @@ public class Search
             }
             
             if(abortSearch){
-                UnityEngine.Debug.Log("Aborted search at depth " + depth);
+                //UnityEngine.Debug.Log("Aborted search at depth " + depth);
+                break;
             }
             //Suspicious about this
             if(IsMateScore(bestEvalThisIteration)){
@@ -145,7 +144,6 @@ public class Search
                 if(plyFromRoot == 0){
                     bestMoveThisIteration = legalMoves[i];
                     bestEvalThisIteration = eval;
-                    //UnityEngine.Debug.Log(Coord.GetMoveNotation(bestMoveThisIteration.oldIndex, bestMoveThisIteration.newIndex));
                 }
             }
         }

@@ -19,23 +19,23 @@ public class BoardManager
     Player blackPlayer;
     public Player playerToMove;
 
-    public bool hasGameStarted = false;
-    public bool hasGameEnded = false;
+    ResultStatus result;
+    public GameStatus gameStatus;
 
     const string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    [SerializeField]
-    AISettings testSettings = new AISettings(true, true, 9);
-    
-    [SerializeField]
-    AISettings regularSettings = new AISettings(false, false, 9); 
+    public enum ResultStatus {Draw, White_Won, Black_Won}
+    public enum GameStatus{PreGame, Playing, Finished}
 
-    UIManager uiManager;
-    public BoardManager(UIManager uiManager){
-        this.uiManager = uiManager;
-    }
+    public Action<ResultStatus, int> gameFinished;
+    public Action<int> moveMade;
+
+    public int boardNumber;
+
+    public BoardManager(int boardNumber){this.boardNumber = boardNumber;}
     
-    public void StartGame(bool useClock, int startTime, bool useCustomPos, string customStr, int whitePlayerType, int blackPlayerType){
+    public void StartGame(bool useClock, int startTime, bool useCustomPos, string customStr, AISettings whiteSettings, AISettings blackSettings, bool whiteHuman = false, bool blackHuman = false){
+        gameStatus = GameStatus.PreGame;
         this.useClock = useClock;
         if(!useCustomPos){
             //Creates new board
@@ -45,22 +45,20 @@ public class BoardManager
             board = new Board(customStr, new MoveGenerator());
             searchBoard = new Board(customStr, new MoveGenerator());
         }
-        uiManager.UpdateBoard(board);
-
-        AISettings whiteSettings = (whitePlayerType == 2)? testSettings : regularSettings;
-        AISettings blackSettings = (blackPlayerType == 2)? testSettings : regularSettings;
+        moveMade.Invoke(boardNumber);
         
         //Syncing OnMoveChosen
-        whitePlayer = (whitePlayerType == 0) ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, startTime, useClock);
+        whitePlayer = whiteHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, startTime, useClock);
         whitePlayer.onMoveChosen += OnMoveChosen;
-        blackPlayer = (blackPlayerType == 0) ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, blackSettings, startTime, useClock);
+        blackPlayer = blackHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, blackSettings, startTime, useClock);
         blackPlayer.onMoveChosen += OnMoveChosen;
         
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
         if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
 
-        hasGameStarted = true;
+        gameStatus = GameStatus.Playing;
         playerToMove.NotifyToMove();
+        Debug.Log("started game");
     }
 
     void OnMoveChosen(Move move){
@@ -69,41 +67,40 @@ public class BoardManager
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
         if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
         //Updates the main board display
-        uiManager.UpdateBoard(board);
+        moveMade.Invoke(boardNumber);
 
         //Checking if there is a draw or mate
         if(board.IsCheckmate(board.colorTurn)){
-            if(board.colorTurn == Piece.White){EndGame(Piece.Black, false);}
-            if(board.colorTurn == Piece.Black){EndGame(Piece.White, false);}
+            if(board.colorTurn == Piece.White){EndGame(ResultStatus.Black_Won);}
+            if(board.colorTurn == Piece.Black){EndGame(ResultStatus.White_Won);}
         }
-        if(board.IsDraw()){EndGame(0, true);}
+        if(board.IsDraw()){EndGame(ResultStatus.Draw);}
 
-        if(!hasGameEnded){
+        if(gameStatus == GameStatus.Playing){
             playerToMove.NotifyToMove();
         }
     }
-
     public void Update(){
-        if(hasGameStarted){
-            if(useClock && playerToMove.timeRemaining <= 0f && !hasGameEnded){
+        if(gameStatus == GameStatus.Playing){
+            if(useClock && playerToMove.timeRemaining <= 0f){
                 Debug.Log("timed out");
-                int winner = (board.colorTurn == Piece.White) ? Piece.Black: Piece.White;
-                EndGame(winner, false);
+                ResultStatus resultStatus = (board.colorTurn == Piece.White) ? ResultStatus.Black_Won: ResultStatus.White_Won;
+                EndGame(resultStatus);
             }
-            if(hasGameStarted && !hasGameEnded){playerToMove.Update();}
+            if(gameStatus == GameStatus.Playing){playerToMove.Update();}
         }
-        
     }
-    public void EndGame(int winningColor, bool isDraw){
+    public void EndGame(ResultStatus resultStatus){
         Debug.Log("game over");
-        hasGameEnded = true;
-        if(!isDraw){uiManager.DisplayResult(winningColor);}
-        else{uiManager.DisplayResult(0);}
+        gameStatus = GameStatus.Finished;
+        result = resultStatus;
 
         Debug.Log("Black: ");
         blackPlayer.NotifyGameOver();
         Debug.Log("White: ");
         whitePlayer.NotifyGameOver();
+        gameFinished.Invoke(result, boardNumber);
     }
+
 
 }

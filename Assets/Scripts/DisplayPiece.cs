@@ -21,10 +21,8 @@ public class DisplayPiece : MonoBehaviour
     [SerializeField] SpriteRenderer render;
     [SerializeField] Transform pos;
     //[SerializeField] GameObject movePrefab;
-    UIManager uiManager;
 
     public void Init(int type, int color){
-        uiManager = GameObject.Find("UIManager").GetComponent<UIManager>();
 
         isWhite = color == Piece.White;
 

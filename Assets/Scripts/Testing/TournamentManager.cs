@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -9,15 +10,19 @@ using UnityEngine;
 
 public class TournamentManager : MonoBehaviour
 {
-    const int numBoards = 2;
-    const int startTime = 75;
-    const int maxGames = 50;
+    const int numBoards = 4;
+    const int startTime = 600;
+    const int maxGames = 8;
     int gamesPlayed;
     int gamesFinished;
     int testPlayerWins, oldPlayerWins, draws;
 
     [SerializeField]
     Tile tile;
+    [SerializeField]
+    DisplayPiece displayPiecePrefab;
+
+    List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     [SerializeField]
     AISettings testSettings = new AISettings(true, 8);
@@ -47,7 +52,9 @@ public class TournamentManager : MonoBehaviour
     }
     public void StartTournament(){
         for(int x = 0; x< numBoards; x++){
-            SpawnBoard(x * 12);
+            int offsetX = (x%2 == 0)? 0: 12;
+            int offsetY = (x < (numBoards/2))? 0: 12;
+            SpawnBoard(offsetX, offsetY);
             StartGame(x);
         }
     }
@@ -59,12 +66,12 @@ public class TournamentManager : MonoBehaviour
         gamesPlayed ++;
     }
 
-    void SpawnBoard(int offset){
+    void SpawnBoard(int offsetX, int offsetY){
         //Generates actual tiles
         for(int x = 0; x< 8; x++){
             for(int y = 0; y < 8; y++){
-                var spawnedTile = Instantiate(tile, new Vector3(x + offset, y, 0.01f), Quaternion.identity);
-                spawnedTile.name = $"tile {x + offset} {y}";
+                var spawnedTile = Instantiate(tile, new Vector3(x + offsetX, y + offsetY, 0.01f), Quaternion.identity);
+                spawnedTile.name = $"tile {x + offsetX} {y + offsetY}";
 
                 var isOffset = (x % 2 == 0 && y % 2 != 0) || (x % 2 != 0 && y % 2 == 0);
                 spawnedTile.Init(isOffset);
@@ -107,6 +114,27 @@ public class TournamentManager : MonoBehaviour
     }
 
     public void UpdateBoard(int boardNumber){
+        for(int x = 0; x< displayPieces.Count; x++){
+            Destroy(displayPieces[x].gameObject);
+        }
+        displayPieces.Clear();
+
+        for(int z = 0; z<numBoards; z++){
+            Board board = boards[z].board;
+            if(board == null){break;}
+            int offsetX = (z % 2 == 0)? 0:12;
+            int offsetY = (z < numBoards / 2)? 0 : 12;
+            for(int x = 0; x<64; x++){
+                if(board.board[x] != 0){
+                    int pieceType = Piece.PieceType(board.board[x]);
+                    int rank = board.IndexToRank(x);
+                    int file = board.IndexToFile(x);
+                    DisplayPiece displayPiece = Instantiate(displayPiecePrefab, new Vector3((file-1) + offsetX, (rank-1) + offsetY), Quaternion.identity);
+                    displayPiece.Init(pieceType, Piece.Color(board.board[x]));
+                    displayPieces.Add(displayPiece);
+                }
+            }
+        }
 
     }
 }

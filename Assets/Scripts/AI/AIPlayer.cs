@@ -53,7 +53,7 @@ public class AIPlayer : Player
 
     //Called when it is our turn to move
     public override void NotifyGameOver(){
-        Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
+        //Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
         /*Debug.Log("Total time making moves: " + makeMoveWatch.Elapsed);
         Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);*/
     }

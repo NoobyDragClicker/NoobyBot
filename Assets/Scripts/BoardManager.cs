@@ -95,9 +95,9 @@ public class BoardManager
         gameStatus = GameStatus.Finished;
         result = resultStatus;
 
-        Debug.Log("Black: ");
+        //Debug.Log("Black: ");
         blackPlayer.NotifyGameOver();
-        Debug.Log("White: ");
+        //Debug.Log("White: ");
         whitePlayer.NotifyGameOver();
         gameFinished.Invoke(result, boardNumber);
     }

@@ -48,9 +48,9 @@ public class Search
         stopwatch.Start();
         bestEval = StartIterativeDeepening(aiSettings.maxDepth);
         stopwatch.Stop();
-        if(bestMove == null){
+        /*if(bestMove == null){
             bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
-        }
+        }*/
 
         //UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
         //UnityEngine.Debug.Log("Best eval: " + bestEval);
@@ -109,8 +109,8 @@ public class Search
             }
         }
         
-        Move firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
-        legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove);
+        //Move firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
+        legalMoves = moveOrder.OrderMoves(board, legalMoves);
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
 

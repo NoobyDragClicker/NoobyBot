@@ -13,7 +13,7 @@ using UnityEngine.UIElements;
 public class Board
 {
     public const int WhiteIndex = 0;
-    public const int BlackIndex = 0;
+    public const int BlackIndex = 1;
 
 
     public bool isCurrentPlayerInCheck;
@@ -43,7 +43,7 @@ public class Board
     public Board(string fenPosition, MoveGenerator generator){
         moveGenerator = generator;
         board = ConvertFromFEN(fenPosition);
-        Zobrist.CalculateZobrist(this);
+        zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory.Push(zobristKey);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
@@ -54,6 +54,13 @@ public class Board
     public void Move(Move move, bool isSearch){
         uint castlingRights = GetCastlingRights(gameStateHistory.Peek());
         int oldCastlingRights = (int)castlingRights;
+        int oldEPFile;
+        if(enPassantIndex != -1){
+            oldEPFile = Coord.IndexToFile(enPassantIndex);
+        } else{
+            oldEPFile = 0;
+        }
+        
         int enPassantFile = 0;
         //Captured piece gets removed, ep file gets removed, need to save castling rights and fiftymoverule
         currentGameState = 0;
@@ -69,14 +76,12 @@ public class Board
 
         //Set to none 
         enPassantIndex = -1;
-
+        movedPiece = board[startPos];
         if(move.isPromotion()){
             fiftyMoveCounter = 0;
             //Sets the new piece to be the same color but whatever the new piece type is
-            movedPiece = board[startPos];
             newPiece = Piece.Color(board[startPos]) | move.PromotedPieceType();
         } else {
-            movedPiece = board[startPos];
             newPiece = movedPiece;
         }
 
@@ -142,6 +147,7 @@ public class Board
             int attackedPawnIndex = (colorTurn == Piece.White) ? newPos+8:newPos-8;
             capturedPiece = board[attackedPawnIndex];
             board[attackedPawnIndex] = 0;
+            zobristKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
             fiftyMoveCounter = 0;
         }
         else{
@@ -229,8 +235,8 @@ public class Board
         zobristKey ^= Zobrist.castlingRights[oldCastlingRights];
         zobristKey ^= Zobrist.castlingRights[castlingRights];
         zobristKey ^= Zobrist.sideToMove;
+        zobristKey ^= Zobrist.enPassantFile[oldEPFile];
         zobristKey ^= Zobrist.enPassantFile[enPassantFile];
-
         zobristHistory.Push(zobristKey);
 
         UpdateCheckingInfo();

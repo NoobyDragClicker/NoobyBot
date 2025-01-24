@@ -51,14 +51,10 @@ public static class Zobrist
 		}
 
 		int epIndex = (int) (board.currentGameState >> 4) & 15;
-		if (epIndex != -1) {
-			zobristKey ^= enPassantFile[epIndex];
-		}
-
+		zobristKey ^= enPassantFile[epIndex];
 		if (board.colorTurn == Piece.Black) {
 			zobristKey ^= sideToMove;
 		}
-
 		zobristKey ^= castlingRights[board.currentGameState & 0b1111];
 		return zobristKey;
     }

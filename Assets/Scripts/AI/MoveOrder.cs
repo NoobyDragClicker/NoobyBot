@@ -10,15 +10,15 @@ public class MoveOrder
 {
     const int maxMoves = 218;
     float[] moveScores = new float[maxMoves];
-    public List<Move> OrderMoves(Board board, List<Move> legalMoves){
+    public List<Move> OrderMoves(Board board, List<Move> legalMoves, Move firstMove){
         List<Move> moves = legalMoves;
 
         for(int x = 0; x< legalMoves.Count; x++){
             Move move = legalMoves[x];
             int score = 0;
-            /*if(firstSearch != null && move.GetIntValue() == firstSearch.GetIntValue()){
+            if(firstMove != null && move.GetIntValue() == firstMove.GetIntValue()){
                 score = 100;
-            } else{*/
+            } else{
                 int movedPieceValue = 0;
                 if(move.isCapture()){
                     int capturedPieceValue = 0;
@@ -48,6 +48,7 @@ public class MoveOrder
                         score = 9;
                     }
                 }
+            }
             moveScores[x] = score;
         }
 

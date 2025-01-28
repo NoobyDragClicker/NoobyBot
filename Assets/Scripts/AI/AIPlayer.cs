@@ -70,10 +70,12 @@ public class AIPlayer : Player
 public struct AISettings{
     public bool useTT;
     public int maxDepth;
+    public bool useBetterEval;
 
-    public AISettings(bool useTT, int maxDepth){
+    public AISettings(bool useTT, int maxDepth, bool useBetterEval){
         this.useTT = useTT;
         this.maxDepth = maxDepth;
+        this.useBetterEval = useBetterEval;
     }
 
 }

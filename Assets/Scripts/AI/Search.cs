@@ -48,9 +48,9 @@ public class Search
         stopwatch.Start();
         bestEval = StartIterativeDeepening(aiSettings.maxDepth);
         stopwatch.Stop();
-        /*if(bestMove == null){
+        if(bestMove == null){
             bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
-        }*/
+        }
 
         //UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
         //UnityEngine.Debug.Log("Best eval: " + bestEval);
@@ -95,7 +95,7 @@ public class Search
         
         //Returns the actual eval of the position
         if(depth <= 0){
-            return evaluation.EvaluatePosition(board);
+            return evaluation.EvaluatePosition(board, aiSettings);
         }
 
         List<Move> legalMoves = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn);
@@ -108,12 +108,16 @@ public class Search
                 return 0;
             }
         }
+        Move firstSearchMove;
+        if(aiSettings.useTT){
+            firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
+        } else{
+            firstSearchMove = (plyFromRoot == 0) ? bestMove : null;
+        }
         
-        //Move firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
-        legalMoves = moveOrder.OrderMoves(board, legalMoves);
+        legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove);
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
-
         for(int i = 0; i<legalMoves.Count; i++){
             makeMoveWatch.Start();
             board.Move(legalMoves[i], true);

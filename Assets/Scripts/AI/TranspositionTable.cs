@@ -89,7 +89,11 @@ public class TranspositionTable
 
     public Move GetStoredMove()
 	{
-		return entries[Index].move;
+        if(entries[Index].key == board.zobristKey){
+            return entries[Index].move;
+        } 
+        return null;
+		
 	}
 
     public struct Entry

@@ -11,8 +11,8 @@ using UnityEngine;
 public class TournamentManager : MonoBehaviour
 {
     const int numBoards = 4;
-    const int startTime = 600;
-    const int maxGames = 8;
+    const int startTime = 75;
+    const int maxGames = 40;
     int gamesPlayed;
     int gamesFinished;
     int testPlayerWins, oldPlayerWins, draws;
@@ -25,9 +25,9 @@ public class TournamentManager : MonoBehaviour
     List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 8);
+    AISettings testSettings = new AISettings(true, 8, true);
     [SerializeField]
-    AISettings oldSettings = new AISettings(false, 8);
+    AISettings oldSettings = new AISettings(true, 8, false);
 
     BoardManager[] boards = new BoardManager[numBoards];
     bool[] isWhiteTest = new bool[numBoards];

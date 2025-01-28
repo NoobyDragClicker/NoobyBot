@@ -75,20 +75,6 @@ public class MoveGenerator
                 }
             }
         }
-
-        /*List<int> pawnIndexes = GetPosByPieceType(Piece.Pawn, pieceColor, board);
-        List<int> bishopIndexes = GetPosByPieceType(Piece.Bishop, pieceColor, board);
-        List<int> knightIndexes = GetPosByPieceType(Piece.Knight, pieceColor, board);
-        List<int> rookIndexes = GetPosByPieceType(Piece.Rook, pieceColor, board);
-        List<int> queenIndexes = GetPosByPieceType(Piece.Queen, pieceColor, board);
-        
-        for(int x = 0; x< pawnIndexes.Count; x++){legalMoves.AddRange(GeneratePawnMoves(pawnIndexes[x], pieceColor, board, false, board.isCurrentPlayerInCheck));}
-        for(int x = 0; x< knightIndexes.Count; x++){ legalMoves.AddRange(GenerateKnightMoves(knightIndexes[x], pieceColor, board, false, board.isCurrentPlayerInCheck));}
-        for(int x = 0; x< bishopIndexes.Count; x++){ legalMoves.AddRange(GenerateBishopMoves(bishopIndexes[x], pieceColor, board, false, board.isCurrentPlayerInCheck));}
-        for(int x = 0; x< rookIndexes.Count; x++){ legalMoves.AddRange(GenerateRookMoves(rookIndexes[x], pieceColor, board, false, board.isCurrentPlayerInCheck));}
-        for(int x = 0; x< queenIndexes.Count; x++){ legalMoves.AddRange(GenerateQueenMoves(queenIndexes[x], pieceColor, board, false, board.isCurrentPlayerInCheck));}
-        legalMoves.AddRange(GenerateKingMoves(kingIndex, pieceColor, board, false));*/
-
         return legalMoves;
     }
     
@@ -459,11 +445,11 @@ public class MoveGenerator
             //Castling
             if(canCastleLong || canCastleShort){
                 //Empty squares to the right and rook of the same color and not in check and square about to be moved to is not in check
-                if(canCastleShort && board.board[index + 1] == 0 && board.board[index + 2] == 0 && board.board[index + 3] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index + 2] == 0 && illegalSquares[index + 1] == 0){
+                if(canCastleShort && index < 61 && board.board[index + 1] == 0 && board.board[index + 2] == 0 && board.board[index + 3] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index + 2] == 0 && illegalSquares[index + 1] == 0){
                     legalMoves.Add(new Move(index, index + 2, false, 5));
                 }
                 //Empty squares to the left and rook of the same color and not in check and square about to be moved to is not in check
-                if(canCastleLong && board.board[index - 1] == 0 && board.board[index - 2] == 0 && board.board[index - 3] == 0 && board.board[index - 4] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index - 2] == 0 && illegalSquares[index - 1] == 0){
+                if(canCastleLong && index > 3 && board.board[index - 1] == 0 && board.board[index - 2] == 0 && board.board[index - 3] == 0 && board.board[index - 4] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index - 2] == 0 && illegalSquares[index - 1] == 0){
                     legalMoves.Add(new Move(index, index - 2, false, 5));
                 }
             }

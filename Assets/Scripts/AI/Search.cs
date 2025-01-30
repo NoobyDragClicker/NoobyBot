@@ -98,7 +98,11 @@ public class Search
             return evaluation.EvaluatePosition(board, aiSettings);
         }
 
+        int searchExtension = 0;
+
         List<Move> legalMoves = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn);
+
+        if(aiSettings.useSearchExtensions && legalMoves.Count == 1){searchExtension++;}
 
         //Check for mate or stalemate
         if(legalMoves.Count == 0){
@@ -119,12 +123,16 @@ public class Search
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
         for(int i = 0; i<legalMoves.Count; i++){
+            int localExtension = searchExtension;
+
             makeMoveWatch.Start();
             board.Move(legalMoves[i], true);
+            if((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && aiSettings.useSearchExtensions){localExtension++;}
+
             makeMoveWatch.Stop(); 
         
             generatingStopwatch.Start();
-            int eval = -SearchMoves(depth - 1, plyFromRoot + 1, -beta, -alpha);
+            int eval = -SearchMoves(depth + localExtension - 1 , plyFromRoot + 1, -beta, -alpha);
             generatingStopwatch.Stop();
 
             unmakeMoveWatch.Start();
@@ -136,7 +144,7 @@ public class Search
             //Move is too good, would be prevented by a previous move
             if(eval >= beta){
                 //Exiting search early, so it is a lower bound
-                if(aiSettings.useTT){tt.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);}
+                if(aiSettings.useTT){tt.StoreEvaluation(depth + localExtension, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);}
                 return beta;
             }
             //This move is better than the current move
@@ -152,14 +160,14 @@ public class Search
             }
         }
 
-        if(aiSettings.useTT){tt.StoreEvaluation(depth, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
+        if(aiSettings.useTT){tt.StoreEvaluation(depth + searchExtension, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
         return alpha;
     }
+    
     public static bool IsMateScore(int score){
         const int maxMatePly = 150;
         return Math.Abs(score) > positiveInfinity - maxMatePly;
     }
-
     public void EndSearch(){
         abortSearch = true;
     }

@@ -21,72 +21,6 @@ public class Evaluation
     int[] rookPieceTable = new int[64];
     int[] queenPieceTable = new int[64];
     int[] kingPieceTable = new int[64];
-
-    int[] oldPawnPieceTable = {
-		0,  0,  0,  0,  0,  0,  0,  0,
-		50, 50, 50, 50, 50, 50, 50, 50,
-		10, 10, 20, 30, 30, 20, 10, 10,
-		5,  5, 10, 25, 25, 10,  5,  5,
-		0,  0,  0, 20, 20,  0,  0,  0,
-		5, -5,-10,  0,  0,-10, -5,  5,
-		5, 10, 10,-20,-20, 10, 10,  5,
-		0,  0,  0,  0,  0,  0,  0,  0
-    };
-    int[] oldKingPieceTable = {
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -30, -30, -40, -45, -45, -45, -30, -30,
-        -15, -20, -25, -30, -30, -25, -20, -15,
-        0, 0, -5, -10, -10, 10, 0, 0,
-        5, 15, -10, -20, -20, -10, 20, 30,
-    };
-    int[] oldKnightPieceTable = {
-		-50,-40,-30,-30,-30,-30,-40,-50,
-		-40,-20,  0,  0,  0,  0,-20,-40,
-		-30,  0, 10, 15, 15, 10,  0,-30,
-		-30,  5, 15, 20, 20, 15,  5,-30,
-		-30,  0, 15, 20, 20, 15,  0,-30,
-		-30,  5, 10, 15, 15, 10,  5,-30,
-		-40,-20,  0,  5,  5,  0,-20,-40,
-		-50,-40,-30,-30,-30,-30,-40,-50,
-	};
-
-    int[] oldBishopPieceTable = {
-		-20,-10,-10,-10,-10,-10,-10,-20,
-		-10,  0,  0,  0,  0,  0,  0,-10,
-		-10,  0,  5, 15, 15,  5,  0,-10,
-		-10,  5,  5, 15, 15,  5,  5,-10,
-		-10,  0, 15, 15, 15, 15,  0,-10,
-		-10, 15, 15, 15, 15, 15, 15,-10,
-		-10,  5,  0,  0,  0,  0,  5,-10,
-		-20,-10,-10,-10,-10,-10,-10,-20,
-	};
-
-	int[] oldRookPieceTable = {
-		0,  0,  0,  0,  0,  0,  0,  0,
-		5, 10, 10, 10, 10, 10, 10,  5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		0,  0,  0,  5,  5,  0,  0,  0
-    };
-
-	int[] oldQueenPieceTable = {
-		-20,-10,-10, -5, -5,-10,-10,-20,
-		-10,  0,  0,  0,  0,  0,  0,-10,
-		-10,  0,  5,  5,  5,  5,  0,-10,
-		-5,  0,  5,  5,  5,  5,  0, -5,
-		0,  0,  5,  5,  5,  5,  0, -5,
-		-10,  5,  5,  5,  5,  5,  0,-10,
-		-10,  0,  5,  0,  0,  0,  0,-10,
-		-20,-10,-10, -5, -5,-10,-10,-20
-	};
-
-
     int[] mg_pawn_table = {
       0,   0,   0,   0,   0,   0,  0,   0,
      98, 134,  61,  95,  68, 126, 34, -11,
@@ -219,8 +153,6 @@ public class Evaluation
         -53, -34, -21, -11, -28, -14, -24, -43
     };
 
-
-
     int playerTurnMultiplier;
     public System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
     public int EvaluatePosition(Board board, AISettings aiSettings){
@@ -231,47 +163,37 @@ public class Evaluation
     }
 
     int CountMaterial(Board board){
-        if(aiSettings.useBetterEval){
-            int totalMaterial = 0;
-            for(int x = 0; x< 64; x++){
-                int pieceType = Piece.PieceType(board.board[x]);
-                if(board.board[x] != 0){
-                    switch (pieceType){
-                        case Piece.Pawn: totalMaterial += pawnValue; break;
-                        case Piece.Knight: totalMaterial += knightValue; break;
-                        case Piece.Bishop: totalMaterial += bishopValue; break;
-                        case Piece.Rook: totalMaterial += rookValue; break;
-                        case Piece.Queen: totalMaterial += queenValue; break;
-                        case Piece.King: break;
-                    }
+        int totalMaterial = 0;
+        for(int x = 0; x< 64; x++){
+            int pieceType = Piece.PieceType(board.board[x]);
+            if(board.board[x] != 0){
+                switch (pieceType){
+                    case Piece.Pawn: totalMaterial += pawnValue; break;
+                    case Piece.Knight: totalMaterial += knightValue; break;
+                    case Piece.Bishop: totalMaterial += bishopValue; break;
+                    case Piece.Rook: totalMaterial += rookValue; break;
+                    case Piece.Queen: totalMaterial += queenValue; break;
+                    case Piece.King: break;
                 }
             }
-            if(totalMaterial > 25){
-                pawnPieceTable = mg_pawn_table;
-                knightPieceTable = mg_knight_table;
-                bishopPieceTable = mg_bishop_table;
-                rookPieceTable = mg_rook_table;
-                queenPieceTable = mg_queen_table;
-                kingPieceTable = mg_king_table;
-            } else{
-                pawnPieceTable = eg_pawn_table;
-                knightPieceTable = eg_knight_table;
-                bishopPieceTable = eg_bishop_table;
-                rookPieceTable = eg_rook_table;
-                queenPieceTable = eg_queen_table;
-                kingPieceTable = eg_king_table;
-            }
-
+        }
+        if(totalMaterial > 2800){
+            pawnPieceTable = mg_pawn_table;
+            knightPieceTable = mg_knight_table;
+            bishopPieceTable = mg_bishop_table;
+            rookPieceTable = mg_rook_table;
+            queenPieceTable = mg_queen_table;
+            kingPieceTable = mg_king_table;
         } else{
-            pawnPieceTable = oldPawnPieceTable;
-            knightPieceTable = oldKnightPieceTable;
-            bishopPieceTable = oldBishopPieceTable;
-            rookPieceTable = oldRookPieceTable;
-            queenPieceTable = oldQueenPieceTable;
-            kingPieceTable = oldKingPieceTable;
+            pawnPieceTable = eg_pawn_table;
+            knightPieceTable = eg_knight_table;
+            bishopPieceTable = eg_bishop_table;
+            rookPieceTable = eg_rook_table;
+            queenPieceTable = eg_queen_table;
+            kingPieceTable = eg_king_table;
         }
 
-
+        
         stopwatch.Start();
         int materialCount = 0;
         //Loops through each index on the board

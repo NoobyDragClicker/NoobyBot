@@ -17,6 +17,10 @@ public class MoveOrder
             Move move = legalMoves[x];
             int score = 0;
             if(firstMove != null && move.GetIntValue() == firstMove.GetIntValue()){
+                if(firstMove.oldIndex != move.oldIndex || firstMove.newIndex != move.newIndex || firstMove.flag != move.flag){
+                    UnityEngine.Debug.Log("move does not match");
+                }
+
                 score = 100;
             } else{
                 int movedPieceValue = 0;

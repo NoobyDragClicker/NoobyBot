@@ -18,7 +18,7 @@ public class AIPlayer : Player
 
 
 
-    public AIPlayer(Board board, AISettings aiSettings, float startTime, bool useClock){
+    public AIPlayer(Board board, AISettings aiSettings, float startTime, int increment, bool useClock){
         this.board = board;
         this.useClock = useClock;
         if(useClock){timeRemaining = startTime;}
@@ -39,12 +39,13 @@ public class AIPlayer : Player
         if(moveFound){
             moveFound = false;
             ChoseMove(move);
+            timeRemaining += increment;
         }
     }
 
     //Called when it is our turn to move
     public override void NotifyToMove(){
-        timeHardCap = timeRemaining - (timeRemaining / 20);
+        timeHardCap = timeRemaining - ((timeRemaining / 20) + (increment/2));
         moveFound = false;
         isTurnToMove = true;
         Task.Factory.StartNew (() => search.StartSearch(), TaskCreationOptions.LongRunning);
@@ -68,14 +69,16 @@ public class AIPlayer : Player
 }
 
 public struct AISettings{
-    public bool useTT;
     public int maxDepth;
-    public bool useBetterEval;
+    public bool useTT;
+    public bool useQuiescence;
+    public bool useSearchExtensions;
 
-    public AISettings(bool useTT, int maxDepth, bool useBetterEval){
+    public AISettings(bool useTT, int maxDepth, bool useQuiescence, bool useSearchExtensions){
         this.useTT = useTT;
         this.maxDepth = maxDepth;
-        this.useBetterEval = useBetterEval;
+        this.useQuiescence = useQuiescence;
+        this.useSearchExtensions = useSearchExtensions;
     }
 
 }

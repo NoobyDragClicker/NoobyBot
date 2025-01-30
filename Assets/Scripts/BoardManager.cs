@@ -34,7 +34,7 @@ public class BoardManager
 
     public BoardManager(int boardNumber){this.boardNumber = boardNumber;}
     
-    public void StartGame(bool useClock, int startTime, bool useCustomPos, string customStr, AISettings whiteSettings, AISettings blackSettings, bool whiteHuman = false, bool blackHuman = false){
+    public void StartGame(bool useClock, int startTime, int increment, bool useCustomPos, string customStr, AISettings whiteSettings, AISettings blackSettings, bool whiteHuman = false, bool blackHuman = false){
         gameStatus = GameStatus.PreGame;
         this.useClock = useClock;
         if(!useCustomPos){
@@ -48,9 +48,9 @@ public class BoardManager
         moveMade.Invoke(boardNumber);
         
         //Syncing OnMoveChosen
-        whitePlayer = whiteHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, startTime, useClock);
+        whitePlayer = whiteHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, startTime, increment, useClock);
         whitePlayer.onMoveChosen += OnMoveChosen;
-        blackPlayer = blackHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, blackSettings, startTime, useClock);
+        blackPlayer = blackHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, blackSettings, startTime, increment, useClock);
         blackPlayer.onMoveChosen += OnMoveChosen;
         
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
@@ -58,7 +58,6 @@ public class BoardManager
 
         gameStatus = GameStatus.Playing;
         playerToMove.NotifyToMove();
-        Debug.Log("started game");
     }
 
     void OnMoveChosen(Move move){
@@ -91,13 +90,9 @@ public class BoardManager
         }
     }
     public void EndGame(ResultStatus resultStatus){
-        Debug.Log("game over");
         gameStatus = GameStatus.Finished;
         result = resultStatus;
-
-        //Debug.Log("Black: ");
         blackPlayer.NotifyGameOver();
-        //Debug.Log("White: ");
         whitePlayer.NotifyGameOver();
         gameFinished.Invoke(result, boardNumber);
     }

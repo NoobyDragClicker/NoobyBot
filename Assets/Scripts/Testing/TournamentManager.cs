@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.VisualScripting;
@@ -11,8 +12,9 @@ using UnityEngine;
 public class TournamentManager : MonoBehaviour
 {
     const int numBoards = 4;
-    const int startTime = 75;
-    const int maxGames = 40;
+    const int startTime = 90;
+    const int increment = 1;
+    const int maxGames = 220;
     int gamesPlayed;
     int gamesFinished;
     int testPlayerWins, oldPlayerWins, draws;
@@ -22,12 +24,19 @@ public class TournamentManager : MonoBehaviour
     [SerializeField]
     DisplayPiece displayPiecePrefab;
 
+    [SerializeField]
+    TextMeshProUGUI newPlayerWins;
+    [SerializeField]
+    TextMeshProUGUI pastPlayerWins;
+    [SerializeField]
+    TextMeshProUGUI drawsDisplay;
+
     List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 8, true);
+    AISettings testSettings = new AISettings(true, 18, true, true);
     [SerializeField]
-    AISettings oldSettings = new AISettings(true, 8, false);
+    AISettings oldSettings = new AISettings(true, 18, false, false);
 
     BoardManager[] boards = new BoardManager[numBoards];
     bool[] isWhiteTest = new bool[numBoards];
@@ -62,8 +71,9 @@ public class TournamentManager : MonoBehaviour
     void StartGame(int boardNumber){
         AISettings whiteSettings = isWhiteTest[boardNumber] ? testSettings : oldSettings;
         AISettings blackSettings = isWhiteTest[boardNumber] ? oldSettings : testSettings;
-        boards[boardNumber].StartGame(true, startTime, false, "", whiteSettings, blackSettings);
+        boards[boardNumber].StartGame(true, startTime, increment, false, "", whiteSettings, blackSettings);
         gamesPlayed ++;
+        Debug.Log("Game started: " + gamesPlayed);
     }
 
     void SpawnBoard(int offsetX, int offsetY){
@@ -80,18 +90,23 @@ public class TournamentManager : MonoBehaviour
     }
 
     void FinishedGame(BoardManager.ResultStatus result, int boardNumber){
-        if(result == BoardManager.ResultStatus.Draw){draws ++;}
+        if(result == BoardManager.ResultStatus.Draw){draws ++;
+        Debug.Log("draw");}
         else if(result == BoardManager.ResultStatus.White_Won){
             if(isWhiteTest[boardNumber] == true){
                 testPlayerWins++;
+                Debug.Log("test player won");
             } else{
                 oldPlayerWins++;
+                Debug.Log("old player won");
             }
         } else if(result == BoardManager.ResultStatus.Black_Won){
             if(isWhiteTest[boardNumber] == true){
                 oldPlayerWins++;
+                Debug.Log("old player won");
             } else{
                 testPlayerWins++;
+                Debug.Log("test player won");
             }
         }
         gamesFinished ++;
@@ -135,6 +150,8 @@ public class TournamentManager : MonoBehaviour
                 }
             }
         }
-
+        newPlayerWins.text = "Test Player Wins: " + testPlayerWins;
+        pastPlayerWins.text = "Old Player Wins: " + oldPlayerWins;
+        drawsDisplay.text = "Draws: " + draws;
     }
 }

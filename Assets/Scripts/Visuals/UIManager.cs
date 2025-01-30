@@ -64,9 +64,9 @@ public class UIManager : MonoBehaviour
     bool useCustomPos = false;
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 8, true);
+    AISettings testSettings = new AISettings(true, 8, true, true);
     [SerializeField]
-    AISettings oldSettings = new AISettings(true, 8, false);
+    AISettings oldSettings = new AISettings(true, 8, false, false);
 
     void Start(){
         boardManager = new BoardManager(0);
@@ -100,7 +100,7 @@ public class UIManager : MonoBehaviour
         bool blackHuman = (blackPlayerType.value == 0) ? true:false;
         AISettings whiteSettings = (whitePlayerType.value == 2) ? testSettings : oldSettings;
         AISettings blackSettings = (blackPlayerType.value == 2) ? testSettings : oldSettings;
-        boardManager.StartGame(useClock, startTime, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, whiteHuman:whiteHuman, blackHuman:blackHuman);
+        boardManager.StartGame(useClock, startTime, 1, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, whiteHuman:whiteHuman, blackHuman:blackHuman);
         
         if(useClock){
             whiteClock.gameObject.SetActive(true);

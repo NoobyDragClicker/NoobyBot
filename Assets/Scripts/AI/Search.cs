@@ -14,7 +14,7 @@ public class Search
     int bestEvalThisIteration;
     Evaluation evaluation;
     MoveOrder moveOrder;
-    TranspositionTable tt;
+    public TranspositionTable tt;
 
     AISettings aiSettings;
     int bestEval;
@@ -112,6 +112,7 @@ public class Search
                 return 0;
             }
         }
+        
         Move firstSearchMove;
         if(aiSettings.useTT){
             firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();

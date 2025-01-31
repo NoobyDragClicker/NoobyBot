@@ -113,6 +113,10 @@ public class TranspositionTable
             this.move = move;
         }
     }
+
+    public void DeleteEntries(){
+        entries = null;
+    }
 }
 
 

@@ -12,8 +12,6 @@ using System.Linq;
 
 public class Perft : MonoBehaviour
 {   
-    //Last total time: 49:22
-    //BUG NO2: castling problem? not sure, must rerun after fixing en passant
     MoveGenerator moveGenerator;
     
 	// Timers

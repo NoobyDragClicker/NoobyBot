@@ -63,10 +63,6 @@ public class BoardManager
     void OnMoveChosen(Move move){
         board.Move(move, false);
         searchBoard.Move(move, true);
-        if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
-        if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
-        //Updates the main board display
-        moveMade.Invoke(boardNumber);
 
         //Checking if there is a draw or mate
         if(board.IsCheckmate(board.colorTurn)){
@@ -74,10 +70,15 @@ public class BoardManager
             if(board.colorTurn == Piece.Black){EndGame(ResultStatus.White_Won);}
         }
         if(board.IsDraw()){EndGame(ResultStatus.Draw);}
-
+        
+        if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
+        if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
+        
         if(gameStatus == GameStatus.Playing){
             playerToMove.NotifyToMove();
         }
+        //Updates the main board display
+        moveMade.Invoke(boardNumber);
     }
     public void Update(){
         if(gameStatus == GameStatus.Playing){

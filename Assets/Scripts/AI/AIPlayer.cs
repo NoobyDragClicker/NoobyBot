@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using System.Threading.Tasks;
+using System.Data;
 
 public class AIPlayer : Player
 {
@@ -57,6 +58,7 @@ public class AIPlayer : Player
         //Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
         /*Debug.Log("Total time making moves: " + makeMoveWatch.Elapsed);
         Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);*/
+        search.tt.DeleteEntries();
     }
 
     //Triggered by the onSearchComplete event

@@ -26,6 +26,8 @@ public class UIManager : MonoBehaviour
     TMP_InputField clockStartTime;
     [SerializeField]
     TMP_InputField customPosition;
+    [SerializeField]
+    TMP_InputField gameReviewPathInput;
 
     //Prefabs
     [SerializeField]
@@ -53,6 +55,9 @@ public class UIManager : MonoBehaviour
 
     public BoardManager boardManager;
     public bool isDebugMode = false;
+    bool isGameReview = false;
+    List<Move> gameMoves;
+    int currentGameMoveIndex = 0;
     int selectedPiece;
     
     [SerializeField]
@@ -98,6 +103,15 @@ public class UIManager : MonoBehaviour
         string inputtedCustomStr = customPosition.text;
         bool whiteHuman = (whitePlayerType.value == 0) ? true: false;
         bool blackHuman = (blackPlayerType.value == 0) ? true:false;
+
+        if(isGameReview){
+            whiteHuman = true;
+            blackHuman = true;
+            useClock = false;
+            gameMoves = GameLogger.ReadMovesFromLog(gameReviewPathInput.text);
+        }
+
+
         AISettings whiteSettings = (whitePlayerType.value == 2) ? testSettings : oldSettings;
         AISettings blackSettings = (blackPlayerType.value == 2) ? testSettings : oldSettings;
         boardManager.StartGame(useClock, startTime, 1, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, whiteHuman:whiteHuman, blackHuman:blackHuman);
@@ -153,7 +167,6 @@ public class UIManager : MonoBehaviour
                 displayPieces.Add(displayPiece);
             }
         }
-        ShowDebugSquares(board.pinnedPieceIndexes);
         if(isDebugMode){ShowAttackedSquares();}
     }
 
@@ -283,5 +296,29 @@ public class UIManager : MonoBehaviour
     }
     public void UpdateCustomPos(bool input){
         useCustomPos = input;
+    }
+    public void UpdateGameReview(bool input){
+        isGameReview = input;
+    }
+    
+    public void LogGame(){
+        if(!isGameReview){
+            GameLogger.LogGame(boardManager.board);
+        }
+    }
+
+    public void NextMove(){
+        if(isGameReview && currentGameMoveIndex < gameMoves.Count){
+            boardManager.board.Move(gameMoves[currentGameMoveIndex], false);
+            UpdateBoard(boardManager.boardNumber);
+            currentGameMoveIndex++;
+        }
+    }
+    public void PreviousMove(){
+        if(isGameReview && currentGameMoveIndex > -1){
+            currentGameMoveIndex--;
+            boardManager.board.UndoMove(gameMoves[currentGameMoveIndex]);
+            UpdateBoard(boardManager.boardNumber);
+        } 
     }
 }

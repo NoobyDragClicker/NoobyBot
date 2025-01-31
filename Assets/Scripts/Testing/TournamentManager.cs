@@ -14,7 +14,7 @@ public class TournamentManager : MonoBehaviour
     const int numBoards = 4;
     const int startTime = 90;
     const int increment = 1;
-    const int maxGames = 220;
+    const int maxGames = 120;
     int gamesPlayed;
     int gamesFinished;
     int testPlayerWins, oldPlayerWins, draws;

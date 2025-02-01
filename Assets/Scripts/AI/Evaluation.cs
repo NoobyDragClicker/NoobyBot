@@ -139,7 +139,7 @@ public class Evaluation
         -49,  -1, -27, -39, -46, -44, -33, -51,
         -14, -14, -22, -46, -44, -30, -15, -27,
         1,   7,  -8, -64, -43, -16,   9,   8,
-        -15,  36,  12, -54,   8, -28,  24,  14,
+        -15,  36,  12, 0,   8, -28,  24,  14,
     };
 
     int[] eg_king_table = {
@@ -192,9 +192,7 @@ public class Evaluation
             queenPieceTable = eg_queen_table;
             kingPieceTable = eg_king_table;
         }
-
         
-        stopwatch.Start();
         int materialCount = 0;
         //Loops through each index on the board
         for(int x = 0; x< 64; x++){
@@ -211,8 +209,6 @@ public class Evaluation
                 }
             }
         }
-
-        stopwatch.Stop();
         return materialCount * playerTurnMultiplier;
     }
 

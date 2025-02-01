@@ -11,10 +11,10 @@ using UnityEngine;
 
 public class TournamentManager : MonoBehaviour
 {
-    const int numBoards = 4;
+    const int numBoards = 2;
     const int startTime = 90;
     const int increment = 1;
-    const int maxGames = 120;
+    const int maxGames = 60;
     int gamesPlayed;
     int gamesFinished;
     int testPlayerWins, oldPlayerWins, draws;

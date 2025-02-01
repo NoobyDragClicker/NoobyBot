@@ -17,15 +17,11 @@ public class MoveOrder
             Move move = legalMoves[x];
             int score = 0;
             if(firstMove != null && move.GetIntValue() == firstMove.GetIntValue()){
-                if(firstMove.oldIndex != move.oldIndex || firstMove.newIndex != move.newIndex || firstMove.flag != move.flag){
-                    UnityEngine.Debug.Log("move does not match");
-                }
-
                 score = 100;
             } else{
-                int movedPieceValue = 0;
+                int movedPieceValue;
                 if(move.isCapture()){
-                    int capturedPieceValue = 0;
+                    int capturedPieceValue;
                     //en passant
                     if(move.flag == 7){
                         if(Piece.IsColour(board.board[legalMoves[x].oldIndex], Piece.White)){
@@ -60,8 +56,6 @@ public class MoveOrder
         Array.Clear(moveScores, 0, moveScores.Length);
         return moves;
     }
-    
-
     List<Move> Sort(List<Move> moves){
         for(int i = 0; i< moves.Count - 1; i++){
             for(int j = i + 1; j > 0; j--){
@@ -74,7 +68,6 @@ public class MoveOrder
         }
         return moves;
     }
-
     static int GetPieceValue (int pieceType) {
 		switch (pieceType) {
 			case Piece.Queen:

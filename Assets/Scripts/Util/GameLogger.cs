@@ -11,8 +11,8 @@ public static class GameLogger
     const string errorPath = "./Assets/Scripts/Logs/Debug/";
     const string savesPath = "./Assets/Scripts/Logs/Saves/";
 
-    public static void LogGame(Board board){
-        string path = errorPath + Time.time.ToString() + ".txt";
+    public static void LogGame(Board board, int pathNumber){
+        string path = errorPath + pathNumber.ToString() + ".txt";
         Move[] moves = board.gameMoveHistory.ToArray();
         string[] moveStrings = new string[board.gameMoveHistory.Count];
         int arrayIndex = 0;

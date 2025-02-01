@@ -27,6 +27,7 @@ public class Search
     Stopwatch generatingStopwatch;
     Stopwatch makeMoveWatch;
     Stopwatch unmakeMoveWatch;
+    ulong startKey;
 
     public Search(Board board, Stopwatch genStopwatch, Stopwatch makeMoveStopwatch, Stopwatch unmakeMoveStopwatch, AISettings aiSettings){
         this.board = board;
@@ -41,20 +42,17 @@ public class Search
     }
 
     public void StartSearch(){
+        startKey = board.zobristKey;
         bestMove = null;
         abortSearch = false;
-        //Init a bunch of stuff, iterative deepening, etc
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
         bestEval = StartIterativeDeepening(aiSettings.maxDepth);
-        stopwatch.Stop();
         if(bestMove == null){
             bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
         }
-
-        //UnityEngine.Debug.Log("Total time: " + stopwatch.Elapsed);
-        //UnityEngine.Debug.Log("Best eval: " + bestEval);
         onSearchComplete?.Invoke(bestMove);
+        if(startKey != board.zobristKey){
+            UnityEngine.Debug.Log("search ended with different key");
+        }
     }
 
     int StartIterativeDeepening(int maxDepth){
@@ -66,10 +64,8 @@ public class Search
             }
             
             if(abortSearch){
-                //UnityEngine.Debug.Log("Aborted search at depth " + depth);
                 break;
             }
-            //Suspicious about this
             if(IsMateScore(bestEvalThisIteration)){
                 break;
             }
@@ -78,6 +74,7 @@ public class Search
     }
     
     int SearchMoves(int depth, int plyFromRoot, int alpha, int beta){
+        if(abortSearch){return 0;}
         if(board.IsRepetitionDraw()){return 0;}
         if(board.fiftyMoveCounter >= 100){return 0;}
 
@@ -88,6 +85,7 @@ public class Search
                 //Set the best move
                 if(plyFromRoot == 0){
                     bestMoveThisIteration = tt.GetStoredMove();
+                    bestEvalThisIteration = ttEval;
                 }
                 return ttEval;
             }
@@ -126,26 +124,19 @@ public class Search
         for(int i = 0; i<legalMoves.Count; i++){
             int localExtension = searchExtension;
 
-            makeMoveWatch.Start();
             board.Move(legalMoves[i], true);
             if((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && aiSettings.useSearchExtensions){localExtension++;}
-
-            makeMoveWatch.Stop(); 
         
-            generatingStopwatch.Start();
             int eval = -SearchMoves(depth + localExtension - 1 , plyFromRoot + 1, -beta, -alpha);
-            generatingStopwatch.Stop();
 
-            unmakeMoveWatch.Start();
             board.UndoMove(legalMoves[i]);
-            unmakeMoveWatch.Stop();
 
-            if(abortSearch){ return 0;}
+            if(abortSearch){return 0;}
 
             //Move is too good, would be prevented by a previous move
             if(eval >= beta){
                 //Exiting search early, so it is a lower bound
-                if(aiSettings.useTT){tt.StoreEvaluation(depth + localExtension, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);}
+                if(aiSettings.useTT){tt.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);}
                 return beta;
             }
             //This move is better than the current move
@@ -160,11 +151,9 @@ public class Search
                 }
             }
         }
-
-        if(aiSettings.useTT){tt.StoreEvaluation(depth + searchExtension, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
+        if(aiSettings.useTT){tt.StoreEvaluation(depth, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
         return alpha;
     }
-    
     public static bool IsMateScore(int score){
         const int maxMatePly = 150;
         return Math.Abs(score) > positiveInfinity - maxMatePly;

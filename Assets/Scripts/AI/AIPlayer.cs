@@ -10,7 +10,7 @@ public class AIPlayer : Player
     Board board;
     Move move;
     bool moveFound;
-    bool isTurnToMove;
+    bool isTurnToMove = false;
     Search search;
     System.Diagnostics.Stopwatch generatingStopwatch = new System.Diagnostics.Stopwatch();
     System.Diagnostics.Stopwatch makeMoveWatch = new System.Diagnostics.Stopwatch();
@@ -50,7 +50,6 @@ public class AIPlayer : Player
         moveFound = false;
         isTurnToMove = true;
         Task.Factory.StartNew (() => search.StartSearch(), TaskCreationOptions.LongRunning);
-        //search.StartSearch();
     }
 
     //Called when it is our turn to move
@@ -58,6 +57,7 @@ public class AIPlayer : Player
         //Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
         /*Debug.Log("Total time making moves: " + makeMoveWatch.Elapsed);
         Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);*/
+        isTurnToMove = false;
         search.tt.DeleteEntries();
     }
 

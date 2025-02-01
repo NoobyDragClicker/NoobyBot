@@ -303,7 +303,7 @@ public class UIManager : MonoBehaviour
     
     public void LogGame(){
         if(!isGameReview){
-            GameLogger.LogGame(boardManager.board);
+            GameLogger.LogGame(boardManager.board, 0);
         }
     }
 

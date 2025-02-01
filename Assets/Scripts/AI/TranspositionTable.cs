@@ -51,7 +51,6 @@ public class TranspositionTable
             }
         }
         return LookupFailed;
-
     }
 
     public void StoreEvaluation(int depth, int numPlySearched, int eval, int evalType, Move move){
@@ -89,11 +88,7 @@ public class TranspositionTable
 
     public Move GetStoredMove()
 	{
-        if(entries[Index].key == board.zobristKey){
-            return entries[Index].move;
-        } 
-        return null;
-		
+        return entries[Index].move;	
 	}
 
     public struct Entry

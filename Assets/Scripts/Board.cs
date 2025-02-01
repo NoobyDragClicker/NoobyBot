@@ -54,7 +54,6 @@ public class Board
     
     //Moves the pieces
     public void Move(Move move, bool isSearch){
-        if(move.GetIntValue() == 0){Debug.Log("0 move played");}
         gameMoveHistory.Push(move);
         uint castlingRights = GetCastlingRights(gameStateHistory.Peek());
         int oldCastlingRights = (int)castlingRights;
@@ -207,7 +206,7 @@ public class Board
 
                 if(Piece.PieceType(capturedPiece) == Piece.King){
                     Debug.Log("King captured");
-                    GameLogger.LogGame(this);
+                    GameLogger.LogGame(this, 1010101);
                     Debug.Log(move.oldIndex + " " + move.newIndex + " " + move.isCapture());
                 }
 
@@ -247,7 +246,6 @@ public class Board
         UpdatePinnedInfo();
     }
     public void UndoMove(Move move){
-        if(move.GetIntValue() == 0){Debug.Log("0 move unplayed");}
         gameMoveHistory.Pop();
         colorTurn = (colorTurn == Piece.White)? Piece.Black : Piece.White;
         //Removing the current one and getting the required info

@@ -31,6 +31,7 @@ public class BoardManager
     public Action<int> moveMade;
 
     public int boardNumber;
+    public int numMismatchesFound = 0;
 
     public BoardManager(int boardNumber){this.boardNumber = boardNumber;}
     
@@ -45,7 +46,6 @@ public class BoardManager
             board = new Board(customStr, new MoveGenerator());
             searchBoard = new Board(customStr, new MoveGenerator());
         }
-        moveMade.Invoke(boardNumber);
         
         //Syncing OnMoveChosen
         whitePlayer = whiteHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, startTime, increment, useClock);
@@ -56,13 +56,35 @@ public class BoardManager
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
         if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
 
+        if(searchBoard.zobristKey != board.zobristKey){
+            Debug.Log("mismatch on game start");
+        }
+
         gameStatus = GameStatus.Playing;
         playerToMove.NotifyToMove();
+        moveMade.Invoke(boardNumber);
     }
 
     void OnMoveChosen(Move move){
+        MoveGenerator moveGenerator = new MoveGenerator();
+        List<Move> moves = moveGenerator.GenerateLegalMoves(board, board.colorTurn);
+        int value = move.GetIntValue();
+        bool isLegal = false;
+        foreach(Move legalMove in moves){
+            if(legalMove.GetIntValue() == value){
+                isLegal = true;
+            }
+        }
         board.Move(move, false);
         searchBoard.Move(move, true);
+        if(searchBoard.zobristKey != board.zobristKey){
+            Debug.Log("Board and search board mismatch");
+        }
+        
+        if(isLegal == false){
+            Debug.Log("Illegal move attempted");
+        }
+
 
         //Checking if there is a draw or mate
         if(board.IsCheckmate(board.colorTurn)){

@@ -55,11 +55,7 @@ public class BoardManager
         
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
         if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
-
-        if(searchBoard.zobristKey != board.zobristKey){
-            Debug.Log("mismatch on game start");
-        }
-
+        
         gameStatus = GameStatus.Playing;
         playerToMove.NotifyToMove();
         moveMade.Invoke(boardNumber);
@@ -77,35 +73,34 @@ public class BoardManager
         }
         board.Move(move, false);
         searchBoard.Move(move, true);
-        if(searchBoard.zobristKey != board.zobristKey){
-            Debug.Log("Board and search board mismatch");
-        }
         
         if(isLegal == false){
-            Debug.Log("Illegal move attempted");
+            Debug.Log("Illegal move attempted, board " + boardNumber);
         }
 
-
+        if(searchBoard.zobristKey != board.zobristKey){
+            Debug.Log("mismatch, board " + boardNumber);
+        }
         //Checking if there is a draw or mate
         if(board.IsCheckmate(board.colorTurn)){
             if(board.colorTurn == Piece.White){EndGame(ResultStatus.Black_Won);}
             if(board.colorTurn == Piece.Black){EndGame(ResultStatus.White_Won);}
         }
         if(board.IsDraw()){EndGame(ResultStatus.Draw);}
-        
-        if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
-        if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
-        
+
         if(gameStatus == GameStatus.Playing){
+            if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
+            if(board.colorTurn == Piece.White){playerToMove = whitePlayer;}
             playerToMove.NotifyToMove();
         }
+        
         //Updates the main board display
         moveMade.Invoke(boardNumber);
+        return;
     }
     public void Update(){
         if(gameStatus == GameStatus.Playing){
             if(useClock && playerToMove.timeRemaining <= 0f){
-                Debug.Log("timed out");
                 ResultStatus resultStatus = (board.colorTurn == Piece.White) ? ResultStatus.Black_Won: ResultStatus.White_Won;
                 EndGame(resultStatus);
             }
@@ -118,6 +113,7 @@ public class BoardManager
         blackPlayer.NotifyGameOver();
         whitePlayer.NotifyGameOver();
         gameFinished.Invoke(result, boardNumber);
+        return;
     }
 
 

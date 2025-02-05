@@ -4,6 +4,7 @@ using System.ComponentModel;
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Data;
+using System;
 
 public class AIPlayer : Player
 {
@@ -22,6 +23,7 @@ public class AIPlayer : Player
     public AIPlayer(Board board, AISettings aiSettings, float startTime, int increment, bool useClock){
         this.board = board;
         this.useClock = useClock;
+        this.increment = increment;
         if(useClock){timeRemaining = startTime;}
 
         search = new Search(this.board, generatingStopwatch, makeMoveWatch, unmakeMoveWatch, aiSettings);
@@ -31,16 +33,16 @@ public class AIPlayer : Player
 
     //Allows us to remain synchronous with Unity, and still interact with the board
     public override void Update(){
+        if(moveFound){
+            moveFound = false;
+            ChoseMove(move);
+            timeRemaining += increment;
+        }
         if(useClock){
             timeRemaining -= Time.deltaTime;
         }
         if(isTurnToMove && timeRemaining <= timeHardCap){
             search.EndSearch();
-        }
-        if(moveFound){
-            moveFound = false;
-            ChoseMove(move);
-            timeRemaining += increment;
         }
     }
 
@@ -49,7 +51,8 @@ public class AIPlayer : Player
         timeHardCap = timeRemaining - ((timeRemaining / 20) + (increment/2));
         moveFound = false;
         isTurnToMove = true;
-        Task.Factory.StartNew (() => search.StartSearch(), TaskCreationOptions.LongRunning);
+        //Task.Factory.StartNew (() => search.StartSearch(), TaskCreationOptions.LongRunning);
+        search.StartSearch();
     }
 
     //Called when it is our turn to move
@@ -59,13 +62,16 @@ public class AIPlayer : Player
         Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);*/
         isTurnToMove = false;
         search.tt.DeleteEntries();
+        search.tt = null;
+        search = null;
+        GC.Collect();
     }
 
     //Triggered by the onSearchComplete event
     void OnSearchComplete(Move move){
         isTurnToMove = false;
-        moveFound = true;
         this.move = move;
+        moveFound = true;
     }
 
 }
@@ -75,12 +81,14 @@ public struct AISettings{
     public bool useTT;
     public bool useQuiescence;
     public bool useSearchExtensions;
+    public bool sayMaxDepth;
 
-    public AISettings(bool useTT, int maxDepth, bool useQuiescence, bool useSearchExtensions){
+    public AISettings(bool useTT, int maxDepth, bool useQuiescence, bool useSearchExtensions, bool sayMaxDepth){
         this.useTT = useTT;
         this.maxDepth = maxDepth;
         this.useQuiescence = useQuiescence;
         this.useSearchExtensions = useSearchExtensions;
+        this.sayMaxDepth = sayMaxDepth;
     }
 
 }

@@ -24,10 +24,6 @@ public class Search
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
     public event Action<Move> onSearchComplete;
-    Stopwatch generatingStopwatch;
-    Stopwatch makeMoveWatch;
-    Stopwatch unmakeMoveWatch;
-    ulong startKey;
 
     public Search(Board board, Stopwatch genStopwatch, Stopwatch makeMoveStopwatch, Stopwatch unmakeMoveStopwatch, AISettings aiSettings){
         this.board = board;
@@ -35,14 +31,9 @@ public class Search
         evaluation = new Evaluation();
         tt = new TranspositionTable(board, 512);
         moveOrder = new MoveOrder();
-
-        generatingStopwatch = genStopwatch;
-        makeMoveWatch = makeMoveStopwatch;
-        unmakeMoveWatch = unmakeMoveStopwatch;
     }
 
     public void StartSearch(){
-        startKey = board.zobristKey;
         bestMove = null;
         abortSearch = false;
         bestEval = StartIterativeDeepening(aiSettings.maxDepth);
@@ -50,12 +41,9 @@ public class Search
             bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
         }
         onSearchComplete?.Invoke(bestMove);
-        if(startKey != board.zobristKey){
-            UnityEngine.Debug.Log("search ended with different key");
-        }
     }
-
     int StartIterativeDeepening(int maxDepth){
+        ulong startKey = board.zobristKey;
         for(int depth = 1; depth <= maxDepth; depth++){
             SearchMoves(depth, 0, negativeInfinity, positiveInfinity);
             if(bestMoveThisIteration != null){
@@ -63,7 +51,13 @@ public class Search
                 bestEval = bestEvalThisIteration;
             }
             
+            if(board.zobristKey !=startKey && depth == 1){
+                GameLogger.LogGame(board, 0);
+                UnityEngine.Debug.Log("Asynced at depth: " + depth);
+            }
+
             if(abortSearch){
+                if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Max depth of: " + depth);}
                 break;
             }
             if(IsMateScore(bestEvalThisIteration)){
@@ -72,7 +66,6 @@ public class Search
         }
         return bestEvalThisIteration;
     }
-    
     int SearchMoves(int depth, int plyFromRoot, int alpha, int beta){
         if(abortSearch){return 0;}
         if(board.IsRepetitionDraw()){return 0;}
@@ -96,12 +89,7 @@ public class Search
             return evaluation.EvaluatePosition(board, aiSettings);
         }
 
-        int searchExtension = 0;
-
         List<Move> legalMoves = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn);
-
-        if(aiSettings.useSearchExtensions && legalMoves.Count == 1){searchExtension++;}
-
         //Check for mate or stalemate
         if(legalMoves.Count == 0){
             if(board.isCurrentPlayerInCheck){
@@ -110,8 +98,10 @@ public class Search
                 return 0;
             }
         }
+        int searchExtension = 0;
+        if(aiSettings.useSearchExtensions && legalMoves.Count == 1){searchExtension++;}
         
-        Move firstSearchMove;
+        Move firstSearchMove = null;
         if(aiSettings.useTT){
             firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
         } else{
@@ -121,14 +111,14 @@ public class Search
         legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove);
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
+        ulong startKey = board.zobristKey;
         for(int i = 0; i<legalMoves.Count; i++){
             int localExtension = searchExtension;
-
+            
+            //Make move -> search move -> unmake move
             board.Move(legalMoves[i], true);
             if((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && aiSettings.useSearchExtensions){localExtension++;}
-        
             int eval = -SearchMoves(depth + localExtension - 1 , plyFromRoot + 1, -beta, -alpha);
-
             board.UndoMove(legalMoves[i]);
 
             if(abortSearch){return 0;}
@@ -151,7 +141,7 @@ public class Search
                 }
             }
         }
-        if(aiSettings.useTT){tt.StoreEvaluation(depth, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
+        if(aiSettings.useTT){tt.StoreEvaluation(depth + searchExtension, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
         return alpha;
     }
     public static bool IsMateScore(int score){
@@ -161,4 +151,5 @@ public class Search
     public void EndSearch(){
         abortSearch = true;
     }
+
 }

@@ -11,10 +11,10 @@ using UnityEngine;
 
 public class TournamentManager : MonoBehaviour
 {
-    const int numBoards = 2;
+    const int numBoards = 1;
     const int startTime = 90;
     const int increment = 1;
-    const int maxGames = 60;
+    const int maxGames = 3;
     int gamesPlayed;
     int gamesFinished;
     int testPlayerWins, oldPlayerWins, draws;
@@ -34,9 +34,9 @@ public class TournamentManager : MonoBehaviour
     List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 18, true, true);
+    AISettings testSettings = new AISettings(true, 10, true, true, true);
     [SerializeField]
-    AISettings oldSettings = new AISettings(true, 18, false, false);
+    AISettings oldSettings = new AISettings(true, 10, false, false, true);
 
     BoardManager[] boards = new BoardManager[numBoards];
     bool[] isWhiteTest = new bool[numBoards];

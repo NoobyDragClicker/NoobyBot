@@ -69,9 +69,9 @@ public class UIManager : MonoBehaviour
     bool useCustomPos = false;
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 8, true, true);
+    AISettings testSettings = new AISettings(true, 8, true, true, true);
     [SerializeField]
-    AISettings oldSettings = new AISettings(true, 8, false, false);
+    AISettings oldSettings = new AISettings(true, 8, false, false, true);
 
     void Start(){
         boardManager = new BoardManager(0);

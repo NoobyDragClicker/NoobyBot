@@ -25,7 +25,7 @@ public class HumanPlayer : Player
     }
 
 
-    public void ChooseSelectedMove(Move move){
-        ChoseMove(move);
+    public void ChooseSelectedMove(Move move, string name){
+        ChoseMove(move, name);
     }
 }

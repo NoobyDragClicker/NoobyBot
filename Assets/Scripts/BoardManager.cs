@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using Unity.VisualScripting.FullSerializer;
 using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -35,7 +36,7 @@ public class BoardManager
 
     public BoardManager(int boardNumber){this.boardNumber = boardNumber;}
     
-    public void StartGame(bool useClock, int startTime, int increment, bool useCustomPos, string customStr, AISettings whiteSettings, AISettings blackSettings, bool whiteHuman = false, bool blackHuman = false){
+    public void StartGame(bool useClock, int startTime, int increment, bool useCustomPos, string customStr, AISettings whiteSettings, AISettings blackSettings, int gameNumber, bool whiteHuman = false, bool blackHuman = false){
         gameStatus = GameStatus.PreGame;
         this.useClock = useClock;
         if(!useCustomPos){
@@ -48,9 +49,9 @@ public class BoardManager
         }
         
         //Syncing OnMoveChosen
-        whitePlayer = whiteHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, startTime, increment, useClock);
+        whitePlayer = whiteHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, startTime, increment, useClock, "White " + gameNumber.ToString());
         whitePlayer.onMoveChosen += OnMoveChosen;
-        blackPlayer = blackHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, blackSettings, startTime, increment, useClock);
+        blackPlayer = blackHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, blackSettings, startTime, increment, useClock, "Black " + gameNumber.ToString());
         blackPlayer.onMoveChosen += OnMoveChosen;
         
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
@@ -61,7 +62,7 @@ public class BoardManager
         moveMade.Invoke(boardNumber);
     }
 
-    void OnMoveChosen(Move move){
+    void OnMoveChosen(Move move, string name){
         MoveGenerator moveGenerator = new MoveGenerator();
         List<Move> moves = moveGenerator.GenerateLegalMoves(board, board.colorTurn);
         int value = move.GetIntValue();
@@ -86,7 +87,11 @@ public class BoardManager
             if(board.colorTurn == Piece.White){EndGame(ResultStatus.Black_Won);}
             if(board.colorTurn == Piece.Black){EndGame(ResultStatus.White_Won);}
         }
-        if(board.IsDraw()){EndGame(ResultStatus.Draw);}
+
+        if(board.IsDraw()){
+            EndGame(ResultStatus.Draw);
+            Debug.Log("Draw");
+        }
 
         if(gameStatus == GameStatus.Playing){
             if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
@@ -112,6 +117,8 @@ public class BoardManager
         result = resultStatus;
         blackPlayer.NotifyGameOver();
         whitePlayer.NotifyGameOver();
+        blackPlayer.onMoveChosen -= OnMoveChosen;
+        whitePlayer.onMoveChosen -= OnMoveChosen;
         gameFinished.Invoke(result, boardNumber);
         return;
     }

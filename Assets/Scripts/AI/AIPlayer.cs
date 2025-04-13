@@ -5,9 +5,11 @@ using UnityEngine;
 using System.Threading.Tasks;
 using System.Data;
 using System;
+using System.Runtime.InteropServices;
 
 public class AIPlayer : Player
 {
+    string name;
     Board board;
     Move move;
     bool moveFound;
@@ -20,7 +22,8 @@ public class AIPlayer : Player
 
 
 
-    public AIPlayer(Board board, AISettings aiSettings, float startTime, int increment, bool useClock){
+    public AIPlayer(Board board, AISettings aiSettings, float startTime, int increment, bool useClock, string name){
+        this.name = name;
         this.board = board;
         this.useClock = useClock;
         this.increment = increment;
@@ -35,7 +38,8 @@ public class AIPlayer : Player
     public override void Update(){
         if(moveFound){
             moveFound = false;
-            ChoseMove(move);
+            isTurnToMove = false;
+            ChoseMove(move, name);
             timeRemaining += increment;
         }
         if(useClock){
@@ -61,6 +65,7 @@ public class AIPlayer : Player
         /*Debug.Log("Total time making moves: " + makeMoveWatch.Elapsed);
         Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);*/
         isTurnToMove = false;
+        search.onSearchComplete -= OnSearchComplete;
         search.tt.DeleteEntries();
         search.tt = null;
         search = null;

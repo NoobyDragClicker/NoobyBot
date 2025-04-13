@@ -114,7 +114,7 @@ public class UIManager : MonoBehaviour
 
         AISettings whiteSettings = (whitePlayerType.value == 2) ? testSettings : oldSettings;
         AISettings blackSettings = (blackPlayerType.value == 2) ? testSettings : oldSettings;
-        boardManager.StartGame(useClock, startTime, 1, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, whiteHuman:whiteHuman, blackHuman:blackHuman);
+        boardManager.StartGame(useClock, startTime, 1, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, 1,  whiteHuman:whiteHuman, blackHuman:blackHuman);
         
         if(useClock){
             whiteClock.gameObject.SetActive(true);

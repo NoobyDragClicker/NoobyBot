@@ -45,7 +45,7 @@ public class Search
     int StartIterativeDeepening(int maxDepth){
         ulong startKey = board.zobristKey;
         for(int depth = 1; depth <= maxDepth; depth++){
-            SearchMoves(depth, 0, negativeInfinity, positiveInfinity);
+            SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
             if(bestMoveThisIteration != null){
                 bestMove = bestMoveThisIteration;
                 bestEval = bestEvalThisIteration;
@@ -66,7 +66,7 @@ public class Search
         }
         return bestEvalThisIteration;
     }
-    int SearchMoves(int depth, int plyFromRoot, int alpha, int beta){
+    int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numExtensions){
         if(abortSearch){return 0;}
         if(board.IsRepetitionDraw()){return 0;}
         if(board.fiftyMoveCounter >= 100){return 0;}
@@ -99,7 +99,7 @@ public class Search
             }
         }
         int searchExtension = 0;
-        if(aiSettings.useSearchExtensions && legalMoves.Count == 1){searchExtension++;}
+        if(aiSettings.useSearchExtensions && legalMoves.Count == 1 && numExtensions < 16){searchExtension++;}
         
         Move firstSearchMove = null;
         if(aiSettings.useTT){
@@ -111,14 +111,13 @@ public class Search
         legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove);
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
-        ulong startKey = board.zobristKey;
         for(int i = 0; i<legalMoves.Count; i++){
             int localExtension = searchExtension;
             
             //Make move -> search move -> unmake move
             board.Move(legalMoves[i], true);
-            if((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && aiSettings.useSearchExtensions){localExtension++;}
-            int eval = -SearchMoves(depth + localExtension - 1 , plyFromRoot + 1, -beta, -alpha);
+            if((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && aiSettings.useSearchExtensions && numExtensions < 16){localExtension++;}
+            int eval = -SearchMoves(depth + localExtension - 1 , plyFromRoot + 1, -beta, -alpha, numExtensions + localExtension);
             board.UndoMove(legalMoves[i]);
 
             if(abortSearch){return 0;}

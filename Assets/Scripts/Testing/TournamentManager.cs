@@ -11,12 +11,10 @@ using UnityEngine;
 
 public class TournamentManager : MonoBehaviour
 {
-    const int numBoards = 1;
-    const int startTime = 90;
+    const int numBoards = 2;
+    const int startTime = 40;
     const int increment = 1;
-    const int maxGames = 3;
-    int gamesPlayed;
-    int gamesFinished;
+    const int maxGames = 8;
     int testPlayerWins, oldPlayerWins, draws;
 
     [SerializeField]
@@ -34,12 +32,16 @@ public class TournamentManager : MonoBehaviour
     List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 10, true, true, true);
+    AISettings testSettings = new AISettings(true, 4, false, true, true);
     [SerializeField]
-    AISettings oldSettings = new AISettings(true, 10, false, false, true);
+    AISettings oldSettings = new AISettings(true, 4, false, false, true);
 
     BoardManager[] boards = new BoardManager[numBoards];
+    int numGamesPerBoard = maxGames / numBoards;
+    int[] numGamesPlayedPerBoard = new int[numBoards];
+    int[] numGamesFinishedPerBoard = new int[numBoards];
     bool[] isWhiteTest = new bool[numBoards];
+    int totalGamesPlayed = 0;
 
     void Start()
     {    
@@ -53,6 +55,7 @@ public class TournamentManager : MonoBehaviour
             currentBoard.moveMade += UpdateBoard;
             currentBoard.gameFinished += FinishedGame;
         }
+        
     }
     void Update(){
         for(int x = 0; x < numBoards; x++){
@@ -71,9 +74,11 @@ public class TournamentManager : MonoBehaviour
     void StartGame(int boardNumber){
         AISettings whiteSettings = isWhiteTest[boardNumber] ? testSettings : oldSettings;
         AISettings blackSettings = isWhiteTest[boardNumber] ? oldSettings : testSettings;
-        boards[boardNumber].StartGame(true, startTime, increment, false, "", whiteSettings, blackSettings);
-        gamesPlayed ++;
-        Debug.Log("Game started: " + gamesPlayed);
+        numGamesPlayedPerBoard[boardNumber]++;
+        totalGamesPlayed++;
+        boards[boardNumber].StartGame(true, startTime, increment, false, "", whiteSettings, blackSettings, totalGamesPlayed);
+        
+        Debug.Log("Game started: " + totalGamesPlayed);
     }
 
     void SpawnBoard(int offsetX, int offsetY){
@@ -109,16 +114,17 @@ public class TournamentManager : MonoBehaviour
                 Debug.Log("test player won");
             }
         }
-        gamesFinished ++;
-        if(gamesPlayed < maxGames){
+        numGamesFinishedPerBoard[boardNumber]++;
+
+        if(numGamesPlayedPerBoard[boardNumber] < numGamesPerBoard){
             StartGame(boardNumber);
         }
-        if(gamesFinished == maxGames){
-            FinishTournament();
+        
+        bool isFinished = true;
+        for(int index = 0; index < numBoards; index++){
+            if (numGamesFinishedPerBoard[index] <  numGamesPerBoard){isFinished = false;}
         }
-        if(gamesPlayed > maxGames){
-            FinishTournament();
-        }
+        if (isFinished){FinishTournament();}
     }
 
     void FinishTournament(){

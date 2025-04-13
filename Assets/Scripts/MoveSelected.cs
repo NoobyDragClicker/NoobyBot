@@ -49,7 +49,7 @@ public class MoveSelected : MonoBehaviour
 
     void OnMouseDown(){
         if(!isPromoManager){
-            uiManager.boardManager.playerToMove.ChoseMove(move);
+            uiManager.boardManager.playerToMove.ChoseMove(move, uiManager.boardManager.playerToMove.name);
         //First dot spawned, no specific piece affiliated, just forces player to promote once selected
         } else{
             uiManager.SpawnPromotionPieces(move);

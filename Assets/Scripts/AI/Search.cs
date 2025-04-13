@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -23,6 +24,7 @@ public class Search
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
+    const int maxExtensions = 10;
     public event Action<Move> onSearchComplete;
 
     public Search(Board board, Stopwatch genStopwatch, Stopwatch makeMoveStopwatch, Stopwatch unmakeMoveStopwatch, AISettings aiSettings){
@@ -37,9 +39,9 @@ public class Search
         bestMove = null;
         abortSearch = false;
         bestEval = StartIterativeDeepening(aiSettings.maxDepth);
-        if(bestMove == null){
-            bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
-        }
+        //if(bestMove == null){
+            //bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
+        //}
         onSearchComplete?.Invoke(bestMove);
     }
     int StartIterativeDeepening(int maxDepth){
@@ -99,7 +101,7 @@ public class Search
             }
         }
         int searchExtension = 0;
-        if(aiSettings.useSearchExtensions && legalMoves.Count == 1 && numExtensions < 16){searchExtension++;}
+        if(aiSettings.useSearchExtensions && legalMoves.Count == 1 && numExtensions < maxExtensions){searchExtension++;}
         
         Move firstSearchMove = null;
         if(aiSettings.useTT){
@@ -116,7 +118,7 @@ public class Search
             
             //Make move -> search move -> unmake move
             board.Move(legalMoves[i], true);
-            if((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && aiSettings.useSearchExtensions && numExtensions < 16){localExtension++;}
+            if((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && aiSettings.useSearchExtensions && numExtensions < maxExtensions){localExtension++;}
             int eval = -SearchMoves(depth + localExtension - 1 , plyFromRoot + 1, -beta, -alpha, numExtensions + localExtension);
             board.UndoMove(legalMoves[i]);
 
@@ -147,8 +149,6 @@ public class Search
         const int maxMatePly = 150;
         return Math.Abs(score) > positiveInfinity - maxMatePly;
     }
-    public void EndSearch(){
-        abortSearch = true;
-    }
+    public void EndSearch(){abortSearch = true;}
 
 }

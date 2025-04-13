@@ -8,13 +8,14 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.SearchService;
 using UnityEngine;
+using System.Threading.Tasks;
 
 public class TournamentManager : MonoBehaviour
 {
     const int numBoards = 2;
-    const int startTime = 40;
-    const int increment = 1;
-    const int maxGames = 8;
+    const int startTime = 30;
+    const int increment = 0;
+    const int maxGames = 20;
     int testPlayerWins, oldPlayerWins, draws;
 
     [SerializeField]
@@ -32,9 +33,9 @@ public class TournamentManager : MonoBehaviour
     List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 4, false, true, true);
+    AISettings testSettings = new AISettings(true, 20, false, true, true);
     [SerializeField]
-    AISettings oldSettings = new AISettings(true, 4, false, false, true);
+    AISettings oldSettings = new AISettings(true, 20, false, false, true);
 
     BoardManager[] boards = new BoardManager[numBoards];
     int numGamesPerBoard = maxGames / numBoards;
@@ -95,8 +96,7 @@ public class TournamentManager : MonoBehaviour
     }
 
     void FinishedGame(BoardManager.ResultStatus result, int boardNumber){
-        if(result == BoardManager.ResultStatus.Draw){draws ++;
-        Debug.Log("draw");}
+        if(result == BoardManager.ResultStatus.Draw){draws ++; Debug.Log("draw");}
         else if(result == BoardManager.ResultStatus.White_Won){
             if(isWhiteTest[boardNumber] == true){
                 testPlayerWins++;
@@ -117,7 +117,7 @@ public class TournamentManager : MonoBehaviour
         numGamesFinishedPerBoard[boardNumber]++;
 
         if(numGamesPlayedPerBoard[boardNumber] < numGamesPerBoard){
-            StartGame(boardNumber);
+            Task.Delay(1000).ContinueWith ((t) => StartGame(boardNumber));
         }
         
         bool isFinished = true;

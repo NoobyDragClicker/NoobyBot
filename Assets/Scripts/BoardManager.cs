@@ -88,10 +88,7 @@ public class BoardManager
             if(board.colorTurn == Piece.Black){EndGame(ResultStatus.White_Won);}
         }
 
-        if(board.IsDraw()){
-            EndGame(ResultStatus.Draw);
-            Debug.Log("Draw");
-        }
+        if(board.IsDraw()){EndGame(ResultStatus.Draw);}
 
         if(gameStatus == GameStatus.Playing){
             if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
@@ -101,7 +98,6 @@ public class BoardManager
         
         //Updates the main board display
         moveMade.Invoke(boardNumber);
-        return;
     }
     public void Update(){
         if(gameStatus == GameStatus.Playing){
@@ -120,7 +116,6 @@ public class BoardManager
         blackPlayer.onMoveChosen -= OnMoveChosen;
         whitePlayer.onMoveChosen -= OnMoveChosen;
         gameFinished.Invoke(result, boardNumber);
-        return;
     }
 
 

@@ -55,8 +55,7 @@ public class AIPlayer : Player
         timeHardCap = timeRemaining - ((timeRemaining / 20) + (increment/2));
         moveFound = false;
         isTurnToMove = true;
-        //Task.Factory.StartNew (() => search.StartSearch(), TaskCreationOptions.LongRunning);
-        search.StartSearch();
+        Task.Factory.StartNew (() => search.StartSearch(), TaskCreationOptions.LongRunning);
     }
 
     //Called when it is our turn to move
@@ -64,6 +63,7 @@ public class AIPlayer : Player
         //Debug.Log("Total time generating moves: " + generatingStopwatch.Elapsed);
         /*Debug.Log("Total time making moves: " + makeMoveWatch.Elapsed);
         Debug.Log("Total time unmaking moves: " + unmakeMoveWatch.Elapsed);*/
+        search.EndSearch();
         isTurnToMove = false;
         search.onSearchComplete -= OnSearchComplete;
         search.tt.DeleteEntries();

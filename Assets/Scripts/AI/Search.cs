@@ -31,7 +31,7 @@ public class Search
         this.board = board;
         this.aiSettings = aiSettings;
         evaluation = new Evaluation();
-        tt = new TranspositionTable(board, 512);
+        tt = new TranspositionTable(board, 256);
         moveOrder = new MoveOrder();
     }
 
@@ -59,10 +59,11 @@ public class Search
             }
 
             if(abortSearch){
-                if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Max depth of: " + depth);}
+                if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Max depth of: " + depth + " Eval: " + bestEval);}
                 break;
             }
             if(IsMateScore(bestEvalThisIteration)){
+                if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Max depth of: " + depth + " Eval: " + bestEval);}
                 break;
             }
         }
@@ -110,7 +111,7 @@ public class Search
             firstSearchMove = (plyFromRoot == 0) ? bestMove : null;
         }
         
-        legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove);
+        legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove, aiSettings);
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
         for(int i = 0; i<legalMoves.Count; i++){

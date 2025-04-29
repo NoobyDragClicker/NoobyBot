@@ -475,31 +475,11 @@ public class Board
     
     //Utilities
     public int IndexToRank(int index){
-        if(index <=7 && index >= 0){
-            return 8;
-        } else if(index <=15 && index > 7){
-            return 7;
-        } else if(index <=23 && index > 15){
-            return 6;
-        } else if(index <=31 && index > 23){
-            return 5;
-        } else if(index <=39 && index > 31){
-            return 4;
-        } else if(index <=47 && index > 39){
-            return 3;
-        } else if(index <=55 && index > 47){
-            return 2;
-        } else if(index <=63 && index > 55){
-            return 1;
-        } else{
-            Debug.Log("index out of range ");
-            return 0;
-        }
+        return 8 - ((index - (index % 8)) / 8);
     }
 
     public int IndexToFile(int index){
-        int rank = IndexToRank(index);
-        int file = index - ((8 - rank)*8) + 1;
+        int file = index % 8 + 1;
         return file;
     }
 

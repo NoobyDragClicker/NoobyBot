@@ -33,8 +33,12 @@ public class BoardManager
 
     public int boardNumber;
     public int numMismatchesFound = 0;
+    BookLoader bookLoader;
 
-    public BoardManager(int boardNumber){this.boardNumber = boardNumber;}
+    public BoardManager(int boardNumber, BookLoader bookLoader){
+        this.boardNumber = boardNumber;
+        this.bookLoader = bookLoader;
+    }
     
     public void StartGame(bool useClock, int startTime, int increment, bool useCustomPos, string customStr, AISettings whiteSettings, AISettings blackSettings, int gameNumber, bool whiteHuman = false, bool blackHuman = false){
         gameStatus = GameStatus.PreGame;
@@ -49,9 +53,9 @@ public class BoardManager
         }
         
         //Syncing OnMoveChosen
-        whitePlayer = whiteHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, startTime, increment, useClock, "White " + gameNumber.ToString());
+        whitePlayer = whiteHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, whiteSettings, bookLoader, startTime, increment, useClock, "White " + gameNumber.ToString());
         whitePlayer.onMoveChosen += OnMoveChosen;
-        blackPlayer = blackHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, blackSettings, startTime, increment, useClock, "Black " + gameNumber.ToString());
+        blackPlayer = blackHuman ? new HumanPlayer(startTime, useClock) : new AIPlayer(searchBoard, blackSettings, bookLoader, startTime, increment, useClock, "Black " + gameNumber.ToString());
         blackPlayer.onMoveChosen += OnMoveChosen;
         
         if(board.colorTurn == Piece.Black){playerToMove = blackPlayer;}
@@ -77,6 +81,7 @@ public class BoardManager
         
         if(isLegal == false){
             Debug.Log("Illegal move attempted, board " + boardNumber);
+            GameLogger.LogGame(board, 1);
         }
 
         if(searchBoard.zobristKey != board.zobristKey){

@@ -1,13 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Unity.Mathematics;
+using UnityEngine;
 
 public class Move
 {
     public int oldIndex;
     public int newIndex;
     bool capture;
-    bool promotion;
 
     //0 = none, 1 = promote to queen, 2 = promote to bishop, 3 = promote to knight, 4 = promote to rook, 5 = castle, 6 = double pawn push, 7 = enpeasent
     public int flag;
@@ -40,11 +41,14 @@ public class Move
     }
 
     public int GetIntValue(){
-        return oldIndex + (newIndex << 6) + (flag << 12);
+        return oldIndex + (newIndex << 6) + (flag << 12) + ((capture ? 1 : 0) << 15);
     }
 
     public bool isPromotion(){
         return (flag > 0 && flag < 5) ? true : false;
     }
 
+    public void printMove(){
+        UnityEngine.Debug.Log("Old position: " + Coord.GetNotationFromIndex(oldIndex) + "  New position: " + Coord.GetNotationFromIndex(newIndex) + "  Is Capture: " + capture.ToString() + "  Flag: " + flag.ToString());
+    }
 }

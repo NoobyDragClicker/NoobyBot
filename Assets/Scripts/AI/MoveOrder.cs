@@ -8,16 +8,17 @@ using UnityEngine;
 
 public class MoveOrder
 {
+    const int million = 1000000;
     const int maxMoves = 218;
     float[] moveScores = new float[maxMoves];
-    public List<Move> OrderMoves(Board board, List<Move> legalMoves, Move firstMove){
+    public List<Move> OrderMoves(Board board, List<Move> legalMoves, Move firstMove, AISettings aiSettings){
         List<Move> moves = legalMoves;
 
         for(int x = 0; x< legalMoves.Count; x++){
             Move move = legalMoves[x];
             int score = 0;
             if(firstMove != null && move.GetIntValue() == firstMove.GetIntValue()){
-                score = 100;
+                score = 8* million;
             } else{
                 int movedPieceValue;
                 if(move.isCapture()){
@@ -32,14 +33,14 @@ public class MoveOrder
                     } else{
                         capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex]));
                     }
-                    if(move.isPromotion()){
-                        movedPieceValue = GetPieceValue(move.PromotedPieceType());
-                    } 
-                    else {
-                        movedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].oldIndex]));
-                    }
+                    movedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].oldIndex]));
                     //Adds one to differentiate from the non captures
-                    score = 1+ capturedPieceValue - movedPieceValue ;
+                    if(aiSettings.useRandomTest)
+                    {
+                        score = million + (capturedPieceValue - movedPieceValue) ;
+                    } else{
+                        score = 1 + (capturedPieceValue - movedPieceValue) ;
+                    }
                 //Castle
                 } else if(move.flag == 5){
                         score = 3;

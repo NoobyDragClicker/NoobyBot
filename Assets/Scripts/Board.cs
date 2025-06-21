@@ -23,19 +23,20 @@ public class Board
     public List<int> blockableIndexes = new List<int>();
     public List<PinnedPair> pinnedIndexes = new List<PinnedPair>();
     public List<int> pinnedPieceIndexes = new List<int>();
+    public int[] whiteAttackedSquares = new int[64];
+    public int[] blackAttackedSquares = new int[64];
     public int colorTurn;
 
     //Saves the index where a pawn can capture
     public int enPassantIndex;
     public int fiftyMoveCounter;
     public MoveGenerator moveGenerator;
-    BoardManager boardManager;
     public int[] board;
 
-    //Bits from L to R: wShort, wLong, bShort, bLong, en passant file (next 4), piece captured (5 bits),50 move counter for the rest
+    //Saves info about the game: Bits from L to R: wShort, wLong, bShort, bLong, en passant file (next 4), piece captured (5 bits), 50 move counter for the rest
     Stack<uint> gameStateHistory = new Stack<uint>();
+    
     public uint currentGameState;
-
     public Stack<Move> gameMoveHistory = new Stack<Move>();
 
     public Stack<ulong> zobristHistory = new Stack<ulong>();
@@ -47,6 +48,8 @@ public class Board
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory.Push(zobristKey);
+        whiteAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.White, this);
+        blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
     }
@@ -242,11 +245,15 @@ public class Board
         zobristKey ^= Zobrist.enPassantFile[enPassantFile];
         zobristHistory.Push(zobristKey);
 
+        whiteAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.White, this);
+        blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
+        
     }
     public void UndoMove(Move move){
         gameMoveHistory.Pop();
+
         colorTurn = (colorTurn == Piece.White)? Piece.Black : Piece.White;
         //Removing the current one and getting the required info
         uint oldGameStateHistory = gameStateHistory.Pop();
@@ -338,6 +345,9 @@ public class Board
                 board[newPos] = 0;
             }
         }
+
+        whiteAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.White, this);
+        blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
     }
@@ -391,7 +401,6 @@ public class Board
         return position;
     }
     
-    //TODO: repetition
     public bool IsDraw(){
         //Stalemate
         if(moveGenerator.GenerateLegalMoves(this, colorTurn).Count == 0 && !isCurrentPlayerInCheck){return true;}

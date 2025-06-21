@@ -37,7 +37,6 @@ public class OpeningBook
                     totalLines++;
                 }
             }
-            //Debug.Log(possibleMovesInPos.Count);
         } 
         else {
             int previousMoveVal = board.gameMoveHistory.Peek().GetIntValue();

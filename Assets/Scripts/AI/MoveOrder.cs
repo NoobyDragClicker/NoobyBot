@@ -16,40 +16,46 @@ public class MoveOrder
 
         for(int x = 0; x< legalMoves.Count; x++){
             Move move = legalMoves[x];
-            int score = 0;
-            if(firstMove != null && move.GetIntValue() == firstMove.GetIntValue()){
-                score = 8* million;
-            } else{
-                int movedPieceValue;
-                if(move.isCapture()){
-                    int capturedPieceValue;
-                    //en passant
-                    if(move.flag == 7){
-                        if(Piece.IsColour(board.board[legalMoves[x].oldIndex], Piece.White)){
-                            capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex + 8]));
-                        } else {
-                            capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex - 8]));
-                        }
-                    } else{
-                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex]));
+            int score = (firstMove != null && move.GetIntValue() == firstMove.GetIntValue()) ? 8 * million : 0;
+
+            int movedPieceValue;
+            if(move.isCapture()){
+
+                int capturedPieceValue;
+                //en passant
+                if(move.flag == 7){
+                    if(Piece.IsColour(board.board[legalMoves[x].oldIndex], Piece.White)){
+                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex + 8]));
+                    } else {
+                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex - 8]));
                     }
-                    movedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].oldIndex]));
-                    //Adds one to differentiate from the non captures
-                    if(aiSettings.useRandomTest)
-                    {
-                        score = million + (capturedPieceValue - movedPieceValue) ;
-                    } else{
-                        score = 1 + (capturedPieceValue - movedPieceValue) ;
-                    }
-                //Castle
-                } else if(move.flag == 5){
-                        score = 3;
                 } else{
-                    if(move.isPromotion()){
-                        score = 9;
-                    }
+                    capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex]));
                 }
+                movedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].oldIndex]));
+               
+                //Basically MVV LVA
+                score = million + (capturedPieceValue - movedPieceValue) ;
+
+            //Castle
+            } else if(move.flag == 5){
+                score = 3;
+            } else if(move.isPromotion()){
+                score = 9;
             }
+
+            //Penalty for moving to attacked square
+            if ((Piece.Color(board.board[legalMoves[x].oldIndex]) == Piece.White && board.blackAttackedSquares[move.newIndex] == 1) |  (board.colorTurn == Piece.Black && board.whiteAttackedSquares[move.newIndex] == 1)){
+                score -= 4;
+            }
+
+            //Bonus for developping
+            if (Coord.IndexToFile(move.newIndex) >= 3 && Coord.IndexToFile(move.newIndex) <= 6 && Coord.IndexToRank(move.newIndex) >= 3 && Coord.IndexToRank(move.newIndex) <= 6){
+                score += 2;
+            } else if (Coord.IndexToFile(move.newIndex) >= 2 && Coord.IndexToFile(move.newIndex) <= 7 && Coord.IndexToRank(move.newIndex) >= 2 && Coord.IndexToRank(move.newIndex) <= 7){
+                score += 1;
+            }
+
             moveScores[x] = score;
         }
 

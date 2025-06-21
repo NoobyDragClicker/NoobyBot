@@ -22,6 +22,7 @@ public class Move
     public Move(int prevIndex, int currIndex, bool capture){
         oldIndex = prevIndex;
         newIndex = currIndex;
+        flag = 0;
         this.capture = capture;
     }
 

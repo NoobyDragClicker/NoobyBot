@@ -55,7 +55,7 @@ public class UIManager : MonoBehaviour
     List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     public BoardManager boardManager;
-    public bool isDebugMode = false;
+    public bool isDebugMode = true;
     bool isGameReview = false;
     List<Move> gameMoves;
     int currentGameMoveIndex = 0;
@@ -68,28 +68,34 @@ public class UIManager : MonoBehaviour
 
     bool useClock = true;
     bool useCustomPos = false;
+    bool isMoveWaiting;
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 20, 16,  true, true, true, true);
+    AISettings testSettings = new AISettings(true, 20, 16,  true, true, false, true);
     [SerializeField]
     AISettings oldSettings = new AISettings(true, 20, 16,  false, false, false, true);
 
     void Start(){
         bookLoader = new BookLoader();
         boardManager = new BoardManager(0, bookLoader);
-        boardManager.moveMade += UpdateBoard;
+        boardManager.moveMade += NewMove;
         boardManager.gameFinished += DisplayResult;
     }
 
     void Update(){
+        if (isMoveWaiting){ UpdateBoard(boardManager.boardNumber);  isMoveWaiting = false; }
         boardManager.Update();
         if(boardManager.gameStatus == BoardManager.GameStatus.Playing){
             UpdateClock();
         }
     }
+    void NewMove(int boardNumber)
+    {
+        isMoveWaiting = true;
+    }
 
     void UpdateClock(){
-        float secondsRemaining = Mathf.Max(0, boardManager.playerToMove.timeRemaining);
+        int secondsRemaining = Mathf.Max(0, boardManager.playerToMove.getSecondsRemaining());
         int numMinutes = (int) (secondsRemaining/60);
         int numSeconds = (int) (secondsRemaining - numMinutes * 60);
 
@@ -113,10 +119,14 @@ public class UIManager : MonoBehaviour
             gameMoves = GameLogger.ReadMovesFromLog(gameReviewPathInput.text);
         }
 
-
         AISettings whiteSettings = (whitePlayerType.value == 2) ? testSettings : oldSettings;
         AISettings blackSettings = (blackPlayerType.value == 2) ? testSettings : oldSettings;
-        boardManager.StartGame(useClock, startTime, 1, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, 1,  whiteHuman:whiteHuman, blackHuman:blackHuman);
+
+        if (!(whiteHuman && blackHuman) && (whiteSettings.openingBookDepth > 0 || blackSettings.openingBookDepth > 0))
+        {
+            bookLoader.loadBook();
+        }
+
         
         if(useClock){
             whiteClock.gameObject.SetActive(true);
@@ -133,20 +143,24 @@ public class UIManager : MonoBehaviour
                 spawnedTile.Init(isOffset);
             }
         }
-
+        boardManager.StartGame(useClock, startTime, 1, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, 1,  whiteHuman:whiteHuman, blackHuman:blackHuman);
         startScreen.SetActive(false);
     }
     
-    public void UpdateBoard(int boardNumber){  
-        Board board = boardManager.board; 
+    public void UpdateBoard(int boardNumber){
+        Board board = boardManager.board;
+        
         //Removing all displayed pieces
-        for(int y = 0; y < displayPieces.Count; y++){
+        for (int y = 0; y < displayPieces.Count; y++)
+        {
             Destroy(displayPieces[y].gameObject);
         }
         displayPieces.Clear();
+        
 
         //Destroy current moveselectors
-        for(int z = 0; z< possiblePlayerMoves.Count; z++){
+        for (int z = 0; z < possiblePlayerMoves.Count; z++)
+        {
             Destroy(possiblePlayerMoves[z].gameObject);
         }
         possiblePlayerMoves.Clear();
@@ -156,15 +170,18 @@ public class UIManager : MonoBehaviour
             Destroy(debugPrefabs[z]);
         }
         debugPrefabs.Clear();
-        
+
+
         
         //Spawning them in based on board
-        for(int x = 0; x<64; x++){
-            if(board.board[x] != 0){
+        for (int x = 0; x < 64; x++)
+        {
+            if (board.board[x] != 0)
+            {
                 int pieceType = Piece.PieceType(board.board[x]);
                 int rank = board.IndexToRank(x);
                 int file = board.IndexToFile(x);
-                DisplayPiece displayPiece = Instantiate(displayPiecePrefab, new Vector3(file-1, rank-1), Quaternion.identity);
+                DisplayPiece displayPiece = Instantiate(displayPiecePrefab, new Vector3(file - 1, rank - 1), Quaternion.identity);
                 displayPiece.Init(pieceType, Piece.Color(board.board[x]));
                 displayPieces.Add(displayPiece);
             }

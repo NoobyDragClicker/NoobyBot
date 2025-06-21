@@ -238,13 +238,14 @@ public static class Coord
         
     }
 
-    public static Move getMoveFromIntValue(int value){
+    public static Move getMoveFromIntValue(int value)
+    {
         int startIndex = value & 0b111111;
-        int endIndex = (value >>6) & 0b111111;
+        int endIndex = (value >> 6) & 0b111111;
         int flag = (value >> 12) & 0b111;
-        bool isCapture = ((value >> 15) & 0b1) == 1 ? true:false;
+        bool isCapture = ((value >> 15) & 0b1) == 1 ? true : false;
         return new Move(startIndex, endIndex, isCapture, flag);
 
-        
+
     }
 }

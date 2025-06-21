@@ -61,18 +61,17 @@ public class TranspositionTable
     }
 
     //Returning it to its new mate value, based on how far away this mate is
-    public int RetrieveEval(int eval, int numPlySearched){
+    int RetrieveEval(int eval, int numPlySearched){
         if(Search.IsMateScore(eval)){
 			int sign = System.Math.Sign(eval);
             return (eval * sign - numPlySearched) * sign;
-			
         }
         //If not a mate, just return the eval
         return eval;
     }
 
     //Returning it to either 99999 or -99999 
-    public int CorrectMateEvalForStorage(int eval, int numPlySearched){
+    int CorrectMateEvalForStorage(int eval, int numPlySearched){
         if (Search.IsMateScore(eval)){
 			int sign = System.Math.Sign(eval);
 			return (eval * sign + numPlySearched) * sign;
@@ -80,7 +79,7 @@ public class TranspositionTable
 		return eval;
     }
 
-    public ulong Index{
+    ulong Index{
         get{
 	        return board.zobristKey % count;
         }

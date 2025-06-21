@@ -1,31 +1,32 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class HumanPlayer : Player
 {
-    public HumanPlayer(float startTime, bool useClock){
-        this.useClock = useClock;
-        if(useClock){timeRemaining = startTime;}
+    public HumanPlayer(int startTime, int incrementMS, bool useClock){
+        //Keeps track of the total time remaining
+        TotalTimeRemaining = TimeSpan.FromSeconds(startTime);
+        increment = TimeSpan.FromMilliseconds(incrementMS);
+        //Keeps track of the current move time
+        moveStopwatch = new Stopwatch();
     }
-    public override void Update()
-    {
-        if(useClock){
-            timeRemaining -= Time.deltaTime;
-        }
-        return;
-    }
+
     public override void NotifyToMove()
     {
-        return;
+        moveStopwatch.Restart();
     }
+
     public override void NotifyGameOver()
     {
         return;
     }
 
-
     public void ChooseSelectedMove(Move move, string name){
+        moveStopwatch.Stop();
+        TotalTimeRemaining -= moveStopwatch.Elapsed;
+        TotalTimeRemaining += increment;
         ChoseMove(move, name);
     }
 }

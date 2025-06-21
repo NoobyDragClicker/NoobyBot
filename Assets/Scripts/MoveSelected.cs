@@ -23,6 +23,9 @@ public class MoveSelected : MonoBehaviour
 
     void Start(){
         uiManager = GameObject.Find("UIManager").GetComponent<UIManager>();
+        if(move.isCapture()){
+            render.color = white;
+        }
     }
 
     //Only used for promotion

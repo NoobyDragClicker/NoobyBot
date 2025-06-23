@@ -1,7 +1,4 @@
 using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using UnityEngine;
 
 public class HumanPlayer : Player
 {

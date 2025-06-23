@@ -1,4 +1,3 @@
-using UnityEngine;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
@@ -68,7 +67,7 @@ public class AIPlayer : Player
             isInBook = false;
             if (aiSettings.sayMaxDepth)
             {
-                UnityEngine.Debug.Log("Out of book");
+                //UnityEngine.Debug.Log("Out of book");
             }
         }
         if (aiSettings.openingBookDepth > 0 && isInBook)
@@ -83,7 +82,7 @@ public class AIPlayer : Player
                 isInBook = false;
                 if (aiSettings.sayMaxDepth)
                 {
-                    UnityEngine.Debug.Log("Out of book");
+                    //UnityEngine.Debug.Log("Out of book");
                 }
                 Task.Factory.StartNew(() => search.StartSearch(), TaskCreationOptions.LongRunning);
             }

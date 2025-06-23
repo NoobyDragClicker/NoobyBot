@@ -1,13 +1,11 @@
 using System;
-using Unity.VisualScripting;
 
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(true, 30, 16, false, false, false, false);
+    AISettings aiSettings = new AISettings(true, 40, 16, false, false, false, false);
     Board board;
     BookLoader bookLoader;
-
 
     static readonly string[] positionLabels = new[] { "position", "fen", "moves" };
     static readonly string[] goLabels = new[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
@@ -15,7 +13,7 @@ public class Engine
 
     public Engine()
     {
-        BookLoader bookLoader = new BookLoader();
+        bookLoader = new BookLoader();
         player = new AIPlayer("Nooby Bot");
         player.onMoveChosen += MakeMove;
     }
@@ -34,6 +32,7 @@ public class Engine
                 Console.WriteLine("readyok");
                 break;
             case "ucinewgame":
+                board = new Board();
                 player.NewGame(board, aiSettings, bookLoader);
                 break;
             case "position":
@@ -89,6 +88,7 @@ public class Engine
         // FEN
         if (message.ToLower().Contains("startpos"))
         {
+            Console.WriteLine("startpos found");
             board.setPosition(Board.startPos, new MoveGenerator());
         }
         else if (message.ToLower().Contains("fen"))

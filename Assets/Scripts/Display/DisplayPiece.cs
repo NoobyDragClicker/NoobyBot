@@ -43,3 +43,4 @@ public class DisplayPiece : MonoBehaviour
         pos.localScale = new UnityEngine.Vector3(.85f, .85f, .85f);
     }
 }
+

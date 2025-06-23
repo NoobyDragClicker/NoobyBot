@@ -1,15 +1,6 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Design.Serialization;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using JetBrains.Annotations;
-using Unity.Collections;
-using Unity.Mathematics;
-using Unity.VisualScripting;
-using UnityEngine;
+
 
 public class MoveGenerator
 {
@@ -70,7 +61,7 @@ public class MoveGenerator
                     case Piece.Rook: legalMoves.AddRange(GenerateRookMoves(x, pieceColor, board, false, board.isCurrentPlayerInCheck, isCapturesOnly)); break;
                     case Piece.Queen: legalMoves.AddRange(GenerateQueenMoves(x, pieceColor, board, false, board.isCurrentPlayerInCheck, isCapturesOnly)); break;
                     case Piece.King: break;
-                    default: UnityEngine.Debug.Log("Unknown piece found"); break;
+                    default: break;
                 }
             }
         }

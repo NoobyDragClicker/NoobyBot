@@ -1,6 +1,4 @@
-
 using System;
-using System.Diagnostics;
 
 public abstract class Player
 {

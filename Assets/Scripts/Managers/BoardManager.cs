@@ -1,8 +1,7 @@
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-
-using UnityEngine;
 
 
 public class BoardManager
@@ -42,6 +41,18 @@ public class BoardManager
 
     public void StartGame(Player.ClockType clockType, int startTime, int incrementMS, bool useCustomPos, string customStr, AISettings whiteSettings, AISettings blackSettings, int gameNumber, bool whiteHuman = false, bool blackHuman = false)
     {
+        Engine engine = new Engine();
+        engine.ReceiveCommand("ucinewgame");
+        try
+        {
+            engine.ReceiveCommand("position startpos");
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.Log(e.Message);
+        }
+        
+
         gameStatus = GameStatus.PreGame;
         this.clockType = clockType;
 
@@ -126,13 +137,17 @@ public class BoardManager
             if (board.colorTurn == Piece.Black)
             {
                 playerToMove = blackPlayer;
+
                 whiteTimeRemaining -= makeMoveWatch.Elapsed;
+                whiteTimeRemaining += increment;
             }
             if (board.colorTurn == Piece.White)
             {
                 playerToMove = whitePlayer;
                 blackTimeRemaining -= makeMoveWatch.Elapsed;
+                blackTimeRemaining += increment;
             }
+
             if (whiteTimeRemaining <= TimeSpan.Zero)
             {
                 EndGame(ResultStatus.Black_Won);
@@ -176,3 +191,4 @@ public class BoardManager
         else{ return (int)blackTimeRemaining.TotalMilliseconds; }
     }
 }
+#endif

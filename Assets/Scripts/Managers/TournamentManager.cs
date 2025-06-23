@@ -1,12 +1,5 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.VisualScripting;
-using UnityEditor;
-using UnityEditor.SearchService;
 using UnityEngine;
 using System.Threading.Tasks;
 
@@ -15,7 +8,7 @@ public class TournamentManager : MonoBehaviour
     const int numBoards = 4;
     const int startTime = 30;
     const int incrementMS = 500;
-    const int maxGames = 200;
+    const int maxGames = 20;
     const Player.ClockType clockType = Player.ClockType.Regular;
 
     int testPlayerWins, oldPlayerWins, draws;

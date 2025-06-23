@@ -1,11 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System;
-using System.Runtime.InteropServices;
+
 
 public class BookLoader
 {
@@ -25,7 +22,6 @@ public class BookLoader
     {
         if (!File.Exists(bookPath))
         {
-            Debug.Log("No file found, trimming from main");
             trimOriginalFile();
         }
         if (!isLoaded)

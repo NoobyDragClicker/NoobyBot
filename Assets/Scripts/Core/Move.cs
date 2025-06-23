@@ -44,6 +44,6 @@ public class Move
     }
 
     public void printMove(){
-        UnityEngine.Debug.Log("Old position: " + Coord.GetNotationFromIndex(oldIndex) + "  New position: " + Coord.GetNotationFromIndex(newIndex) + "  Is Capture: " + capture.ToString() + "  Flag: " + flag.ToString());
+        //UnityEngine.Debug.Log("Old position: " + Coord.GetNotationFromIndex(oldIndex) + "  New position: " + Coord.GetNotationFromIndex(newIndex) + "  Is Capture: " + capture.ToString() + "  Flag: " + flag.ToString());
     }
 }

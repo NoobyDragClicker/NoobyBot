@@ -1,10 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
-using Unity.VisualScripting;
-using UnityEngine;
-using UnityEngine.AI;
+
 
 public static class Coord
 {
@@ -22,7 +18,7 @@ public static class Coord
             case 6: file = 'f'; break;
             case 7: file = 'g'; break;
             case 8: file = 'h'; break;
-            default: Debug.Log("out of range"); file = 'x'; break;
+            default: file = 'x'; break;
         }
         notation = file.ToString() + rank.ToString();
         return notation;
@@ -61,7 +57,7 @@ public static class Coord
             case 'f': file = 6; break;
             case 'g': file = 7; break;
             case 'h': file = 8; break;
-            default: Debug.Log("Outside of options, letter to file"); break;
+            default:  break;
         }
         return file;
     }
@@ -143,7 +139,7 @@ public static class Coord
                                     if (startIndex == 0){
                                         startIndex = possibleStartIndexes[x];
                                     } else{
-                                        Debug.Log("Rank Disambiguated but multiple options");
+                                        //Debug.Log("Rank Disambiguated but multiple options");
                                     } 
                                 }
                             }
@@ -155,7 +151,7 @@ public static class Coord
                                     if (startIndex == 0){
                                         startIndex = possibleStartIndexes[x];
                                     } else{
-                                        Debug.Log("File Disambiguated but multiple options: " + ogMove + " " + strMove + "Line: " + lineNum.ToString());
+                                        //Debug.Log("File Disambiguated but multiple options: " + ogMove + " " + strMove + "Line: " + lineNum.ToString());
                                     } 
                                 }
                             }
@@ -170,13 +166,13 @@ public static class Coord
                         if (possibleStartIndexes.Count == 1) {
                             startIndex = possibleStartIndexes[0];
                         } else {
-                            Debug.Log("Disambiguated but no extra info: " + ogMove + " " + strMove + "Line: " + lineNum.ToString());
-                            Debug.Log(possibleStartIndexes.Count);
+                            //Debug.Log("Disambiguated but no extra info: " + ogMove + " " + strMove + "Line: " + lineNum.ToString());
+                            //Debug.Log(possibleStartIndexes.Count);
                         }
                     } 
                     else{
-                        Debug.Log("No Valid Moves found: " + ogMove + " " + strMove + "Line: " + lineNum.ToString());
-                        Debug.Log(possibleStartIndexes.Count);
+                        //Debug.Log("No Valid Moves found: " + ogMove + " " + strMove + "Line: " + lineNum.ToString());
+                        //Debug.Log(possibleStartIndexes.Count);
                     }
                 }
 
@@ -217,7 +213,7 @@ public static class Coord
                         startIndex = endIndex + 16;
                         flag = 6;
                     } else {
-                        Debug.Log("No pawn detected for pawn push");
+                        //Debug.Log("No pawn detected for pawn push");
                     }
                 } else {
                     if (board.board[endIndex - 8]  == (Piece.Pawn | Piece.Black)){
@@ -228,7 +224,7 @@ public static class Coord
                         startIndex = endIndex - 16;
                         flag = 6;
                     } else {
-                        Debug.Log("No pawn detected for pawn push");
+                        //Debug.Log("No pawn detected for pawn push");
                     }
                 }
             }

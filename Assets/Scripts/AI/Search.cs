@@ -37,7 +37,6 @@ public class Search
         bestEval = StartIterativeDeepening(aiSettings.maxDepth);
         if(bestMove == null){
             bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
-            UnityEngine.Debug.Log("Timed out, returning random");
         }
 
         onSearchComplete?.Invoke(bestMove);
@@ -56,20 +55,20 @@ public class Search
             }
             else
             {
-                UnityEngine.Debug.Log("Did not find a move " + board.moveGenerator.GenerateLegalMoves(board, board.colorTurn).Count + "Eval: " + bestEvalThisIteration);
+                //UnityEngine.Debug.Log("Did not find a move " + board.moveGenerator.GenerateLegalMoves(board, board.colorTurn).Count + "Eval: " + bestEvalThisIteration);
             }
             
             if(board.zobristKey != startKey){
                 GameLogger.LogGame(board, 0);
-                UnityEngine.Debug.Log("Asynced at depth: " + depth);
+                //UnityEngine.Debug.Log("Asynced at depth: " + depth);
             }
 
             if(abortSearch){
-                if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Max depth of: " + depth + " Eval: " + bestEval);}
+                //if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Max depth of: " + depth + " Eval: " + bestEval);}
                 break;
             }
             if(IsMateScore(bestEvalThisIteration)){
-                if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Mate in: " + (positiveInfinity - 1 - Math.Abs(bestEval)));}
+                //if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Mate in: " + (positiveInfinity - 1 - Math.Abs(bestEval)));}
                 break;
             }
         }
@@ -85,10 +84,6 @@ public class Search
             int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
             //TT score found
             if(ttEval != TranspositionTable.LookupFailed){
-                if (ttEval < negativeInfinity || ttEval > positiveInfinity)
-                {
-                    UnityEngine.Debug.Log(ttEval);
-                }
                 //Set the best move
                 if (plyFromRoot == 0)
                 {
@@ -107,7 +102,7 @@ public class Search
                     eval = QuiescenceSearch(alpha, beta, plyFromRoot + 1);
                 }
                 catch (Exception e){
-                    UnityEngine.Debug.Log(e.Message);
+                    //UnityEngine.Debug.Log(e.Message);
                 }
                 
                 return eval;

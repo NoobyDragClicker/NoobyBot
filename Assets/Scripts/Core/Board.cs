@@ -44,7 +44,15 @@ public class Board
         
         moveGenerator = generator;
         board = ConvertFromFEN(fenPosition);
-        zobristKey = Zobrist.CalculateZobrist(this);
+        try
+        {
+            zobristKey = Zobrist.CalculateZobrist(this);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+        
         zobristHistory.Push(zobristKey);
         whiteAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.White, this);
         blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);

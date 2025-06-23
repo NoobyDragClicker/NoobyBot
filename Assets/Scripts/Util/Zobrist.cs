@@ -6,8 +6,8 @@ using System.IO;
 public static class Zobrist
 {
     const int seed = 73448693;
-    static System.Random prng = new System.Random (seed);
-    const string RandomNumberFile = "./Assets/Scripts/Util/RandomNumbers.txt";
+    static Random prng = new Random (seed);
+    const string RandomNumberFile = "RandomNumbers.txt";
     public static readonly ulong[, , ] piecesArray = new ulong[8, 2, 64];
 	public static readonly ulong[] castlingRights = new ulong[16];
 	/// ep file (0 = no ep).

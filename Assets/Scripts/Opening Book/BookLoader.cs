@@ -6,8 +6,8 @@ using System.Text;
 
 public class BookLoader
 {
-    const string bookPath = "./Assets/Scripts/Opening Book/book.txt";
-    const string originalFile = "./Assets/Scripts/Opening Book/8moves_v3.pgn";
+    const string bookPath = "book.txt";
+    const string originalFile = "C:/Users/Spencer/Desktop/Chess/8moves_v3.pgn";
     List<Move[]> allLines = new List<Move[]>();
     bool isLoaded = false;
 

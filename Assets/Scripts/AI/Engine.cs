@@ -3,7 +3,7 @@ using System;
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(true, 40, 16, false, false, false, false);
+    AISettings aiSettings = new AISettings(true, 40, 16, false, true, false, false);
     Board board;
     BookLoader bookLoader;
 
@@ -33,6 +33,7 @@ public class Engine
                 break;
             case "ucinewgame":
                 board = new Board();
+                bookLoader.loadBook();
                 player.NewGame(board, aiSettings, bookLoader);
                 break;
             case "position":

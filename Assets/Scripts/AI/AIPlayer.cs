@@ -10,28 +10,25 @@ public class AIPlayer : Player
     Board board;
     OpeningBook openingBook;
     AISettings aiSettings;
-    bool isInBook = true;
+    bool isInBook;
     Search search;
     Stopwatch generatingStopwatch = new Stopwatch();
     Stopwatch makeMoveWatch = new Stopwatch();
     Stopwatch unmakeMoveWatch = new Stopwatch();
 
-    
-    public TimeSpan MoveTimeLimit { get; private set; }
+
+    public TimeSpan MoveTimeLimit;
     private CancellationTokenSource moveTimeoutTokenSource;
 
 
-    public AIPlayer(Board board, AISettings aiSettings, BookLoader bookLoader, int startTime, int incrementMS, bool useClock, string name)
+    public AIPlayer(string name)
     {
-        //Keeps track of the total time remaining
-        TotalTimeRemaining = TimeSpan.FromSeconds(startTime);
-        //Keeps track of the current move time
-        moveStopwatch = new Stopwatch();
-
         this.name = name;
+    }
+
+    public override void NewGame(Board board, AISettings aiSettings, BookLoader bookLoader)
+    {
         this.board = board;
-        this.useClock = useClock;
-        increment = TimeSpan.FromMilliseconds(incrementMS);
         this.aiSettings = aiSettings;
 
         search = new Search(this.board, generatingStopwatch, makeMoveWatch, unmakeMoveWatch, aiSettings);
@@ -41,21 +38,31 @@ public class AIPlayer : Player
         {
             openingBook = new OpeningBook(bookLoader);
         }
+        isInBook = true;
     }
 
     //Called when it is our turn to move
-    public override void NotifyToMove()
+    public override void NotifyToMove(TimeSpan timeRemaining, TimeSpan increment, ClockType clockType)
     {
-        int millisecondsForMove = (int)((TotalTimeRemaining.TotalMilliseconds / 20) + (increment.TotalSeconds * 500));
-        MoveTimeLimit = TimeSpan.FromMilliseconds(millisecondsForMove);
+        if (clockType != ClockType.None)
+        {
+            int millisecondsForMove = 100;
+            if (clockType == ClockType.Regular)
+            {
+                millisecondsForMove = (int)((timeRemaining.TotalMilliseconds / 20) + (increment.TotalSeconds * 500));
+            }
+            else if (clockType == ClockType.PerMove)
+            {
+                millisecondsForMove = (int)(timeRemaining.TotalMilliseconds * 0.75f);
+            }
 
-        moveStopwatch.Restart();
+            MoveTimeLimit = TimeSpan.FromMilliseconds(millisecondsForMove);
+            moveTimeoutTokenSource = new CancellationTokenSource();
 
-        moveTimeoutTokenSource = new CancellationTokenSource();
-
-        // Start monitoring in background
-        Task.Run(() => MonitorMoveTime(moveTimeoutTokenSource.Token));
-
+            // Start monitoring in background
+            Task.Run(() => MonitorMoveTime(moveTimeoutTokenSource.Token));
+        }
+        
         if ((board.gameMoveHistory.Count >= aiSettings.openingBookDepth) && isInBook)
         {
             isInBook = false;
@@ -111,10 +118,7 @@ public class AIPlayer : Player
     //Triggered by the onSearchComplete event, makes move
     void OnSearchComplete(Move move)
     {
-        moveStopwatch.Stop();
         moveTimeoutTokenSource.Cancel();
-        TotalTimeRemaining -= moveStopwatch.Elapsed;
-        TotalTimeRemaining += increment;
         ChoseMove(move, name);
     }
 

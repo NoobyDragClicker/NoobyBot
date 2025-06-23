@@ -1,9 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using Unity.Mathematics;
-using UnityEngine;
-
 public class Move
 {
     public int oldIndex;

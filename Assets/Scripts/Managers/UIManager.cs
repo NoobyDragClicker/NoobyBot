@@ -66,9 +66,11 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     TMP_Text blackClock;
 
-    bool useClock = true;
+    Player.ClockType clockType = Player.ClockType.Regular;
     bool useCustomPos = false;
     bool isMoveWaiting;
+    bool hasGameEnded = false;
+    BoardManager.ResultStatus result;
 
     [SerializeField]
     AISettings testSettings = new AISettings(true, 20, 16,  true, true, false, true);
@@ -79,13 +81,14 @@ public class UIManager : MonoBehaviour
         bookLoader = new BookLoader();
         boardManager = new BoardManager(0, bookLoader);
         boardManager.moveMade += NewMove;
-        boardManager.gameFinished += DisplayResult;
+        boardManager.gameFinished += EndGame;
     }
 
     void Update(){
         if (isMoveWaiting){ UpdateBoard(boardManager.boardNumber);  isMoveWaiting = false; }
-        boardManager.Update();
-        if(boardManager.gameStatus == BoardManager.GameStatus.Playing){
+        if (hasGameEnded) { DisplayResult(result); }
+        if (boardManager.gameStatus == BoardManager.GameStatus.Playing && clockType != Player.ClockType.None)
+        {
             UpdateClock();
         }
     }
@@ -95,15 +98,18 @@ public class UIManager : MonoBehaviour
     }
 
     void UpdateClock(){
-        int secondsRemaining = Mathf.Max(0, boardManager.playerToMove.getSecondsRemaining());
-        int numMinutes = (int) (secondsRemaining/60);
-        int numSeconds = (int) (secondsRemaining - numMinutes * 60);
+        int whiteSecondsRemaining = Mathf.Max(0, boardManager.getWhiteMSRemaining() / 1000);
+        int blackSecondsRemaining = Mathf.Max(0, boardManager.getBlackMSRemaining() / 1000);
 
-        if(boardManager.board.colorTurn == Piece.White){
-            whiteClock.text = $"{numMinutes:00}:{numSeconds:00}";
-        } else{
-            blackClock.text = $"{numMinutes:00}:{numSeconds:00}";
-        }
+        int numWhiteMinutes = (int) (whiteSecondsRemaining/60);
+        int numWhiteSeconds = (int) (whiteSecondsRemaining - numWhiteMinutes * 60);
+        
+        int numBlackMinutes = (int) (blackSecondsRemaining/60);
+        int numBlackSeconds = (int) (blackSecondsRemaining - numBlackMinutes * 60);
+
+        whiteClock.text = $"{numWhiteMinutes:00}:{numWhiteSeconds:00}";
+        blackClock.text = $"{numBlackMinutes:00}:{numBlackSeconds:00}";
+        
     }
 
     public void StartGame(){
@@ -115,7 +121,7 @@ public class UIManager : MonoBehaviour
         if(isGameReview){
             whiteHuman = true;
             blackHuman = true;
-            useClock = false;
+            clockType = Player.ClockType.None;
             gameMoves = GameLogger.ReadMovesFromLog(gameReviewPathInput.text);
         }
 
@@ -128,7 +134,7 @@ public class UIManager : MonoBehaviour
         }
 
         
-        if(useClock){
+        if(clockType != Player.ClockType.None){
             whiteClock.gameObject.SetActive(true);
             blackClock.gameObject.SetActive(true);
         }
@@ -143,7 +149,7 @@ public class UIManager : MonoBehaviour
                 spawnedTile.Init(isOffset);
             }
         }
-        boardManager.StartGame(useClock, startTime, 1, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, 1,  whiteHuman:whiteHuman, blackHuman:blackHuman);
+        boardManager.StartGame(clockType, startTime, 1, useCustomPos, inputtedCustomStr, whiteSettings, blackSettings, 1,  whiteHuman:whiteHuman, blackHuman:blackHuman);
         startScreen.SetActive(false);
     }
     
@@ -277,7 +283,8 @@ public class UIManager : MonoBehaviour
 
     }
 
-    public void DisplayResult(BoardManager.ResultStatus resultStatus, int boardNumber){
+    public void DisplayResult(BoardManager.ResultStatus resultStatus){
+        UpdateBoard(0);
         whiteIndicator.gameObject.SetActive(true);
         blackIndicator.gameObject.SetActive(true);
         if(resultStatus == BoardManager.ResultStatus.Draw){
@@ -292,18 +299,28 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowDebugSquares(List<int> index){
+    public void EndGame(BoardManager.ResultStatus resultStatus, int boardNumber)
+    {
+        result = resultStatus;
+        hasGameEnded = true;
+    }
+
+    public void ShowDebugSquares(List<int> index)
+    {
         Board board = boardManager.board;
         //Destroy current debug prefabs
-        for(int z = 0; z< debugPrefabs.Count; z++){
+        for (int z = 0; z < debugPrefabs.Count; z++)
+        {
             Destroy(debugPrefabs[z]);
         }
         debugPrefabs.Clear();
-        for(int x = 0; x<64; x++){
+        for (int x = 0; x < 64; x++)
+        {
             int rank = board.IndexToRank(x);
             int file = board.IndexToFile(x);
-            if(index.Contains(x)){
-                var debug = Instantiate(debugPrefab, new Vector3(file-1, rank-1, -0.02f), Quaternion.identity);
+            if (index.Contains(x))
+            {
+                var debug = Instantiate(debugPrefab, new Vector3(file - 1, rank - 1, -0.02f), Quaternion.identity);
                 debugPrefabs.Add(debug);
             }
         }
@@ -311,7 +328,9 @@ public class UIManager : MonoBehaviour
     }
     //UI
     public void UpdateUseClock(bool input){
-        useClock = input;
+        if (input){ clockType = Player.ClockType.Regular; }
+        else{ clockType = Player.ClockType.None; }
+        
     }
     public void UpdateCustomPos(bool input){
         useCustomPos = input;

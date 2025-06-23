@@ -1,0 +1,22 @@
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using UnityEngine;
+
+public class HumanPlayer : Player
+{
+    public HumanPlayer(string name)
+    {
+        this.name = name;
+    }
+
+    public override void NewGame(Board board, AISettings aiSettings, BookLoader bookLoader){}
+
+    public override void NotifyToMove(TimeSpan timeRemaining, TimeSpan increment, ClockType clockType){}
+
+    public override void NotifyGameOver(){}
+
+    public void ChooseSelectedMove(Move move, string name){
+        ChoseMove(move, name);
+    }
+}

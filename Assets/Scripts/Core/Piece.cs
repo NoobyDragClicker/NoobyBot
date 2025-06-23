@@ -1,17 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO.Compression;
-using System.Linq;
-
-using Unity.Collections;
-using Unity.Mathematics;
-using Unity.VisualScripting;
-using UnityEditor.SearchService;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-
 public static class Piece
 {
 

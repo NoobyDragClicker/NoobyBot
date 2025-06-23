@@ -12,6 +12,7 @@ public class BookLoader
     const string bookPath = "./Assets/Scripts/Opening Book/book.txt";
     const string originalFile = "./Assets/Scripts/Opening Book/8moves_v3.pgn";
     List<Move[]> allLines = new List<Move[]>();
+    bool isLoaded = false;
 
 
     public List<Move[]> getAllLines()
@@ -27,10 +28,14 @@ public class BookLoader
             Debug.Log("No file found, trimming from main");
             trimOriginalFile();
         }
-        string[] lines = File.ReadAllLines(bookPath);
-        for (int x = 0; x < lines.Length; x++)
+        if (!isLoaded)
         {
-            allLines.Add(convertIntLine(lines[x]));
+            string[] lines = File.ReadAllLines(bookPath);
+            for (int x = 0; x < lines.Length; x++)
+            {
+                allLines.Add(convertIntLine(lines[x]));
+            }
+            isLoaded = true;
         }
     }
 
@@ -86,7 +91,9 @@ public class BookLoader
         string[] sections = line.Split(" ");
         Move[] moves = new Move[16];
         int index = 0;
-        Board board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", new MoveGenerator());
+        Board board = new Board();
+        board.setPosition(Board.startPos, new MoveGenerator());
+
         for (int x = 0; x < sections.Count(); x++)
         {
             if (sections[x] != "1." && sections[x] != "2." && sections[x] != "3." && sections[x] != "4." && sections[x] != "5." && sections[x] != "6." && sections[x] != "7." && sections[x] != "8." && sections[x] != "1/2-1/2" && sections[x] != "0-1" && sections[x] != "1-0")

@@ -13,9 +13,10 @@ using System.Threading.Tasks;
 public class TournamentManager : MonoBehaviour
 {
     const int numBoards = 4;
-    const int startTime = 60;
+    const int startTime = 30;
     const int incrementMS = 500;
-    const int maxGames = 20;
+    const int maxGames = 200;
+    const Player.ClockType clockType = Player.ClockType.Regular;
 
     int testPlayerWins, oldPlayerWins, draws;
 
@@ -34,7 +35,7 @@ public class TournamentManager : MonoBehaviour
     List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 20, 16, true, false, false, false);
+    AISettings testSettings = new AISettings(true, 20, 16, false, true, false, false);
     [SerializeField]
     AISettings oldSettings = new AISettings(true, 20, 16, false, false, false, false);
 
@@ -73,10 +74,6 @@ public class TournamentManager : MonoBehaviour
     void Update()
     {
         if (isMoveWaiting) { UpdateBoard(boardWaiting); isMoveWaiting = false; }
-        for (int x = 0; x < numBoards; x++)
-        {
-            boards[x].Update();
-        }
     }
     public void StartTournament()
     {
@@ -93,7 +90,7 @@ public class TournamentManager : MonoBehaviour
         AISettings whiteSettings = isWhiteTest[boardNumber] ? testSettings : oldSettings;
         AISettings blackSettings = isWhiteTest[boardNumber] ? oldSettings : testSettings;
 
-        boards[boardNumber].StartGame(true, startTime, incrementMS, false, "", whiteSettings, blackSettings, totalGamesPlayed);
+        boards[boardNumber].StartGame(clockType, startTime, incrementMS, false, "", whiteSettings, blackSettings, totalGamesPlayed);
         numGamesPlayedPerBoard[boardNumber]++;
         totalGamesPlayed++;
         Debug.Log("Game started: " + totalGamesPlayed);

@@ -35,7 +35,9 @@ public class Perft : MonoBehaviour
         moveGenerator = new MoveGenerator();
         try
         {
-            Task.Factory.StartNew(() => SearchDivide(maxDepth, maxDepth, new Board(startString, moveGenerator)), TaskCreationOptions.LongRunning);
+            Board board = new Board();
+            board.setPosition(Board.startPos, new MoveGenerator());
+            Task.Factory.StartNew(() => SearchDivide(maxDepth, maxDepth, board), TaskCreationOptions.LongRunning);
         }
         catch (Exception e)
         {
@@ -75,8 +77,10 @@ public class Perft : MonoBehaviour
         {
             string fenString = fenAndExpectedResult.ElementAt(x).Key;
             ulong expected = fenAndExpectedResult.ElementAt(x).Value;
+            Board board = new Board();
+            board.setPosition(fenString, new MoveGenerator());
 
-            var result = Search(maxDepth, new Board(fenString, moveGenerator), testQuiescence);
+            var result = Search(maxDepth, board, testQuiescence);
 
             if (result != expected) { failedFenPositions.Add(fenString); }
             else { numPassed++; }

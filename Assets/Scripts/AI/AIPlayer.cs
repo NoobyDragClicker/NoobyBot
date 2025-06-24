@@ -9,7 +9,7 @@ public class AIPlayer : Player
     Board board;
     OpeningBook openingBook;
     AISettings aiSettings;
-    bool isInBook;
+    
     Search search;
     Stopwatch generatingStopwatch = new Stopwatch();
     Stopwatch makeMoveWatch = new Stopwatch();
@@ -18,6 +18,7 @@ public class AIPlayer : Player
 
     public TimeSpan MoveTimeLimit;
     private CancellationTokenSource moveTimeoutTokenSource;
+    public bool isInBook;
 
 
     public AIPlayer(string name)
@@ -35,11 +36,15 @@ public class AIPlayer : Player
 
         if (aiSettings.openingBookDepth > 0)
         {
-            openingBook = new OpeningBook(bookLoader);
+            ResetOpeningBook(bookLoader);
         }
-        isInBook = true;
     }
 
+    public void ResetOpeningBook(BookLoader bookLoader)
+    {
+        openingBook = new OpeningBook(bookLoader);
+        isInBook = true;
+    }
     //Called when it is our turn to move
     public override void NotifyToMove(TimeSpan timeRemaining, TimeSpan increment, ClockType clockType)
     {
@@ -61,15 +66,13 @@ public class AIPlayer : Player
             // Start monitoring in background
             Task.Run(() => MonitorMoveTime(moveTimeoutTokenSource.Token));
         }
-        
+
         if ((board.gameMoveHistory.Count >= aiSettings.openingBookDepth) && isInBook)
         {
             isInBook = false;
-            if (aiSettings.sayMaxDepth)
-            {
-                //UnityEngine.Debug.Log("Out of book");
-            }
+            Engine.LogToFile("Out of book, depth limit reached: " + board.gameMoveHistory.Count);
         }
+
         if (aiSettings.openingBookDepth > 0 && isInBook)
         {
             Move openingBookMove = openingBook.getBookMove(board);
@@ -80,13 +83,9 @@ public class AIPlayer : Player
             else
             {
                 isInBook = false;
-                if (aiSettings.sayMaxDepth)
-                {
-                    //UnityEngine.Debug.Log("Out of book");
-                }
+                Engine.LogToFile("Out of book, no line found");
                 Task.Factory.StartNew(() => search.StartSearch(), TaskCreationOptions.LongRunning);
             }
-
         }
         else
         {

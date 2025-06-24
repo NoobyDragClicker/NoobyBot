@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+
 
 public class Engine
 {
@@ -6,10 +8,14 @@ public class Engine
     AISettings aiSettings = new AISettings(true, 40, 16, false, true, false, false);
     Board board;
     BookLoader bookLoader;
+    const string name = "Nooby Bot v1.0.1";
+
 
     static readonly string[] positionLabels = new[] { "position", "fen", "moves" };
     static readonly string[] goLabels = new[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
     static readonly string[] perftLabels = new[] { "perft", "position", "perftSuite" };
+    const string LogPath = "C:/Users/Spencer/Desktop/Chess/Logs/" + name + " Log.txt";
+    const bool logToFile = false;
 
     public Engine()
     {
@@ -22,11 +28,15 @@ public class Engine
     {
         command = command.Trim();
         string messageType = command.Split(' ')[0].ToLower();
+        if (messageType != "isready") { LogToFile("Received: " + command);}
 
         switch (messageType)
         {
             case "uci":
+                Console.WriteLine("id name=NoobyBot");
+                Console.WriteLine("id author=Me");
                 Console.WriteLine("uciok");
+                LogToFile("uciok");
                 break;
             case "isready":
                 Console.WriteLine("readyok");
@@ -34,6 +44,7 @@ public class Engine
             case "ucinewgame":
                 board = new Board();
                 bookLoader.loadBook();
+                LogToFile("##############################");
                 player.NewGame(board, aiSettings, bookLoader);
                 break;
             case "position":
@@ -49,38 +60,19 @@ public class Engine
                 player.NotifyGameOver();
                 break;
             case "d":
-                Console.WriteLine("n/a");
+                LogToFile("n/a");
                 break;
             default:
-                Console.WriteLine($"Unrecognized command: {messageType}");
+                LogToFile($"Unrecognized command: {messageType}");
                 break;
         }
     }
 
     void MakeMove(Move move, string name)
     {
-        string moveFlag = "";
-        switch (move.flag)
-        {
-            case 1:
-                moveFlag = "q";
-                break;
-            case 2:
-                moveFlag = "b";
-                break;
-            case 3:
-                moveFlag = "n";
-                break;
-            case 4:
-                moveFlag = "r";
-                break;
-            default:
-                break;
-        }
-
-        string moveString = Coord.GetNotationFromIndex(move.oldIndex) + Coord.GetNotationFromIndex(move.newIndex) + moveFlag;
-
-        Console.WriteLine("bestmove " + moveString);
+        board.Move(move, false);
+        Console.WriteLine("bestmove " + convertMoveToUCI(move));
+        LogToFile("bestmove " + convertMoveToUCI(move));
     }
 
     //Sets up board position
@@ -89,17 +81,18 @@ public class Engine
         // FEN
         if (message.ToLower().Contains("startpos"))
         {
-            Console.WriteLine("startpos found");
             board.setPosition(Board.startPos, new MoveGenerator());
+            player.ResetOpeningBook(bookLoader);
         }
         else if (message.ToLower().Contains("fen"))
         {
             string customFen = TryGetLabelledValue(message, "fen", positionLabels);
             board.setPosition(customFen, new MoveGenerator());
+            player.isInBook = false;
         }
         else
         {
-            Console.WriteLine("Invalid position command (expected 'startpos' or 'fen')");
+            LogToFile("Invalid position command (expected 'startpos' or 'fen')");
         }
 
         // Moves
@@ -130,7 +123,6 @@ public class Engine
             int incrementWhiteMs = TryGetLabelledValueInt(message, "winc", goLabels, 0);
             int incrementBlackMs = TryGetLabelledValueInt(message, "binc", goLabels, 0);
 
-
             if (board.colorTurn == Piece.White)
             {
                 player.NotifyToMove(TimeSpan.FromMilliseconds(timeRemainingWhiteMs), TimeSpan.FromMilliseconds(incrementWhiteMs), Player.ClockType.Regular);
@@ -140,7 +132,7 @@ public class Engine
                 player.NotifyToMove(TimeSpan.FromMilliseconds(timeRemainingBlackMs), TimeSpan.FromMilliseconds(incrementBlackMs), Player.ClockType.Regular);
             }
         }
-        
+
     }
 
     //Gets the int value from a received message by removing the label 
@@ -183,7 +175,7 @@ public class Engine
         return defaultValue;
     }
 
-    Move convertUCIMove(string moveName)
+    public Move convertUCIMove(string moveName)
     {
         int startSquare = Coord.NotationToIndex(moveName.Substring(0, 2));
         int targetSquare = Coord.NotationToIndex(moveName.Substring(2, 2));
@@ -232,5 +224,39 @@ public class Engine
         return new Move(startSquare, targetSquare, isCapture, flag);
     }
 
+    public static void LogToFile(string message)
+    {
+        if (logToFile)
+        {
+            using (StreamWriter writer = new StreamWriter(LogPath, true))
+            {
+                writer.WriteLine(message);
+            }
+        }
+    }
 
+    public static string convertMoveToUCI(Move move)
+    {
+        string moveFlag = "";
+        switch (move.flag)
+        {
+            case 1:
+                moveFlag = "q";
+                break;
+            case 2:
+                moveFlag = "b";
+                break;
+            case 3:
+                moveFlag = "n";
+                break;
+            case 4:
+                moveFlag = "r";
+                break;
+            default:
+                break;
+        }
+
+        string moveString = Coord.GetNotationFromIndex(move.oldIndex) + Coord.GetNotationFromIndex(move.newIndex) + moveFlag;
+        return moveString;
+    }
 }

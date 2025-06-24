@@ -6,7 +6,7 @@ using System.Text;
 
 public class BookLoader
 {
-    const string bookPath = "book.txt";
+    const string bookPath = "C:/Users/Spencer/Desktop/Chess/book.txt";
     const string originalFile = "C:/Users/Spencer/Desktop/Chess/8moves_v3.pgn";
     List<Move[]> allLines = new List<Move[]>();
     bool isLoaded = false;
@@ -22,6 +22,7 @@ public class BookLoader
     {
         if (!File.Exists(bookPath))
         {
+            Engine.LogToFile("No file found, trimming from original");
             trimOriginalFile();
         }
         if (!isLoaded)

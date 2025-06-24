@@ -35,8 +35,10 @@ public class Search
         bestMoveThisIteration = null;
         abortSearch = false;
         bestEval = StartIterativeDeepening(aiSettings.maxDepth);
-        if(bestMove == null){
+        if (bestMove == null)
+        {
             bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
+            Engine.LogToFile($"Timed out, no move found. Num moves: {board.moveGenerator.GenerateLegalMoves(board, board.colorTurn).Count}. Generating random");
         }
 
         onSearchComplete?.Invoke(bestMove);
@@ -53,22 +55,27 @@ public class Search
                 bestMove = bestMoveThisIteration;
                 bestEval = bestEvalThisIteration;
             }
+
+
+            string infoLine = "";
+            if (IsMateScore(bestEval))
+            {
+                infoLine = $"info depth {depth} score mate {(bestEval < 0 ? "-" : "")}{positiveInfinity - 1 - Math.Abs(bestEval)} currmove {Engine.convertMoveToUCI(bestMove)}";
+            }
             else
             {
-                //UnityEngine.Debug.Log("Did not find a move " + board.moveGenerator.GenerateLegalMoves(board, board.colorTurn).Count + "Eval: " + bestEvalThisIteration);
+                infoLine = $"info depth {depth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)}";
             }
+            Console.WriteLine(infoLine);
+            Engine.LogToFile(infoLine);
             
-            if(board.zobristKey != startKey){
-                GameLogger.LogGame(board, 0);
-                //UnityEngine.Debug.Log("Asynced at depth: " + depth);
-            }
 
-            if(abortSearch){
-                //if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Max depth of: " + depth + " Eval: " + bestEval);}
+
+            if (abortSearch)
+            {
                 break;
             }
             if(IsMateScore(bestEvalThisIteration)){
-                //if(aiSettings.sayMaxDepth){UnityEngine.Debug.Log("Mate in: " + (positiveInfinity - 1 - Math.Abs(bestEval)));}
                 break;
             }
         }

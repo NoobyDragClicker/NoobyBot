@@ -6,7 +6,8 @@ public class OpeningBook
     BookLoader loader;
     List<Move[]> allLines;
 
-    public OpeningBook(BookLoader bookLoader){
+    public OpeningBook(BookLoader bookLoader)
+    {
         loader = bookLoader;
         allLines = loader.getAllLines();
     }
@@ -60,8 +61,6 @@ public class OpeningBook
         //Questionable
         Random random = new Random();
         int chosenNum = random.Next(1, maxLines);
-       //Debug.Log(chosenNum);
-        //Debug.Log(totalLines);
         int sumSoFar = 0;
 
         foreach (KeyValuePair<int, int> pair in possibleMovesInPos){
@@ -73,12 +72,6 @@ public class OpeningBook
             sumSoFar += pair.Value;
         }
 
-        if (chosenMove == null){
-            //Debug.Log("Move not chosen");
-            //Debug.Log(totalLines);
-        }
-        
-
         int maxNewLines = allLines.Count();
         //Removing the lines that were not chosen
         for (int x = 0; x < maxNewLines; x++){
@@ -88,6 +81,7 @@ public class OpeningBook
                 x--;
             }
         }
+
         return chosenMove;
     }
 

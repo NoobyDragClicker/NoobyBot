@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
 using System;
+using System.Collections.Generic;
 
 
 public class AIPlayer : Player
@@ -11,14 +12,11 @@ public class AIPlayer : Player
     AISettings aiSettings;
     
     Search search;
-    Stopwatch generatingStopwatch = new Stopwatch();
-    Stopwatch makeMoveWatch = new Stopwatch();
-    Stopwatch unmakeMoveWatch = new Stopwatch();
-
 
     public TimeSpan MoveTimeLimit;
     private CancellationTokenSource moveTimeoutTokenSource;
     public bool isInBook;
+    Move[,] killers;
 
 
     public AIPlayer(string name)
@@ -30,8 +28,8 @@ public class AIPlayer : Player
     {
         this.board = board;
         this.aiSettings = aiSettings;
-
-        search = new Search(this.board, generatingStopwatch, makeMoveWatch, unmakeMoveWatch, aiSettings);
+        killers = new Move[1024, 3];
+        search = new Search(this.board, aiSettings, killers);
         search.onSearchComplete += OnSearchComplete;
 
         if (aiSettings.openingBookDepth > 0)
@@ -124,21 +122,14 @@ public class AIPlayer : Player
 
 public struct AISettings{
     public int maxDepth;
+    public int maxSearchExtensionDepth;
     public int openingBookDepth;
-    public bool useTT;
-    public bool useQuiescence;
-    public bool useSearchExtensions;
-    public bool useRandomTest;
     public bool sayMaxDepth;
 
-
-    public AISettings(bool useTT, int maxDepth, int openingBookDepth, bool useQuiescence, bool useSearchExtensions, bool useRandomTest, bool sayMaxDepth){
-        this.useTT = useTT;
+    public AISettings(int maxDepth, int maxSearchExtensionDepth, int openingBookDepth, bool sayMaxDepth){
         this.openingBookDepth = openingBookDepth;
         this.maxDepth = maxDepth;
-        this.useQuiescence = useQuiescence;
-        this.useSearchExtensions = useSearchExtensions;
-        this.useRandomTest = useRandomTest;
+        this.maxSearchExtensionDepth = maxSearchExtensionDepth;
         this.sayMaxDepth = sayMaxDepth;
     }
 

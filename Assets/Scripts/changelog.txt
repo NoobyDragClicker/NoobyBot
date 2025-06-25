@@ -1,0 +1,21 @@
+v1.0.1 Added search extensions (maxdepth of 10)
+--------------------------------------------------
+Elo: 29.60 +/- 20.89, nElo: 34.32 +/- 24.08
+LOS: 99.74 %, DrawRatio: 34.50 %, PairsRatio: 1.36
+Games: 800, Wins: 337, Losses: 269, Draws: 194, Points: 434.0 (54.25 %)
+--------------------------------------------------
+v1.0.2 Added quiescence search
+--------------------------------------------------
+Elo: 232.79 +/- 46.30, nElo: 325.23 +/- 48.15
+LOS: 100.00 %, DrawRatio: 20.00 %, PairsRatio: 25.67
+Games: 200, Wins: 138, Losses: 21, Draws: 41, Points: 158.5 (79.25 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+v1.0.3 Added basic killer move heuristic
+--------------------------------------------------
+Elo: 114.64 +/- 33.14, nElo: 148.67 +/- 39.85
+LOS: 100.00 %, DrawRatio: 34.93 %, PairsRatio: 4.00
+Games: 292, Wins: 146, Losses: 53, Draws: 93, Points: 192.5 (65.92 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+

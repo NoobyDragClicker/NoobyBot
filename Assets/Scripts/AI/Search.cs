@@ -10,6 +10,8 @@ public class Search
     int bestEvalThisIteration;
     Evaluation evaluation;
     MoveOrder moveOrder;
+
+    
     public TranspositionTable tt;
 
     AISettings aiSettings;
@@ -19,12 +21,14 @@ public class Search
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
-    const int maxExtensions = 10;
     public event Action<Move> onSearchComplete;
+    Move[,] killerMoves;
 
-    public Search(Board board, Stopwatch genStopwatch, Stopwatch makeMoveStopwatch, Stopwatch unmakeMoveStopwatch, AISettings aiSettings){
+    public Search(Board board, AISettings aiSettings, Move[,] killerMoves)
+    {
         this.board = board;
         this.aiSettings = aiSettings;
+        this.killerMoves = killerMoves;
         evaluation = new Evaluation();
         tt = new TranspositionTable(board, 256);
         moveOrder = new MoveOrder();
@@ -87,38 +91,26 @@ public class Search
         if(board.IsRepetitionDraw()){return 0;}
         if(board.fiftyMoveCounter >= 100){return 0;}
 
-        if(aiSettings.useTT){
-            int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
-            //TT score found
-            if(ttEval != TranspositionTable.LookupFailed){
-                //Set the best move
-                if (plyFromRoot == 0)
-                {
-                    bestMoveThisIteration = tt.GetStoredMove();
-                    bestEvalThisIteration = ttEval;
-                }
-                return ttEval;
-            }
-        }
         
-        //Returns the actual eval of the position
-        if(depth <= 0){
-            if (aiSettings.useQuiescence){
-                int eval = 0;
-                try{
-                    eval = QuiescenceSearch(alpha, beta, plyFromRoot + 1);
-                }
-                catch (Exception e){
-                    //UnityEngine.Debug.Log(e.Message);
-                }
-                
-                return eval;
-            } 
-            else{
-                return evaluation.EvaluatePosition(board, aiSettings);
+        int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
+        //TT score found
+        if(ttEval != TranspositionTable.LookupFailed){
+            //Set the best move
+            if (plyFromRoot == 0)
+            {
+                bestMoveThisIteration = tt.GetStoredMove();
+                bestEvalThisIteration = ttEval;
             }
+            return ttEval;
         }
 
+        //Returns the actual eval of the position
+        if (depth <= 0)
+        {
+            int eval = QuiescenceSearch(alpha, beta, plyFromRoot + 1);
+            return eval;
+        }
+        
         List<Move> legalMoves = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn);
         //Check for mate or stalemate
         if(legalMoves.Count == 0){
@@ -131,28 +123,21 @@ public class Search
 
         //Search extension for single legal moves
         int searchExtension = 0;
-        if(aiSettings.useSearchExtensions && legalMoves.Count == 1 && numExtensions < maxExtensions){searchExtension++;}
+        if(legalMoves.Count == 1 && numExtensions < aiSettings.maxSearchExtensionDepth){searchExtension++;}
         
-        Move firstSearchMove = null;
-        if(aiSettings.useTT){
-            firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
-        } else{
-            firstSearchMove = (plyFromRoot == 0) ? bestMove : null;
-        }
+        Move firstSearchMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
         
-        legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove, aiSettings);
+        legalMoves = moveOrder.OrderMoves(board, legalMoves, firstSearchMove, killerMoves, aiSettings);
+
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
-        
         for (int i = 0; i < legalMoves.Count; i++)
         {
             int localExtension = searchExtension;
-
-            //Make move -> search move -> unmake move
             board.Move(legalMoves[i], true);
 
             //Search extensions for promotion and checks
-            if ((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && aiSettings.useSearchExtensions && numExtensions < maxExtensions) { localExtension++; }
+            if ((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && numExtensions < aiSettings.maxSearchExtensionDepth) { localExtension++; }
 
             int eval = -SearchMoves(depth + localExtension - 1, plyFromRoot + 1, -beta, -alpha, numExtensions + localExtension);
 
@@ -164,9 +149,21 @@ public class Search
             if (eval >= beta)
             {
                 //Exiting search early, so it is a lower bound
-                if (aiSettings.useTT) { tt.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]); }
+                tt.StoreEvaluation(depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);
+                if (!legalMoves[i].isCapture()) {
+                    for (int moveNum = 0; moveNum < 3; moveNum++)
+                    {
+                        if (killerMoves[board.plyFromStart, moveNum] == null)
+                        {
+                            killerMoves[board.plyFromStart, moveNum] = legalMoves[i];
+                            break;
+                        }
+                    }
+                }
+                
                 return beta;
             }
+
             //This move is better than the current move
             if (eval > alpha)
             {
@@ -182,7 +179,7 @@ public class Search
                 }
             }
         }
-        if(aiSettings.useTT){tt.StoreEvaluation(depth + searchExtension, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);}
+        tt.StoreEvaluation(depth + searchExtension, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);
         return alpha;
     }
 
@@ -204,7 +201,7 @@ public class Search
 		}
 
         List<Move> captures = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn, true);
-        captures = moveOrder.OrderMoves(board, captures, null, aiSettings);
+        captures = moveOrder.OrderMoves(board, captures, null, killerMoves, aiSettings);
 
         for (int i = 0; i < captures.Count; i++) {
 			board.Move (captures[i], true);

@@ -73,9 +73,9 @@ public class UIManager : MonoBehaviour
     BoardManager.ResultStatus result;
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 20, 16,  true, true, false, true);
+    AISettings testSettings = new AISettings(20, 10, 16, false);
     [SerializeField]
-    AISettings oldSettings = new AISettings(true, 20, 16,  false, false, false, true);
+    AISettings oldSettings = new AISettings( 20, 10, 16, false);
 
     void Start(){
         bookLoader = new BookLoader();

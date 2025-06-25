@@ -115,7 +115,7 @@ public class BoardManager
 
         if (isLegal == false)
         {
-            //Debug.Log("Illegal move attempted, board " + boardNumber);
+            UnityEngine.Debug.Log("Illegal move attempted, board " + boardNumber);
             GameLogger.LogGame(board, boardNumber);
         }
 

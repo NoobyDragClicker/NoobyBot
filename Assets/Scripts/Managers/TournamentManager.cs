@@ -28,9 +28,9 @@ public class TournamentManager : MonoBehaviour
     List<DisplayPiece> displayPieces = new List<DisplayPiece>();
 
     [SerializeField]
-    AISettings testSettings = new AISettings(true, 20, 16, false, true, false, false);
+    AISettings testSettings = new AISettings(20, 10, 16, false);
     [SerializeField]
-    AISettings oldSettings = new AISettings(true, 20, 16, false, false, false, false);
+    AISettings oldSettings = new AISettings(20, 10, 16, false);
 
     BoardManager[] boards = new BoardManager[numBoards];
     BookLoader bookLoader;

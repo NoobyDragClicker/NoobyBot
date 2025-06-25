@@ -5,10 +5,10 @@ using System.IO;
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(true, 40, 16, false, true, false, false);
+    AISettings aiSettings = new AISettings(40, 10, 16, false);
     Board board;
     BookLoader bookLoader;
-    const string name = "Nooby Bot v1.0.1";
+    const string name = "Nooby Bot v1.0.3";
 
 
     static readonly string[] positionLabels = new[] { "position", "fen", "moves" };

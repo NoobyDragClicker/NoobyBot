@@ -35,13 +35,14 @@ public class Board
 
     public Stack<ulong> zobristHistory = new Stack<ulong>();
     public ulong zobristKey;
+    public int plyFromStart;
 
 
     public void setPosition(string fenPosition, MoveGenerator generator)
     {
         zobristHistory.Clear();
         gameMoveHistory.Clear();
-        
+
         moveGenerator = generator;
         board = ConvertFromFEN(fenPosition);
         try
@@ -52,7 +53,7 @@ public class Board
         {
             Console.WriteLine(e.Message);
         }
-        
+
         zobristHistory.Push(zobristKey);
         whiteAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.White, this);
         blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
@@ -60,7 +61,7 @@ public class Board
         UpdatePinnedInfo();
     }
 
-    
+
     //Moves the pieces
     public void Move(Move move, bool isSearch)
     {
@@ -286,12 +287,14 @@ public class Board
         blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
+        plyFromStart ++;
 
     }
-    public void UndoMove(Move move){
+    public void UndoMove(Move move)
+    {
         gameMoveHistory.Pop();
 
-        colorTurn = (colorTurn == Piece.White)? Piece.Black : Piece.White;
+        colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
         //Removing the current one and getting the required info
         uint oldGameStateHistory = gameStateHistory.Pop();
 
@@ -300,15 +303,18 @@ public class Board
         int capturedPiece = (int)((oldGameStateHistory >> 8) & 0b011111);
         int enPassantFile = (int)((currentGameState >> 4) & 0b01111);
 
-        fiftyMoveCounter = (int) (currentGameState >> 13);
+        fiftyMoveCounter = (int)(currentGameState >> 13);
 
         zobristHistory.Pop();
         zobristKey = zobristHistory.Peek();
 
         //Setting the ep index to what it used to be
-        if(enPassantFile != 0){
+        if (enPassantFile != 0)
+        {
             enPassantIndex = (colorTurn == Piece.White) ? (15 + enPassantFile) : (39 + enPassantFile);
-        } else{
+        }
+        else
+        {
             enPassantIndex = -1;
         }
 
@@ -316,26 +322,33 @@ public class Board
         int newPos = move.newIndex;
         int movedPiece;
 
-        if(move.isPromotion()){
+        if (move.isPromotion())
+        {
             fiftyMoveCounter = 0;
             //Sets the new piece to be the same color but whatever the new piece type is
             movedPiece = Piece.Color(board[newPos]) | Piece.Pawn;
-        } else {
+        }
+        else
+        {
             movedPiece = board[newPos];
         }
 
         //castle
-        if(move.flag == 5){
+        if (move.flag == 5)
+        {
             //Undo the castles
-            if(colorTurn == Piece.White) {
+            if (colorTurn == Piece.White)
+            {
                 //short castles
-                if(newPos == 62){
+                if (newPos == 62)
+                {
                     int rook = board[61];
                     board[63] = rook;
                     board[61] = 0;
-                } 
+                }
                 //Long castles
-                else if(newPos == 58){
+                else if (newPos == 58)
+                {
                     int rook = board[59];
                     board[56] = rook;
                     board[59] = 0;
@@ -343,15 +356,18 @@ public class Board
                 board[startPos] = movedPiece;
                 board[newPos] = 0;
             }
-            else if(colorTurn == Piece.Black){
+            else if (colorTurn == Piece.Black)
+            {
                 //Short castles
-                if(newPos == 6){
+                if (newPos == 6)
+                {
                     int rook = board[5];
                     board[7] = rook;
                     board[5] = 0;
-                } 
+                }
                 //Long castles
-                else if(newPos == 2){
+                else if (newPos == 2)
+                {
                     int rook = board[3];
                     board[0] = rook;
                     board[3] = 0;
@@ -362,22 +378,27 @@ public class Board
 
         }
         //en passant
-        else if(move.flag == 7){
+        else if (move.flag == 7)
+        {
             //capture
             board[startPos] = movedPiece;
             board[newPos] = 0;
-            
+
             //Replacing the captured pawn
-            int attackedPawnIndex = (colorTurn == Piece.White) ? newPos+8:newPos-8;
+            int attackedPawnIndex = (colorTurn == Piece.White) ? newPos + 8 : newPos - 8;
             board[attackedPawnIndex] = capturedPiece;
         }
-        else{
+        else
+        {
             //Undo the move
-            if(move.isCapture()){
+            if (move.isCapture())
+            {
                 //capture
                 board[startPos] = movedPiece;
                 board[newPos] = capturedPiece;
-            } else{
+            }
+            else
+            {
                 board[startPos] = movedPiece;
                 board[newPos] = 0;
             }
@@ -387,6 +408,7 @@ public class Board
         blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
+        plyFromStart--;
     }
     public int[] ConvertFromFEN(string fenPosition){
         currentGameState = 0;
@@ -435,6 +457,7 @@ public class Board
         currentGameState |= (uint) castlingRights;
         enPassantIndex = -1;
         gameStateHistory.Push(currentGameState);
+        plyFromStart = 0;
         return position;
     }
     

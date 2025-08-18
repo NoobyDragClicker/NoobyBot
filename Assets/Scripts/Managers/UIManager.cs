@@ -270,11 +270,11 @@ public class UIManager : MonoBehaviour
         }
         debugPrefabs.Clear();
 
-        int[] attackedSquares = board.moveGenerator.GenerateAttackedSquares(board.colorTurn, board);
+        int attackedSquaresIndex = (board.colorTurn == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
         for(int x = 0; x<64; x++){
             int rank = board.IndexToRank(x);
             int file = board.IndexToFile(x);
-            if(attackedSquares[x] == 1){
+            if(board.attackedSquares[attackedSquaresIndex, x] == 1){
                 
                 var debug = Instantiate(debugPrefab, new Vector3(file-1, rank-1, -0.02f), Quaternion.identity);
                 debugPrefabs.Add(debug);

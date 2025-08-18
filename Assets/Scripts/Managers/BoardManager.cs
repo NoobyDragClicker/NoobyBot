@@ -41,16 +41,6 @@ public class BoardManager
 
     public void StartGame(Player.ClockType clockType, int startTime, int incrementMS, bool useCustomPos, string customStr, AISettings whiteSettings, AISettings blackSettings, int gameNumber, bool whiteHuman = false, bool blackHuman = false)
     {
-        Engine engine = new Engine();
-        engine.ReceiveCommand("ucinewgame");
-        try
-        {
-            engine.ReceiveCommand("position startpos");
-        }
-        catch (Exception e)
-        {
-            UnityEngine.Debug.Log(e.Message);
-        }
         
 
         gameStatus = GameStatus.PreGame;
@@ -75,12 +65,12 @@ public class BoardManager
 
 
         //Syncing OnMoveChosen
-        if (whitePlayer == null) { whitePlayer = whiteHuman ? new HumanPlayer("White Player") : new AIPlayer("White Bot: " + gameNumber.ToString()); }
+        if (whitePlayer == null) { whitePlayer = whiteHuman ? new HumanPlayer("White Player") : new AIPlayer("White Bot " + gameNumber.ToString()); }
 
         whitePlayer.NewGame(searchBoard, whiteSettings, bookLoader);
         whitePlayer.onMoveChosen += OnMoveChosen;
 
-        if (blackPlayer == null) { blackPlayer = blackHuman ? new HumanPlayer("Black Player") : new AIPlayer("Black Bot: " + gameNumber.ToString()); }
+        if (blackPlayer == null) { blackPlayer = blackHuman ? new HumanPlayer("Black Player") : new AIPlayer("Black Bot " + gameNumber.ToString()); }
 
         blackPlayer.NewGame(searchBoard, blackSettings, bookLoader);
         blackPlayer.onMoveChosen += OnMoveChosen;

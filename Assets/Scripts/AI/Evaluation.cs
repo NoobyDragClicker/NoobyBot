@@ -9,12 +9,6 @@ public class Evaluation
     public const int queenValue = 900;
     AISettings aiSettings;
 
-    int[] pawnPieceTable = new int[64];
-    int[] knightPieceTable = new int[64];
-    int[] bishopPieceTable = new int[64];
-    int[] rookPieceTable = new int[64];
-    int[] queenPieceTable = new int[64];
-    int[] kingPieceTable = new int[64];
     int[] mg_pawn_table = {
       0,   0,   0,   0,   0,   0,  0,   0,
      98, 134,  61,  95,  68, 126, 34, -11,
@@ -148,7 +142,6 @@ public class Evaluation
     };
 
     int playerTurnMultiplier;
-    public System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
     public int EvaluatePosition(Board board, AISettings aiSettings){
         this.aiSettings = aiSettings;
         colorTurn = board.colorTurn;
@@ -158,52 +151,101 @@ public class Evaluation
 
     int CountMaterial(Board board){
         int totalMaterial = 0;
-        for(int x = 0; x< 64; x++){
-            int pieceType = Piece.PieceType(board.board[x]);
-            if(board.board[x] != 0){
-                switch (pieceType){
-                    case Piece.Pawn: totalMaterial += pawnValue; break;
-                    case Piece.Knight: totalMaterial += knightValue; break;
-                    case Piece.Bishop: totalMaterial += bishopValue; break;
-                    case Piece.Rook: totalMaterial += rookValue; break;
-                    case Piece.Queen: totalMaterial += queenValue; break;
-                    case Piece.King: break;
+        int mgMaterialCount = 0;
+        int egMaterialCount = 0;
+        for (int x = 0; x < 64; x++)
+        {
+            if (board.board[x] != 0)
+            {
+                int pieceType = Piece.PieceType(board.board[x]);
+                int pieceColor = Piece.Color(board.board[x]);
+                switch (pieceType)
+                {
+                    case Piece.Pawn:
+                        totalMaterial += pawnValue;
+                        if (pieceColor == Piece.White)
+                        {
+                            mgMaterialCount += pawnValue + mg_pawn_table[x];
+                            egMaterialCount += pawnValue + eg_pawn_table[x];
+                        }
+                        else
+                        {
+                            mgMaterialCount -= pawnValue + mg_pawn_table[63 - x];
+                            egMaterialCount -= pawnValue + eg_pawn_table[63 - x];
+                        }
+                        break;
+                    case Piece.Knight:
+                        totalMaterial += knightValue;
+                        if (pieceColor == Piece.White)
+                        {
+                            mgMaterialCount += knightValue + mg_knight_table[x];
+                            egMaterialCount += knightValue + eg_knight_table[x];
+                        }
+                        else
+                        {
+                            mgMaterialCount -= knightValue + mg_knight_table[63 - x];
+                            egMaterialCount -= knightValue + eg_knight_table[63 - x];
+                        }
+                        break;
+                    case Piece.Bishop:
+                        totalMaterial += bishopValue;
+                        if (pieceColor == Piece.White)
+                        {
+                            mgMaterialCount += bishopValue + mg_bishop_table[x];
+                            egMaterialCount += bishopValue + eg_bishop_table[x];
+                        }
+                        else
+                        {
+                            mgMaterialCount -= bishopValue + mg_bishop_table[63 - x];
+                            egMaterialCount -= bishopValue + eg_bishop_table[63 - x];
+                        }
+                        break;
+                    case Piece.Rook:
+                        totalMaterial += rookValue;
+                        if (pieceColor == Piece.White)
+                        {
+                            mgMaterialCount += rookValue + mg_rook_table[x];
+                            egMaterialCount += rookValue + eg_rook_table[x];
+                        }
+                        else
+                        {
+                            mgMaterialCount -= rookValue + mg_rook_table[63 - x];
+                            egMaterialCount -= rookValue + eg_rook_table[63 - x];
+                        }
+                        break;
+                    case Piece.Queen:
+                        totalMaterial += queenValue;
+                        if (pieceColor == Piece.White)
+                        {
+                            mgMaterialCount += queenValue + mg_queen_table[x];
+                            egMaterialCount += queenValue + eg_queen_table[x];
+                        }
+                        else
+                        {
+                            mgMaterialCount -= queenValue + mg_queen_table[63 - x];
+                            egMaterialCount -= queenValue + eg_queen_table[63 - x];
+                        }
+                        break;
+                    case Piece.King:
+                        if (pieceColor == Piece.White)
+                        {
+                            mgMaterialCount += mg_king_table[x];
+                            egMaterialCount += eg_king_table[x];
+                        }
+                        else
+                        {
+                            mgMaterialCount -= mg_king_table[63 - x];
+                            egMaterialCount -= eg_king_table[63 - x];
+                        }
+                        break;
                 }
             }
         }
-        if(totalMaterial > 2800){
-            pawnPieceTable = mg_pawn_table;
-            knightPieceTable = mg_knight_table;
-            bishopPieceTable = mg_bishop_table;
-            rookPieceTable = mg_rook_table;
-            queenPieceTable = mg_queen_table;
-            kingPieceTable = mg_king_table;
+        if(totalMaterial == 2800){
+            return mgMaterialCount * playerTurnMultiplier;
         } else{
-            pawnPieceTable = eg_pawn_table;
-            knightPieceTable = eg_knight_table;
-            bishopPieceTable = eg_bishop_table;
-            rookPieceTable = eg_rook_table;
-            queenPieceTable = eg_queen_table;
-            kingPieceTable = eg_king_table;
+            return egMaterialCount * playerTurnMultiplier;
         }
-        
-        int materialCount = 0;
-        //Loops through each index on the board
-        for(int x = 0; x< 64; x++){
-            int pieceType = Piece.PieceType(board.board[x]);
-            int pieceColor = Piece.Color(board.board[x]);
-            if(board.board[x] != 0){
-                switch (pieceType){
-                    case Piece.Pawn: if(pieceColor == Piece.White){materialCount += pawnValue + pawnPieceTable[x];} else{materialCount -= pawnValue + pawnPieceTable[63-x];} break;
-                    case Piece.Knight: if(pieceColor == Piece.White){materialCount += knightValue + knightPieceTable[x];} else{materialCount -= knightValue + knightPieceTable[63-x];} break;
-                    case Piece.Bishop: if(pieceColor == Piece.White){materialCount += bishopValue + bishopPieceTable[x];} else{materialCount -= bishopValue + bishopPieceTable[63-x];} break;
-                    case Piece.Rook: if(pieceColor == Piece.White){materialCount += rookValue + rookPieceTable[x];} else{materialCount -= rookValue + rookPieceTable[63-x];} break;
-                    case Piece.Queen: if(pieceColor == Piece.White){materialCount += queenValue + queenPieceTable[x];} else{materialCount -= queenValue + queenPieceTable[63-x];} break;
-                    case Piece.King: if(pieceColor == Piece.White){materialCount +=kingPieceTable[x];} else{materialCount -=kingPieceTable[63-x];} break;
-                }
-            }
-        }
-        return materialCount * playerTurnMultiplier;
     }
 
 

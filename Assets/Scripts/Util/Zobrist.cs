@@ -7,7 +7,7 @@ public static class Zobrist
 {
     const int seed = 73448693;
     static Random prng = new Random (seed);
-    const string RandomNumberFile = "RandomNumbers.txt";
+    const string RandomNumberFile = "C:/Users/Spencer/Desktop/Chess/RandomNumbers.txt";
     public static readonly ulong[, , ] piecesArray = new ulong[8, 2, 64];
 	public static readonly ulong[] castlingRights = new ulong[16];
 	/// ep file (0 = no ep).
@@ -49,12 +49,12 @@ public static class Zobrist
 			}
 		}
 
-		int epIndex = (int) (board.currentGameState >> 4) & 15;
+		int epIndex = board.currentGameState.enPassantFile;
 		zobristKey ^= enPassantFile[epIndex];
 		if (board.colorTurn == Piece.Black) {
 			zobristKey ^= sideToMove;
 		}
-		zobristKey ^= castlingRights[board.currentGameState & 0b1111];
+		zobristKey ^= castlingRights[board.currentGameState.castlingRights];
 		return zobristKey;
     }
 

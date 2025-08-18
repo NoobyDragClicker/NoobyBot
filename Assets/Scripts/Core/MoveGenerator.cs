@@ -8,6 +8,7 @@ public class MoveGenerator
     public MoveGenerator(){}
     //Used for a player when clicking on a piece
     public List<Move> GeneratePieceMove(int piece, int index, Board board){
+        board.GenerateMoveGenInfo();
         int pieceType = Piece.PieceType(piece);
         int pieceColor = Piece.Color(piece);
         int oppositeColor = (pieceColor == Piece.White)? Piece.Black : Piece.White;
@@ -41,6 +42,7 @@ public class MoveGenerator
 
     //Returns all legal moves in a position
     public List<Move> GenerateLegalMoves(Board board, int pieceColor , bool isCapturesOnly=false){
+        board.GenerateMoveGenInfo();
         
         List<Move> legalMoves = new List<Move>();
         int kingIndex = GetKingIndex(pieceColor, board);
@@ -69,39 +71,53 @@ public class MoveGenerator
     }
     
     //Returns a 64 int long array, with 0 being safe and 1 being attacked
-    public int[] GenerateAttackedSquares(int oppositeColor, Board board){
-        int[] attackedSquares = new int[64];
-        List<int> pawnIndexes = GetPosByPieceType(Piece.Pawn, oppositeColor, board);
-        List<int> knightIndexes = GetPosByPieceType(Piece.Knight, oppositeColor, board);
-        List<int> bishopIndexes = GetPosByPieceType(Piece.Bishop, oppositeColor, board);
-        List<int> rookIndexes = GetPosByPieceType(Piece.Rook, oppositeColor, board);
-        List<int> queenIndexes = GetPosByPieceType(Piece.Queen, oppositeColor, board);
+    public int[,] GenerateAllAttackedSquares(Board board){
+        int[,] attackedSquares = new int[2, 64];
+        List<Move> whitePossibleMoves = new List<Move>();
+        List<Move> blackPossibleMoves = new List<Move>();
 
-        List<Move> possibleMoves = new List<Move>();
-        for(int x = 0; x<pawnIndexes.Count; x++){
-            possibleMoves.AddRange(GeneratePawnMoves(pawnIndexes[x], oppositeColor, board, true, false));
-        }
-        for(int x = 0; x<knightIndexes.Count; x++){
-            possibleMoves.AddRange(GenerateKnightMoves(knightIndexes[x], oppositeColor, board, true, false));
-        }
-        for(int x = 0; x<bishopIndexes.Count; x++){
-            possibleMoves.AddRange(GenerateBishopMoves(bishopIndexes[x], oppositeColor, board, true, false));
-        }
-        for(int x = 0; x<rookIndexes.Count; x++){
-            possibleMoves.AddRange(GenerateRookMoves(rookIndexes[x], oppositeColor, board, true, false));
-        }
-        for(int x = 0; x<queenIndexes.Count; x++){
-            possibleMoves.AddRange(GenerateQueenMoves(queenIndexes[x], oppositeColor, board, true, false));
-        }
-        possibleMoves.AddRange(GenerateKingMoves(GetKingIndex(oppositeColor, board), oppositeColor, board, true));
-        
-        for(int x = 0; x< possibleMoves.Count; x++){
-            //If not already attacked
-            if(attackedSquares[possibleMoves[x].newIndex] == 0){
-                attackedSquares[possibleMoves[x].newIndex] = 1;
+        for (int x = 0; x < 64; x++)
+        {
+            if (board.board[x] != 0)
+            {
+
+                int pieceColor = Piece.Color(board.board[x]);
+                List<Move> correctList = (pieceColor == Piece.Black) ? blackPossibleMoves : whitePossibleMoves;
+                int pieceType = Piece.PieceType(board.board[x]);
+
+                switch (pieceType)
+                {
+                    case Piece.Pawn:
+                        correctList.AddRange(GeneratePawnMoves(x, pieceColor, board, true, false));
+                        break;
+                    case Piece.Knight:
+                        correctList.AddRange(GenerateKnightMoves(x, pieceColor, board, true, false));
+                        break;
+                    case Piece.Bishop:
+                        correctList.AddRange(GenerateBishopMoves(x, pieceColor, board, true, false));
+                        break;
+                    case Piece.Rook:
+                        correctList.AddRange(GenerateRookMoves(x, pieceColor, board, true, false));
+                        break;
+                    case Piece.Queen:
+                        correctList.AddRange(GenerateQueenMoves(x, pieceColor, board, true, false));
+                        break;
+                    case Piece.King:
+                        correctList.AddRange(GenerateKingMoves(x, pieceColor, board, true));
+                        break;
+                }
             }
         }
-        
+
+        for (int x = 0; x < whitePossibleMoves.Count; x++)
+        {
+            attackedSquares[Board.WhiteIndex, whitePossibleMoves[x].newIndex] = 1;
+        }
+
+        for (int x = 0; x < blackPossibleMoves.Count; x++)
+        {
+            attackedSquares[Board.BlackIndex, blackPossibleMoves[x].newIndex] = 1;
+        }
 
         return attackedSquares;
     }
@@ -421,13 +437,9 @@ public class MoveGenerator
     public List<Move> GenerateKingMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isCapturesOnly=false){
         List<int> potentialIndexes = new List<int>();
         List<Move> legalMoves = new List<Move>();
-        int[] illegalSquares = new int[64];
-
-        if(!squaresAttacked){
-            illegalSquares = (pieceColor == Piece.White) ? board.blackAttackedSquares: board.whiteAttackedSquares;
-        }
 
         if(!squaresAttacked && !isCapturesOnly){
+            int illegalSquaresIndex = (pieceColor == Piece.White) ? Board.BlackIndex: Board.WhiteIndex;
             //Loads generic castling data
             bool canCastleShort = board.HasKingsideRight(pieceColor);
             bool canCastleLong = board.HasQueensideRight(pieceColor);
@@ -435,11 +447,11 @@ public class MoveGenerator
             //Castling
             if(canCastleLong || canCastleShort){
                 //Empty squares to the right and rook of the same color and not in check and square about to be moved to is not in check
-                if(canCastleShort && index < 61 && board.board[index + 1] == 0 && board.board[index + 2] == 0 && board.board[index + 3] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index + 2] == 0 && illegalSquares[index + 1] == 0){
+                if(canCastleShort && index < 61 && board.board[index + 1] == 0 && board.board[index + 2] == 0 && board.board[index + 3] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && board.attackedSquares[illegalSquaresIndex, index + 2] == 0 && board.attackedSquares[illegalSquaresIndex, index + 1] == 0){
                     legalMoves.Add(new Move(index, index + 2, false, 5));
                 }
                 //Empty squares to the left and rook of the same color and not in check and square about to be moved to is not in check
-                if(canCastleLong && index > 3 && board.board[index - 1] == 0 && board.board[index - 2] == 0 && board.board[index - 3] == 0 && board.board[index - 4] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && illegalSquares[index - 2] == 0 && illegalSquares[index - 1] == 0){
+                if(canCastleLong && index > 3 && board.board[index - 1] == 0 && board.board[index - 2] == 0 && board.board[index - 3] == 0 && board.board[index - 4] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && board.attackedSquares[illegalSquaresIndex, index - 2] == 0 && board.attackedSquares[illegalSquaresIndex, index - 1] == 0){
                     legalMoves.Add(new Move(index, index - 2, false, 5));
                 }
             }
@@ -479,9 +491,13 @@ public class MoveGenerator
         }
         
         for(int x = 0; x< potentialIndexes.Count; x++){
-            if(board.board[potentialIndexes[x]] == 0 && illegalSquares[potentialIndexes[x]] == 0 && !isCapturesOnly){
+            int illegalSquaresIndex = (pieceColor == Piece.White) ? Board.BlackIndex: Board.WhiteIndex;
+            if (board.board[potentialIndexes[x]] == 0 && board.attackedSquares[illegalSquaresIndex, potentialIndexes[x]] == 0 && !isCapturesOnly)
+            {
                 legalMoves.Add(new Move(index, potentialIndexes[x], false));
-            } else if(!Piece.IsColour(board.board[potentialIndexes[x]], pieceColor) && illegalSquares[potentialIndexes[x]] == 0 && board.board[potentialIndexes[x]] != 0){
+            }
+            else if (!Piece.IsColour(board.board[potentialIndexes[x]], pieceColor) && board.attackedSquares[illegalSquaresIndex, potentialIndexes[x]] == 0 && board.board[potentialIndexes[x]] != 0)
+            {
                 legalMoves.Add(new Move(index, potentialIndexes[x], true));
             }
         }

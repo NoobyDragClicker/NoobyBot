@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
 using System.Threading;
-using System.Diagnostics;
 using System;
-using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEngine;
+#endif
 
 
 public class AIPlayer : Player
@@ -11,17 +12,20 @@ public class AIPlayer : Player
     OpeningBook openingBook;
     AISettings aiSettings;
     
-    Search search;
+    public Search search;
+    public SearchLogger logger;
 
     public TimeSpan MoveTimeLimit;
     private CancellationTokenSource moveTimeoutTokenSource;
     public bool isInBook;
     Move[,] killers;
+    const string logPath = "C:/Users/Spencer/Desktop/Chess/Logs/";
 
 
     public AIPlayer(string name)
     {
         this.name = name;
+        logger = new SearchLogger(name, logPath);
     }
 
     public override void NewGame(Board board, AISettings aiSettings, BookLoader bookLoader)
@@ -29,7 +33,7 @@ public class AIPlayer : Player
         this.board = board;
         this.aiSettings = aiSettings;
         killers = new Move[1024, 3];
-        search = new Search(this.board, aiSettings, killers);
+        search = new Search(this.board, aiSettings, killers, logger);
         search.onSearchComplete += OnSearchComplete;
 
         if (aiSettings.openingBookDepth > 0)
@@ -46,29 +50,13 @@ public class AIPlayer : Player
     //Called when it is our turn to move
     public override void NotifyToMove(TimeSpan timeRemaining, TimeSpan increment, ClockType clockType)
     {
-        if (clockType != ClockType.None)
-        {
-            int millisecondsForMove = 100;
-            if (clockType == ClockType.Regular)
-            {
-                millisecondsForMove = (int)((timeRemaining.TotalMilliseconds / 20) + (increment.TotalSeconds * 500));
-            }
-            else if (clockType == ClockType.PerMove)
-            {
-                millisecondsForMove = (int)(timeRemaining.TotalMilliseconds * 0.75f);
-            }
-
-            MoveTimeLimit = TimeSpan.FromMilliseconds(millisecondsForMove);
-            moveTimeoutTokenSource = new CancellationTokenSource();
-
-            // Start monitoring in background
-            Task.Run(() => MonitorMoveTime(moveTimeoutTokenSource.Token));
-        }
+        bool needsSearch = !isInBook;
 
         if ((board.gameMoveHistory.Count >= aiSettings.openingBookDepth) && isInBook)
         {
             isInBook = false;
-            Engine.LogToFile("Out of book, depth limit reached: " + board.gameMoveHistory.Count);
+            logger.AddToLog("Out of book, depth limit reached: " + board.gameMoveHistory.Count);
+            needsSearch = true;
         }
 
         if (aiSettings.openingBookDepth > 0 && isInBook)
@@ -81,14 +69,35 @@ public class AIPlayer : Player
             else
             {
                 isInBook = false;
-                Engine.LogToFile("Out of book, no line found");
-                Task.Factory.StartNew(() => search.StartSearch(), TaskCreationOptions.LongRunning);
+                logger.AddToLog($"Out of book, no line found, time remaining: {timeRemaining}");
+                needsSearch = true;
             }
         }
-        else
+
+        if (needsSearch)
         {
-            Task.Factory.StartNew(() => search.StartSearch(), TaskCreationOptions.LongRunning);
+            if (clockType != ClockType.None)
+            {
+                int millisecondsForMove = 100;
+                if (clockType == ClockType.Regular)
+                {
+                    millisecondsForMove = (int)((timeRemaining.TotalMilliseconds / 20) + (increment.TotalSeconds * 500));
+                }
+                else if (clockType == ClockType.PerMove)
+                {
+                    millisecondsForMove = (int)(timeRemaining.TotalMilliseconds * 0.75f);
+                }
+
+                logger.AddToLog($"time for move: {millisecondsForMove}");
+                MoveTimeLimit = TimeSpan.FromMilliseconds(millisecondsForMove);
+
+                moveTimeoutTokenSource = new CancellationTokenSource();
+                // Start monitoring in background
+                Task.Run(() => MonitorMoveTime(moveTimeoutTokenSource.Token));
+            }
+            Task.Run(() => search.StartSearch());
         }
+        
     }
 
     private async Task MonitorMoveTime(CancellationToken token)
@@ -96,25 +105,26 @@ public class AIPlayer : Player
         try
         {
             await Task.Delay(MoveTimeLimit, token);
-            if (!token.IsCancellationRequested)
-            {
-                search.EndSearch();
-            }
+            logger.AddToLog("Time ran out");
+            search.EndSearch();
         }
-        catch (TaskCanceledException) { }
+        //Expected when search finishes earlier
+        catch (TaskCanceledException){}
     }
 
     public override void NotifyGameOver()
     {
         search.EndSearch();
-        search.onSearchComplete -= OnSearchComplete;
         search.tt.DeleteEntries();
     }
 
     //Triggered by the onSearchComplete event, makes move
     void OnSearchComplete(Move move)
     {
-        moveTimeoutTokenSource.Cancel();
+        if (!isInBook)
+        {
+            moveTimeoutTokenSource.Cancel();
+        }
         ChoseMove(move, name);
     }
 

@@ -18,4 +18,20 @@ LOS: 100.00 %, DrawRatio: 34.93 %, PairsRatio: 4.00
 Games: 292, Wins: 146, Losses: 53, Draws: 93, Points: 192.5 (65.92 %)
 SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
-
+v1.0.4 Added node tracking to infoline
+v1.0.5 Added LMR -1 for any move past the 3rd ordered move
+--------------------------------------------------
+Results of nooby_LMR vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 14.60 +/- 14.13, nElo: 22.29 +/- 21.53
+LOS: 97.88 %, DrawRatio: 43.00 %, PairsRatio: 1.23
+Games: 1000, Wins: 249, Losses: 207, Draws: 544, Points: 521.0 (52.10 %)
+--------------------------------------------------
+v1.0.6 Fixed bug in movegen that crippled performance - maybe, added better logging support
+--------------------------------------------------
+Results of nooby_Fixed vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: -0.47 +/- 18.40, nElo: -0.64 +/- 25.03
+LOS: 48.00 %, DrawRatio: 32.70 %, PairsRatio: 0.99
+Games: 740, Wins: 185, Losses: 186, Draws: 369, Points: 369.5 (49.93 %)
+Ptnml(0-2): [25, 100, 121, 99, 25], WL/DD Ratio: 0.42
+LLR: -0.35 (-11.7%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------

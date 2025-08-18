@@ -2,45 +2,44 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Unity.Collections;
-using UnityEngine;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
 
-
-
-public class Perft : MonoBehaviour
+public class Perft
 {
     MoveGenerator moveGenerator;
 
     // Timers
     Stopwatch moveGenTimer = new Stopwatch();
 
-    const string depth6File = "./Assets/Scripts/Testing/depth6only.txt";
-
+    const string depth6File = "C:/Users/Spencer/Desktop/Chess/depth6only.txt";
 
     Dictionary<string, ulong> fenAndExpectedResult = new Dictionary<string, ulong>();
     List<String> failedFenPositions = new List<string>();
     List<String> failedQuiescence = new List<string>();
-    [SerializeField]
     int numPassed;
     int numTotal;
     ulong endNodesSearched;
     bool hasQuiescencePassed = true;
+    SearchLogger logger;
 
-    public void StartSearchDivide(string startString, int maxDepth)
+    public Perft(SearchLogger logger)
+    {
+        this.logger = logger;
+    }
+
+    public void StartSearchDivide(Board board, int maxDepth)
     {
         moveGenerator = new MoveGenerator();
         try
         {
-            Board board = new Board();
-            board.setPosition(Board.startPos, new MoveGenerator());
             Task.Factory.StartNew(() => SearchDivide(maxDepth, maxDepth, board), TaskCreationOptions.LongRunning);
         }
         catch (Exception e)
         {
-            UnityEngine.Debug.Log(e.Message);
+            logger.AddToLog(e.Message);
+            Console.WriteLine(e.Message);
         }
     }
 
@@ -53,9 +52,10 @@ public class Perft : MonoBehaviour
         }
         catch (Exception e)
         {
-            UnityEngine.Debug.Log(e.Message);
+            logger.AddToLog(e.Message);
+            Console.WriteLine(e.Message);
         }
-        UnityEngine.Debug.Log("Started suite");
+        Console.WriteLine($"Started suite, depth {maxDepth}");
     }
 
     void RunSuite(int numPositions, int maxDepth, bool testQuiescence)
@@ -78,8 +78,16 @@ public class Perft : MonoBehaviour
             ulong expected = fenAndExpectedResult.ElementAt(x).Value;
             Board board = new Board();
             board.setPosition(fenString, new MoveGenerator());
-
-            var result = Search(maxDepth, board, testQuiescence);
+            ulong result = 0;
+            try
+            {
+                result = Search(maxDepth, board, testQuiescence);
+            }
+            catch (Exception e)
+            {
+                logger.AddToLog(e.Message);
+                Console.WriteLine(e.Message);
+            }
 
             if (result != expected) { failedFenPositions.Add(fenString); }
             else { numPassed++; }
@@ -92,27 +100,38 @@ public class Perft : MonoBehaviour
 
             totalRun++;
 
-            UnityEngine.Debug.Log(totalRun);
+            Console.WriteLine(totalRun.ToString());
         }
 
         moveGenTimer.Stop();
-        UnityEngine.Debug.Log("Passed " + numPassed);
-        UnityEngine.Debug.Log("Failed " + (numTotal - numPassed));
-        UnityEngine.Debug.Log("Quiescence Failed " + failedQuiescence.Count);
-        UnityEngine.Debug.Log("Total time: " + moveGenTimer.Elapsed);
-        UnityEngine.Debug.Log("Total end nodes searched: " + endNodesSearched);
-        UnityEngine.Debug.Log("Nodes/second: " + (float)endNodesSearched / moveGenTimer.ElapsedMilliseconds * 1000f);
+        Console.WriteLine("Passed " + numPassed);
+        Console.WriteLine("Failed " + (numTotal - numPassed));
+        Console.WriteLine("Quiescence Failed " + failedQuiescence.Count);
+        Console.WriteLine("Total time: " + moveGenTimer.Elapsed);
+        Console.WriteLine("Total end nodes searched: " + endNodesSearched);
+        Console.WriteLine("Nodes/second: " + (float)endNodesSearched / moveGenTimer.ElapsedMilliseconds * 1000f);
 
-        UnityEngine.Debug.Log("Failed:");
+        logger.AddToLog("Passed " + numPassed);
+        logger.AddToLog("Failed " + (numTotal - numPassed));
+        logger.AddToLog("Quiescence Failed " + failedQuiescence.Count);
+        logger.AddToLog("Total time: " + moveGenTimer.Elapsed);
+        logger.AddToLog("Total end nodes searched: " + endNodesSearched);
+        logger.AddToLog("Nodes/second: " + (float)endNodesSearched / moveGenTimer.ElapsedMilliseconds * 1000f);
+
+        Console.WriteLine("Failed:");
+        logger.AddToLog("Failed:");
         for (int x = 0; x < failedFenPositions.Count; x++)
         {
-            UnityEngine.Debug.Log(failedFenPositions[x]);
+            Console.WriteLine(failedFenPositions[x]);
+            logger.AddToLog(failedFenPositions[x]);
         }
 
-        UnityEngine.Debug.Log("Failed Quiescence:");
+        Console.WriteLine("Failed Quiescence:");
+        logger.AddToLog("Failed Quiescence:");
         for (int x = 0; x < failedQuiescence.Count; x++)
         {
-            UnityEngine.Debug.Log(failedQuiescence[x]);
+            Console.WriteLine(failedQuiescence[x]);
+            logger.AddToLog(failedQuiescence[x]);
         }
 
     }
@@ -196,7 +215,14 @@ public class Perft : MonoBehaviour
 
             if (currentDepth == startDepth)
             {
-                UnityEngine.Debug.Log(moves[i].oldIndex + " " + " " + moves[i].newIndex + " " + numMovesForThisNode);
+                numTotal += (int)numMovesForThisNode;
+                logger.AddToLog(Coord.GetMoveNotation(moves[i].oldIndex, moves[i].newIndex) + " " + numMovesForThisNode);
+                Console.WriteLine(Coord.GetMoveNotation(moves[i].oldIndex, moves[i].newIndex) + " " + numMovesForThisNode);
+                if (i == moves.Count - 1)
+                {
+                    logger.AddToLog(numTotal.ToString());
+                    Console.WriteLine(numTotal.ToString());
+                }
             }
         }
         return numLocalNodes;

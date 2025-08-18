@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
+using UnityEngine;
+#endif
 
 
 public class Board
@@ -17,8 +20,7 @@ public class Board
     public List<int> blockableIndexes = new List<int>();
     public List<PinnedPair> pinnedIndexes = new List<PinnedPair>();
     public List<int> pinnedPieceIndexes = new List<int>();
-    public int[] whiteAttackedSquares = new int[64];
-    public int[] blackAttackedSquares = new int[64];
+    public int[,] attackedSquares = new int[2, 64];
     public int colorTurn;
 
     //Saves the index where a pawn can capture
@@ -27,10 +29,10 @@ public class Board
     public MoveGenerator moveGenerator;
     public int[] board;
 
-    //Saves info about the game: Bits from L to R: wShort, wLong, bShort, bLong, en passant file (next 4), piece captured (5 bits), 50 move counter for the rest
-    Stack<uint> gameStateHistory = new Stack<uint>();
-    
-    public uint currentGameState;
+    //Saves info about the game
+    Stack<GameState> gameStateHistory = new Stack<GameState>();
+
+    public GameState currentGameState = new GameState();
     public Stack<Move> gameMoveHistory = new Stack<Move>();
 
     public Stack<ulong> zobristHistory = new Stack<ulong>();
@@ -42,6 +44,8 @@ public class Board
     {
         zobristHistory.Clear();
         gameMoveHistory.Clear();
+        gameStateHistory.Clear();
+        currentGameState = new GameState();
 
         moveGenerator = generator;
         board = ConvertFromFEN(fenPosition);
@@ -55,10 +59,7 @@ public class Board
         }
 
         zobristHistory.Push(zobristKey);
-        whiteAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.White, this);
-        blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
-        UpdateCheckingInfo();
-        UpdatePinnedInfo();
+        GenerateMoveGenInfo();
     }
 
 
@@ -66,8 +67,9 @@ public class Board
     public void Move(Move move, bool isSearch)
     {
         gameMoveHistory.Push(move);
-        uint castlingRights = GetCastlingRights(gameStateHistory.Peek());
-        int oldCastlingRights = (int)castlingRights;
+        int oldCastlingRights = currentGameState.castlingRights;
+        int castlingRights = oldCastlingRights;
+
         int oldEPFile;
         if (enPassantIndex != -1)
         {
@@ -77,10 +79,7 @@ public class Board
         {
             oldEPFile = 0;
         }
-
         int enPassantFile = 0;
-        //Captured piece gets removed, ep file gets removed, need to save castling rights and fiftymoverule
-        currentGameState = 0;
 
         int startPos = move.oldIndex;
         int newPos = move.newIndex;
@@ -168,7 +167,6 @@ public class Board
         //en passant
         else if (move.flag == 7)
         {
-
             //capture
             board[newPos] = movedPiece;
             board[startPos] = 0;
@@ -180,7 +178,6 @@ public class Board
         }
         else
         {
-
             //Double pawn push
             if (move.flag == 6)
             {
@@ -192,7 +189,7 @@ public class Board
             //Once the king has been moved, you can't castle
             if (Piece.PieceType(movedPiece) == Piece.King)
             {
-                if (colorTurn == Piece.White) { castlingRights &= 0b1100; }
+                if (colorTurn == Piece.White) { castlingRights &= 0b1100;}
                 else if (colorTurn == Piece.Black) { castlingRights &= 0b0011; }
             }
 
@@ -243,6 +240,9 @@ public class Board
 
                 if (Piece.PieceType(capturedPiece) == Piece.King)
                 {
+                    #if UNITY_EDITOR
+                    UnityEngine.Debug.Log("King captured");
+                    #endif
                     GameLogger.LogGame(this, 1010101);
                 }
 
@@ -267,8 +267,11 @@ public class Board
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
 
-        //Adds captured piece to gamestate
-        currentGameState = currentGameState | castlingRights | (uint)enPassantFile << 4 | (uint)capturedPiece << 8 | (uint)fiftyMoveCounter << 13;
+        //Update gamestate
+        currentGameState.capturedPiece = capturedPiece;
+        currentGameState.enPassantFile = enPassantFile;
+        currentGameState.fiftyMoveCounter = fiftyMoveCounter;
+        currentGameState.castlingRights = castlingRights;
         gameStateHistory.Push(currentGameState);
 
         //Moving friendly piece
@@ -282,13 +285,7 @@ public class Board
         zobristKey ^= Zobrist.enPassantFile[oldEPFile];
         zobristKey ^= Zobrist.enPassantFile[enPassantFile];
         zobristHistory.Push(zobristKey);
-
-        whiteAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.White, this);
-        blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
-        UpdateCheckingInfo();
-        UpdatePinnedInfo();
-        plyFromStart ++;
-
+        plyFromStart++;
     }
     public void UndoMove(Move move)
     {
@@ -296,14 +293,13 @@ public class Board
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
         //Removing the current one and getting the required info
-        uint oldGameStateHistory = gameStateHistory.Pop();
+        GameState oldGameStateHistory = gameStateHistory.Pop();
 
-        //Setting the game state to the previous one without removing it
+        //Getting the game state from the current move
         currentGameState = gameStateHistory.Peek();
-        int capturedPiece = (int)((oldGameStateHistory >> 8) & 0b011111);
-        int enPassantFile = (int)((currentGameState >> 4) & 0b01111);
-
-        fiftyMoveCounter = (int)(currentGameState >> 13);
+        int capturedPiece = oldGameStateHistory.capturedPiece;
+        int enPassantFile = currentGameState.enPassantFile;
+        fiftyMoveCounter = currentGameState.fiftyMoveCounter;
 
         zobristHistory.Pop();
         zobristKey = zobristHistory.Peek();
@@ -403,70 +399,83 @@ public class Board
                 board[newPos] = 0;
             }
         }
-
-        whiteAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.White, this);
-        blackAttackedSquares = moveGenerator.GenerateAttackedSquares(Piece.Black, this);
-        UpdateCheckingInfo();
-        UpdatePinnedInfo();
         plyFromStart--;
     }
-    public int[] ConvertFromFEN(string fenPosition){
-        currentGameState = 0;
-        Dictionary<char, int> pieceTypeFromSymbol = new Dictionary<char, int>(){
-            ['k'] = Piece.King, ['p'] = Piece.Pawn, ['n'] = Piece.Knight, ['b'] = Piece.Bishop, ['r'] = Piece.Rook, ['q'] = Piece.Queen
+    public int[] ConvertFromFEN(string fenPosition)
+    {
+        currentGameState.capturedPiece = 0;
+        currentGameState.castlingRights = 0;
+        currentGameState.enPassantFile = 0;
+        currentGameState.fiftyMoveCounter = 0;
+        
+        Dictionary<char, int> pieceTypeFromSymbol = new Dictionary<char, int>()
+        {
+            ['k'] = Piece.King,
+            ['p'] = Piece.Pawn,
+            ['n'] = Piece.Knight,
+            ['b'] = Piece.Bishop,
+            ['r'] = Piece.Rook,
+            ['q'] = Piece.Queen
         };
         int[] position = new int[64];
 
         //Part denoting position of each piece
         string posString = fenPosition.Split(' ')[0];
         int index = 0;
-        foreach(char c in posString){
-            if(c == '/'){
+        foreach (char c in posString)
+        {
+            if (c == '/')
+            {
                 //ignore
-            } 
-            else{
-                
-                if(Char.IsLetter(c)){
+            }
+            else
+            {
+
+                if (Char.IsLetter(c))
+                {
                     int pieceColour = Char.IsUpper(c) ? Piece.White : Piece.Black;
                     int pieceType = pieceTypeFromSymbol[char.ToLower(c)];
                     position[index] = pieceType | pieceColour;
-                    index ++;
-                } 
-                else if(Char.IsNumber(c)){
-                    for(int x = 0; x< Char.GetNumericValue(c); x ++){
+                    index++;
+                }
+                else if (Char.IsNumber(c))
+                {
+                    for (int x = 0; x < Char.GetNumericValue(c); x++)
+                    {
                         position[index] = 0;
-                        index ++;
+                        index++;
                     }
                 }
             }
-            
+
         }
 
         //Loads who's move it is
-        string sidetoMove = fenPosition.Split(' ')[1];  
-        if(sidetoMove == "w"){colorTurn = Piece.White;}
-        else if(sidetoMove == "b"){colorTurn = Piece.Black;}
+        string sidetoMove = fenPosition.Split(' ')[1];
+        if (sidetoMove == "w") { colorTurn = Piece.White; }
+        else if (sidetoMove == "b") { colorTurn = Piece.Black; }
 
         string castling = fenPosition.Split(' ')[2];
 
         int castlingRights = 0;
-        if(castling.Contains("K")){castlingRights += 1;}
-        if(castling.Contains("Q")){castlingRights += 2;}
-        if(castling.Contains("k")){castlingRights += 4;}
-        if(castling.Contains("q")){castlingRights += 8;}
-        currentGameState |= (uint) castlingRights;
+        if (castling.Contains("K")) { castlingRights += 1; }
+        if (castling.Contains("Q")) { castlingRights += 2; }
+        if (castling.Contains("k")) { castlingRights += 4; }
+        if (castling.Contains("q")) { castlingRights += 8; }
+        currentGameState.castlingRights = castlingRights;
         enPassantIndex = -1;
         gameStateHistory.Push(currentGameState);
         plyFromStart = 0;
         return position;
     }
-    
-    public bool IsDraw(){
+
+    public bool IsDraw()
+    {
         //Stalemate
-        if(moveGenerator.GenerateLegalMoves(this, colorTurn).Count == 0 && !isCurrentPlayerInCheck){return true;}
+        if (moveGenerator.GenerateLegalMoves(this, colorTurn).Count == 0 && !isCurrentPlayerInCheck) { return true; }
         //50 move rule
-        if(fiftyMoveCounter >= 100){return true;}
-        if(IsRepetitionDraw()){return true;}
+        if (fiftyMoveCounter >= 100) { return true; }
+        if (IsRepetitionDraw()) { return true; }
 
         //Can be improved with dedicated function
         int numQueens = moveGenerator.GetPosByPieceType(Piece.Queen, Piece.Black, this).Count + moveGenerator.GetPosByPieceType(Piece.Queen, Piece.White, this).Count;
@@ -478,118 +487,156 @@ public class Board
         int numPawn = moveGenerator.GetPosByPieceType(Piece.Pawn, Piece.Black, this).Count + moveGenerator.GetPosByPieceType(Piece.Pawn, Piece.White, this).Count;
 
         //Insufficient material
-        if(numPawn > 0 || numQueens >0 || numRook > 0){return false;}
-        else if((numWhiteBishop + numWhiteKnight) > 1 || (numBlackBishop + numBlackKnight) > 1){return false;}
-        else{
+        if (numPawn > 0 || numQueens > 0 || numRook > 0) { return false; }
+        else if ((numWhiteBishop + numWhiteKnight) > 1 || (numBlackBishop + numBlackKnight) > 1) { return false; }
+        else
+        {
             return true;
         }
     }
 
-    public bool IsRepetitionDraw(){
+    public void GenerateMoveGenInfo()
+    {
+        attackedSquares = moveGenerator.GenerateAllAttackedSquares(this);
+        UpdateCheckingInfo();
+        UpdatePinnedInfo();
+    }
+
+    public bool IsRepetitionDraw()
+    {
         int repCount = zobristHistory.Count(x => x == zobristKey);
-		if (repCount >= 3)
-		{
-			return true;
-		} else{
+        if (repCount >= 3)
+        {
+            return true;
+        }
+        else
+        {
             return false;
         }
 
     }
-    public bool IsCheckmate(int color){
+
+    public bool IsCheckmate(int color)
+    {
         int kingIndex = moveGenerator.GetKingIndex(color, this);
-        if(isCurrentPlayerInCheck){
+        if (isCurrentPlayerInCheck)
+        {
             //If there are any valid king moves
-            if(moveGenerator.GenerateKingMoves(kingIndex, color, this, false).Count != 0){
+            if (moveGenerator.GenerateKingMoves(kingIndex, color, this, false).Count != 0)
+            {
                 return false;
             }
             //check if there are any blocks
-            else{
-                if(moveGenerator.GenerateLegalMoves(this, color).Count == 0){return true;}
-                else{return false;} 
+            else
+            {
+                if (moveGenerator.GenerateLegalMoves(this, color).Count == 0) { return true; }
+                else { return false; }
             }
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
 
     //More efficient than checking multiple times for checks
-    public void UpdateCheckingInfo(){
+    public void UpdateCheckingInfo()
+    {
         checkingPieces = moveGenerator.KingCheckIndexes(colorTurn, this);
-        if(checkingPieces.Count > 1)
+        if (checkingPieces.Count > 1)
         {
             blockableIndexes.Clear();
             isCurrentPlayerInCheck = true;
             isCurrentPlayerInDoubleCheck = true;
-        } else if(checkingPieces.Count == 1){
+        }
+        else if (checkingPieces.Count == 1)
+        {
             isCurrentPlayerInCheck = true;
             isCurrentPlayerInDoubleCheck = false;
             blockableIndexes = moveGenerator.BlockableIndexes(moveGenerator.GetKingIndex(colorTurn, this), checkingPieces[0], this);
-        } else{
+        }
+        else
+        {
             isCurrentPlayerInCheck = false;
             isCurrentPlayerInDoubleCheck = false;
             blockableIndexes.Clear();
         }
-        
+
     }
-    
+
     //More efficient than checking multiple times for pinned pieces
-    public void UpdatePinnedInfo(){
+    public void UpdatePinnedInfo()
+    {
         pinnedIndexes.Clear();
         pinnedIndexes = moveGenerator.PinnedIndexes(moveGenerator.GetKingIndex(colorTurn, this), this);
         pinnedPieceIndexes.Clear();
-        for(int x = 0; x < pinnedIndexes.Count; x++){
+        for (int x = 0; x < pinnedIndexes.Count; x++)
+        {
             pinnedPieceIndexes.Add(pinnedIndexes[x].PinnedPiece);
         }
     }
-    
+
     //Utilities
-    public int IndexToRank(int index){
+    public int IndexToRank(int index)
+    {
         return 8 - ((index - (index % 8)) / 8);
     }
 
-    public int IndexToFile(int index){
+    public int IndexToFile(int index)
+    {
         int file = index % 8 + 1;
         return file;
     }
 
-    public int RankFileToIndex(int file, int rank){
-        int index = ((8 - rank) * 8) + file-1;
+    public int RankFileToIndex(int file, int rank)
+    {
+        int index = ((8 - rank) * 8) + file - 1;
         return index;
     }
 
-    void DebugGameState(uint gameState){
-        /*
-        Debug.Log("Castling: " + (gameState & 0b1111).ToString());
-        Debug.Log("Captured piece type: " + ((gameState & 0b1111100000000)>>8).ToString());
-        Debug.Log("EP file: " + ((gameState & 0b11110000) >>4).ToString());
-        Debug.Log("50 move rule: " + ((gameState & 0b11111111111110000000000000) >>13).ToString());*/
-    }
 
     //Gets them from the current gamestate
-    public bool HasKingsideRight(int color){
-        if(color == Piece.White && (currentGameState & 0b0000000000001) == 1){
+    public bool HasKingsideRight(int color)
+    {
+        if (color == Piece.White && (currentGameState.castlingRights & 0b1) == 1)
+        {
             return true;
-        } else if(color == Piece.Black && (currentGameState & 0b0000000000100) == 4){
+        }
+        else if (color == Piece.Black && (currentGameState.castlingRights & 0b100) == 4)
+        {
             return true;
-        } else{return false;}
+        }
+        else { return false; }
     }
-    public bool HasQueensideRight(int color){
-        if(color == Piece.White && (currentGameState & 0b000010) == 2){
+    public bool HasQueensideRight(int color)
+    {
+        if (color == Piece.White && (currentGameState.castlingRights & 0b000010) == 2)
+        {
             return true;
-        } else if(color == Piece.Black && (currentGameState & 0b001000) == 8){
+        }
+        else if (color == Piece.Black && (currentGameState.castlingRights & 0b001000) == 8)
+        {
             return true;
-        } else{return false;}
+        }
+        else { return false; }
     }
 
-    //Returns the int in the form of the gamestate
-    public uint GetCastlingRights(uint gameState){
-        return gameState & 0b001111;
-    }
-    public int EnPassantFileToIndex(int pieceColor, int epFile){
-        if(pieceColor == Piece.White){
+
+    public int EnPassantFileToIndex(int pieceColor, int epFile)
+    {
+        if (pieceColor == Piece.White)
+        {
             return 39 + epFile;
-        } else{
+        }
+        else
+        {
             return 15 + epFile;
         }
     }
+}
+public struct GameState {
+    public int castlingRights;
+    public int enPassantFile;
+    public int capturedPiece;
+    public int fiftyMoveCounter;
 }

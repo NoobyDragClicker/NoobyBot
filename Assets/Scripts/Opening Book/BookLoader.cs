@@ -22,7 +22,6 @@ public class BookLoader
     {
         if (!File.Exists(bookPath))
         {
-            Engine.LogToFile("No file found, trimming from original");
             trimOriginalFile();
         }
         if (!isLoaded)

@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-
 
 public class Engine
 {
@@ -8,19 +6,19 @@ public class Engine
     AISettings aiSettings = new AISettings(40, 10, 16, false);
     Board board;
     BookLoader bookLoader;
-    const string name = "Nooby Bot v1.0.3";
+    Perft perft;
+    bool hasStartedGame = false;
+    const string name = "Nooby Bot v1.0.6";
 
 
     static readonly string[] positionLabels = new[] { "position", "fen", "moves" };
     static readonly string[] goLabels = new[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
     static readonly string[] perftLabels = new[] { "perft", "position", "perftSuite" };
-    const string LogPath = "C:/Users/Spencer/Desktop/Chess/Logs/" + name + " Log.txt";
-    const bool logToFile = false;
 
     public Engine()
     {
         bookLoader = new BookLoader();
-        player = new AIPlayer("Nooby Bot");
+        player = new AIPlayer(name);
         player.onMoveChosen += MakeMove;
     }
 
@@ -28,7 +26,7 @@ public class Engine
     {
         command = command.Trim();
         string messageType = command.Split(' ')[0].ToLower();
-        if (messageType != "isready") { LogToFile("Received: " + command);}
+        if (messageType != "isready") { player.logger.AddToLog("Received: " + command);}
 
         switch (messageType)
         {
@@ -36,43 +34,60 @@ public class Engine
                 Console.WriteLine("id name=NoobyBot");
                 Console.WriteLine("id author=Me");
                 Console.WriteLine("uciok");
-                LogToFile("uciok");
+                player.logger.AddToLog("uciok");
                 break;
             case "isready":
                 Console.WriteLine("readyok");
                 break;
             case "ucinewgame":
+                player.logger.AddToLog("##############################");
                 board = new Board();
                 bookLoader.loadBook();
-                LogToFile("##############################");
                 player.NewGame(board, aiSettings, bookLoader);
+                hasStartedGame = true;
                 break;
+
             case "position":
+                if (!hasStartedGame)
+                {
+                    board = new Board();
+                    bookLoader.loadBook();
+                    player.NewGame(board, aiSettings, bookLoader);
+                }
                 ProcessPositionCommand(command);
                 break;
             case "go":
                 ProcessGoCommand(command);
                 break;
             case "stop":
-                player.NotifyGameOver();
+                player.search.EndSearch();
                 break;
             case "quit":
                 player.NotifyGameOver();
                 break;
             case "d":
-                LogToFile("n/a");
+                player.logger.AddToLog("n/a");
                 break;
             default:
-                LogToFile($"Unrecognized command: {messageType}");
+                player.logger.AddToLog($"Unrecognized command: {messageType}");
                 break;
         }
     }
 
     void MakeMove(Move move, string name)
     {
-        board.Move(move, false);
-        Console.WriteLine("bestmove " + convertMoveToUCI(move));
-        LogToFile("bestmove " + convertMoveToUCI(move));
+        player.logger.AddToLog("Reached make move");
+        try
+        {
+            board.Move(move, false);
+            Console.WriteLine("bestmove " + convertMoveToUCI(move));
+            player.logger.AddToLog("bestmove " + convertMoveToUCI(move));
+        }
+        catch (Exception e)
+        {
+            player.logger.AddToLog(e.Message);
+        }
+        
     }
 
     //Sets up board position
@@ -92,7 +107,7 @@ public class Engine
         }
         else
         {
-            LogToFile("Invalid position command (expected 'startpos' or 'fen')");
+            player.logger.AddToLog("Invalid position command (expected 'startpos' or 'fen')");
         }
 
         // Moves
@@ -116,6 +131,32 @@ public class Engine
             int moveTimeMs = TryGetLabelledValueInt(message, "movetime", goLabels, 0);
             player.NotifyToMove(TimeSpan.FromMilliseconds(moveTimeMs), TimeSpan.Zero, Player.ClockType.PerMove);
         }
+        else if (message.Contains("perft"))
+        {
+            perft = new Perft(player.logger);
+            int depth = 6;
+            if (message.Contains("depth"))
+            {
+                depth = TryGetLabelledValueInt(message, "depth", perftLabels);
+            }
+
+            bool quiescence = message.Contains("quiescence") ? true : false;
+
+            if (message.Contains("suite"))
+            {
+                perft.StartSuite(120, depth, quiescence);
+            }
+            else
+            {
+                perft.StartSearchDivide(board, depth);
+            }
+
+        }
+        else if (message.Contains("static"))
+        {
+            Evaluation evaluator = new Evaluation();
+            Console.WriteLine(evaluator.EvaluatePosition(board, new AISettings()));
+        }
         else
         {
             int timeRemainingWhiteMs = TryGetLabelledValueInt(message, "wtime", goLabels, 0);
@@ -125,10 +166,12 @@ public class Engine
 
             if (board.colorTurn == Piece.White)
             {
+                timeRemainingWhiteMs = (timeRemainingWhiteMs == 0) ? 500 : timeRemainingWhiteMs;
                 player.NotifyToMove(TimeSpan.FromMilliseconds(timeRemainingWhiteMs), TimeSpan.FromMilliseconds(incrementWhiteMs), Player.ClockType.Regular);
             }
             else
             {
+                timeRemainingBlackMs = (timeRemainingBlackMs == 0) ? 500 : timeRemainingBlackMs;
                 player.NotifyToMove(TimeSpan.FromMilliseconds(timeRemainingBlackMs), TimeSpan.FromMilliseconds(incrementBlackMs), Player.ClockType.Regular);
             }
         }
@@ -136,7 +179,7 @@ public class Engine
     }
 
     //Gets the int value from a received message by removing the label 
-    static int TryGetLabelledValueInt(string text, string label, string[] allLabels, int defaultValue = 0)
+    static int TryGetLabelledValueInt(string text, string label, string[] allLabels, int defaultValue = 100)
     {
         string valueString = TryGetLabelledValue(text, label, allLabels, defaultValue + "");
         if (int.TryParse(valueString.Split(' ')[0], out int result))
@@ -224,16 +267,6 @@ public class Engine
         return new Move(startSquare, targetSquare, isCapture, flag);
     }
 
-    public static void LogToFile(string message)
-    {
-        if (logToFile)
-        {
-            using (StreamWriter writer = new StreamWriter(LogPath, true))
-            {
-                writer.WriteLine(message);
-            }
-        }
-    }
 
     public static string convertMoveToUCI(Move move)
     {

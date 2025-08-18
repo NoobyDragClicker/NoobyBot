@@ -59,7 +59,7 @@ public class Search
         }
         catch (Exception e)
         {
-            logger.AddToLog(e.Message);
+            logger.AddToLog("Iterative deepening error: " + e.Message);
         }
 
         if (bestMove == null)
@@ -111,7 +111,6 @@ public class Search
 
             if (abortSearch)
             {
-                logger.AddToLog("Search successfully aborpted, brok for loop");
                 break;
             }
             if (IsMateScore(bestEvalThisIteration))
@@ -275,7 +274,7 @@ public class Search
         }
         catch (Exception e)
         {
-            logger.AddToLog(e.Message);
+            logger.AddToLog("Error storing eval:" + e.Message);
         }
         ttStoreTimer.Stop();
         return alpha;
@@ -289,7 +288,16 @@ public class Search
         }
 
         evaluationTimer.Start();
-        int eval = evaluation.EvaluatePosition(board, aiSettings);
+        int eval = 0;
+        try
+        {
+            eval = evaluation.EvaluatePosition(board, aiSettings);
+        }
+        catch (Exception e)
+        {
+            logger.AddToLog("Evaluation error: " + e.Message);
+        }
+        
         evaluationTimer.Stop();
 
         //Cutoffs

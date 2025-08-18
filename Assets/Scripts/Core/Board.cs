@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 #if UNITY_EDITOR
 using UnityEngine;
 #endif
@@ -401,13 +402,57 @@ public class Board
         }
         plyFromStart--;
     }
+
+    public void MakeNullMove()
+    {
+        fiftyMoveCounter += 1;
+        plyFromStart += 1;
+        colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
+        currentGameState.fiftyMoveCounter = fiftyMoveCounter;
+        currentGameState.enPassantFile = 0;
+        currentGameState.capturedPiece = 0;
+        gameStateHistory.Push(currentGameState);
+
+        enPassantIndex = -1;
+
+        zobristKey ^= Zobrist.sideToMove;
+        zobristHistory.Push(zobristKey);
+    }
+
+    public void UnmakeNullMove()
+    {
+        fiftyMoveCounter -= 1;
+        plyFromStart -= 1;
+        colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
+        zobristHistory.Pop();
+        zobristKey = zobristHistory.Peek();
+        gameStateHistory.Pop();
+        currentGameState = gameStateHistory.Peek();
+        enPassantIndex = EnPassantFileToIndex(colorTurn, currentGameState.enPassantFile);
+    }
+
+    public bool hasNonPawn(int colorTurn)
+    {
+        for (int index = 0; index < 64; index++)
+        {
+            if (board[index] != 0)
+            {
+                if (Piece.IsColour(board[index], colorTurn) && Piece.PieceType(board[index]) != Piece.Pawn)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public int[] ConvertFromFEN(string fenPosition)
     {
         currentGameState.capturedPiece = 0;
         currentGameState.castlingRights = 0;
         currentGameState.enPassantFile = 0;
         currentGameState.fiftyMoveCounter = 0;
-        
+
         Dictionary<char, int> pieceTypeFromSymbol = new Dictionary<char, int>()
         {
             ['k'] = Piece.King,
@@ -468,7 +513,6 @@ public class Board
         plyFromStart = 0;
         return position;
     }
-
     public bool IsDraw()
     {
         //Stalemate

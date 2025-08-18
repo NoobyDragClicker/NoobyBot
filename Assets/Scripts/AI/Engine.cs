@@ -8,7 +8,7 @@ public class Engine
     BookLoader bookLoader;
     Perft perft;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.0.7";
+    const string name = "Nooby Bot v1.1.2";
 
 
     static readonly string[] positionLabels = new[] { "position", "fen", "moves" };
@@ -85,7 +85,7 @@ public class Engine
         }
         catch (Exception e)
         {
-            player.logger.AddToLog(e.Message);
+            player.logger.AddToLog("MakeMove Error:" + e.Message);
         }
         
     }

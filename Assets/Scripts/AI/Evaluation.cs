@@ -150,6 +150,9 @@ public class Evaluation
     }
 
     int CountMaterial(Board board){
+        const int totalPhase = 24;
+        int phase = 0;
+
         int totalMaterial = 0;
         int mgMaterialCount = 0;
         int egMaterialCount = 0;
@@ -176,6 +179,8 @@ public class Evaluation
                         break;
                     case Piece.Knight:
                         totalMaterial += knightValue;
+                        phase += 1;
+
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += knightValue + mg_knight_table[x];
@@ -189,6 +194,7 @@ public class Evaluation
                         break;
                     case Piece.Bishop:
                         totalMaterial += bishopValue;
+                        phase += 1;
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += bishopValue + mg_bishop_table[x];
@@ -202,6 +208,7 @@ public class Evaluation
                         break;
                     case Piece.Rook:
                         totalMaterial += rookValue;
+                        phase += 2;
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += rookValue + mg_rook_table[x];
@@ -215,6 +222,7 @@ public class Evaluation
                         break;
                     case Piece.Queen:
                         totalMaterial += queenValue;
+                        phase += 4;
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += queenValue + mg_queen_table[x];
@@ -230,23 +238,70 @@ public class Evaluation
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += mg_king_table[x];
+                            mgMaterialCount += EvaluateKingSafety(board, x, pieceColor);
                             egMaterialCount += eg_king_table[x];
                         }
                         else
                         {
                             mgMaterialCount -= mg_king_table[63 - x];
+                            mgMaterialCount -= EvaluateKingSafety(board, x, pieceColor);
                             egMaterialCount -= eg_king_table[63 - x];
                         }
                         break;
                 }
             }
         }
-        if(totalMaterial == 2800){
-            return mgMaterialCount * playerTurnMultiplier;
-        } else{
-            return egMaterialCount * playerTurnMultiplier;
-        }
+
+        if (phase > 24) { phase = 24; }
+        return (mgMaterialCount * phase + egMaterialCount * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
     }
 
+    int EvaluateKingSafety(Board board, int kingIndex, int kingColor)
+    {
+        int penalty = 0;
+        int numPenalties = 0;
+        if (kingColor == Piece.White)
+        {
+            //Pawn shield
+            //Not back rank
+            if (Coord.IndexToRank(kingIndex) != 8)
+            {
+                //White Pawn in front
+                if (Piece.PieceType(board.board[kingIndex - 8]) != Piece.Pawn || Piece.Color(board.board[kingIndex - 8]) != Piece.White) { numPenalties += 1; }
 
+                //White Pawn front left
+                if (Coord.IndexToFile(kingIndex) != 1)
+                {
+                    if (Piece.PieceType(board.board[kingIndex - 9]) != Piece.Pawn || Piece.Color(board.board[kingIndex - 9]) != Piece.White) { numPenalties += 1; }
+                }
+                //White Pawn front right
+                if (Coord.IndexToFile(kingIndex) != 8)
+                {
+                    if (Piece.PieceType(board.board[kingIndex - 7]) != Piece.Pawn || Piece.Color(board.board[kingIndex - 7]) != Piece.White) { numPenalties += 1; }
+                }
+            }
+        }
+        else
+        {
+            //Pawn shield
+            //Not back rank
+            if (Coord.IndexToRank(kingIndex) != 1)
+            {
+                //Black Pawn in front
+                if (Piece.PieceType(board.board[kingIndex + 8]) != Piece.Pawn || Piece.Color(board.board[kingIndex + 8]) != Piece.White) { numPenalties += 1; }
+
+                //Black Pawn front left
+                if (Coord.IndexToFile(kingIndex) != 1)
+                {
+                    if (Piece.PieceType(board.board[kingIndex + 7]) != Piece.Pawn || Piece.Color(board.board[kingIndex + 7]) != Piece.White) { numPenalties += 1; }
+                }
+                //Black Pawn front right
+                if (Coord.IndexToFile(kingIndex) != 8)
+                {
+                    if (Piece.PieceType(board.board[kingIndex + 9]) != Piece.Pawn || Piece.Color(board.board[kingIndex + 9]) != Piece.White) { numPenalties += 1; }
+                }
+            }
+        }
+        return numPenalties * -30;
+    }
 }

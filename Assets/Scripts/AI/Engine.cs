@@ -8,7 +8,7 @@ public class Engine
     BookLoader bookLoader;
     Perft perft;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.0.6";
+    const string name = "Nooby Bot v1.0.7";
 
 
     static readonly string[] positionLabels = new[] { "position", "fen", "moves" };

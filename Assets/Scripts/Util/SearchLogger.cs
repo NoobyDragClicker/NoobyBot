@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 
 
+
 #if UNITY_EDITOR
 using UnityEngine;
 #endif
@@ -16,6 +17,7 @@ public class SearchLogger
     public SearchDiagnostics currentDiagnostics;
     public SearchLogger(string name, string folderPath, bool useDiagnostics)
     {
+        this.useDiagnostics = useDiagnostics;
         logPath = folderPath + name + " " + DateTime.Now.Month.ToString() + "-" + DateTime.Now.Day.ToString() + "-" + DateTime.Now.Ticks.ToString() + ".txt";
         currentDiagnostics = new SearchDiagnostics();
         diagnostics.Add(currentDiagnostics);
@@ -23,8 +25,8 @@ public class SearchLogger
 
     public void startNewSearch()
     {
-        currentDiagnostics = new SearchDiagnostics();
         diagnostics.Add(currentDiagnostics);
+        currentDiagnostics = new SearchDiagnostics();
     }
 
     public void logSingleSearch()
@@ -35,7 +37,7 @@ public class SearchLogger
         message += "Nodes/second: " + (currentDiagnostics.nodesSearched / currentDiagnostics.totalSearchTime.TotalMilliseconds * 1000).ToString() + "\n";
 
         message += "TT hits: " + currentDiagnostics.ttHits.ToString() + "\n";
-        message += "TT stores: " + currentDiagnostics.ttHits.ToString() + "\n";
+        message += "TT stores: " + currentDiagnostics.ttStores.ToString() + "\n";
 
         message += "LMR total uses: " + (currentDiagnostics.timesReSearched_LMR + currentDiagnostics.timesNotReSearched_LMR).ToString() + "\n";
         message += "LMR successes: " + currentDiagnostics.timesNotReSearched_LMR.ToString() + "\n";
@@ -50,7 +52,8 @@ public class SearchLogger
         message += "Quiescence time: " + currentDiagnostics.quiescenceTime + "\n";
         message += "Quiescence move gen time: " + currentDiagnostics.quiescenceGenTime + "\n";
         message += "Make/unmake time: " + currentDiagnostics.makeUnmakeTime + "\n";
-        message += "Evaluation time: " + currentDiagnostics.moveGenTime + "\n";
+        message += "Re-search time: " + currentDiagnostics.reSearchTime + "\n";
+        message += "Evaluation time: " + currentDiagnostics.evaluationTime + "\n";
 
         message += "New best move found on: \n";
 
@@ -79,8 +82,53 @@ public class SearchLogger
         }
     }
 
-    public void logAllSearches() {
+    public void logAllSearches()
+    {
+        SearchDiagnostics totaldiagnostics = new SearchDiagnostics();
+        totaldiagnostics.ttHits = 0;
+        totaldiagnostics.ttEntries = 0;
+        totaldiagnostics.nodesSearched = 0;
+        totaldiagnostics.msPerIteration = new int[100];
+        totaldiagnostics.numBestMovesPerIndex = new int[300];
+        AddToLog($"Num of search diagnostics: {diagnostics.Count}");
 
+        for (int index = 0; index < diagnostics.Count; index++)
+        {
+            totaldiagnostics.ttHits += diagnostics[index].ttHits;
+            totaldiagnostics.ttStores += diagnostics[index].ttStores;
+            totaldiagnostics.ttEntries += diagnostics[index].ttEntries;
+            totaldiagnostics.ttOverwrites += diagnostics[index].ttOverwrites;
+
+            totaldiagnostics.nodesSearched += diagnostics[index].nodesSearched;
+
+            totaldiagnostics.timesReSearched_LMR += diagnostics[index].timesReSearched_LMR;
+            totaldiagnostics.timesNotReSearched_LMR += diagnostics[index].timesNotReSearched_LMR;
+
+            totaldiagnostics.timesReSearched_NMR += diagnostics[index].timesReSearched_NMR;
+            totaldiagnostics.timesNotReSearched_NMR += diagnostics[index].timesNotReSearched_NMR;
+
+            totaldiagnostics.totalSearchTime += diagnostics[index].totalSearchTime;
+            totaldiagnostics.reSearchTime += diagnostics[index].reSearchTime;
+            totaldiagnostics.moveGenTime += diagnostics[index].moveGenTime;
+            totaldiagnostics.moveOrderTime += diagnostics[index].moveOrderTime;
+            totaldiagnostics.quiescenceGenTime += diagnostics[index].quiescenceGenTime;
+            totaldiagnostics.quiescenceTime += diagnostics[index].quiescenceTime;
+            totaldiagnostics.makeUnmakeTime += diagnostics[index].makeUnmakeTime;
+            totaldiagnostics.evaluationTime += diagnostics[index].evaluationTime;
+
+            /*for (int iteration = 0; iteration < diagnostics[index].msPerIteration.Length; iteration++)
+            {
+                totaldiagnostics.msPerIteration[iteration] += diagnostics[index].msPerIteration[iteration];
+            }
+
+            for (int moveNumber = 0; moveNumber < diagnostics[index].numBestMovesPerIndex.Length; moveNumber++)
+            {
+                totaldiagnostics.numBestMovesPerIndex[moveNumber] += diagnostics[index].numBestMovesPerIndex[moveNumber];
+            }*/
+        }
+
+        currentDiagnostics = totaldiagnostics;
+        logSingleSearch();
     }
 
     public void AddToLog(string message)
@@ -119,6 +167,7 @@ public struct SearchDiagnostics
     public ulong timesNotReSearched_NMR;
 
     public TimeSpan totalSearchTime;
+    public TimeSpan reSearchTime;
     public TimeSpan moveGenTime;
     public TimeSpan moveOrderTime;
     public TimeSpan quiescenceGenTime;

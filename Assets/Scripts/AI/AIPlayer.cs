@@ -27,7 +27,7 @@ public class AIPlayer : Player
     public AIPlayer(string name)
     {
         this.name = name;
-        logger = new SearchLogger(name, logPath, false);
+        logger = new SearchLogger(name, logPath, true);
     }
 
     public override void NewGame(Board board, AISettings aiSettings, BookLoader bookLoader)

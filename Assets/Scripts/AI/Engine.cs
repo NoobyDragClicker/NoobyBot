@@ -6,7 +6,6 @@ public class Engine
     AISettings aiSettings = new AISettings(40, 10, 16, false);
     Board board;
     BookLoader bookLoader;
-    Perft perft;
     bool hasStartedGame = false;
     const string name = "Nooby Bot v1.1.2";
 
@@ -14,6 +13,7 @@ public class Engine
     static readonly string[] positionLabels = new[] { "position", "fen", "moves" };
     static readonly string[] goLabels = new[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
     static readonly string[] perftLabels = new[] { "perft", "position", "perftSuite" };
+    static readonly string[] searchLabels = new[] { "search", "depth", "positions" };
 
     public Engine()
     {
@@ -46,7 +46,6 @@ public class Engine
                 player.NewGame(board, aiSettings, bookLoader);
                 hasStartedGame = true;
                 break;
-
             case "position":
                 if (!hasStartedGame)
                 {
@@ -58,6 +57,9 @@ public class Engine
                 break;
             case "go":
                 ProcessGoCommand(command);
+                break;
+            case "test":
+                ProcessTestCommand(command);
                 break;
             case "stop":
                 player.search.EndSearch();
@@ -123,17 +125,11 @@ public class Engine
         }
     }
 
-    //Synchronises the clock and tells the player to move
-    void ProcessGoCommand(string message)
+    void ProcessTestCommand(string message)
     {
-        if (message.Contains("movetime"))
+        if (message.Contains("perft"))
         {
-            int moveTimeMs = TryGetLabelledValueInt(message, "movetime", goLabels, 0);
-            player.NotifyToMove(TimeSpan.FromMilliseconds(moveTimeMs), TimeSpan.Zero, Player.ClockType.PerMove);
-        }
-        else if (message.Contains("perft"))
-        {
-            perft = new Perft(player.logger);
+            Perft perft = new Perft(player.logger);
             int depth = 6;
             if (message.Contains("depth"))
             {
@@ -156,6 +152,31 @@ public class Engine
         {
             Evaluation evaluator = new Evaluation();
             Console.WriteLine(evaluator.EvaluatePosition(board, new AISettings()));
+        }
+        else if (message.Contains("search"))
+        {
+            SearchTester tester = new SearchTester(player.logger);
+            int targetDepth = 6;
+            int numPositions = 125;
+
+            if (message.Contains("depth"))
+            {
+                targetDepth = TryGetLabelledValueInt(message, "depth", searchLabels);
+            }
+            if (message.Contains("positions"))
+            {
+                numPositions = TryGetLabelledValueInt(message, "positions", searchLabels);
+            }
+            tester.RunSearchSuite(numPositions, targetDepth);
+        }
+    }
+    //Synchronises the clock and tells the player to move
+    void ProcessGoCommand(string message)
+    {
+        if (message.Contains("movetime"))
+        {
+            int moveTimeMs = TryGetLabelledValueInt(message, "movetime", goLabels, 0);
+            player.NotifyToMove(TimeSpan.FromMilliseconds(moveTimeMs), TimeSpan.Zero, Player.ClockType.PerMove);
         }
         else
         {

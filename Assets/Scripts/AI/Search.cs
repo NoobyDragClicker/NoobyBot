@@ -37,6 +37,7 @@ public class Search
     Stopwatch moveOrderTimer = new Stopwatch();
     Stopwatch makeUnmakeTimer = new Stopwatch();
     Stopwatch searchTimer = new Stopwatch();
+    Stopwatch reSearchTimer = new Stopwatch();
     SearchLogger logger;
 
     public Search(Board board, AISettings aiSettings, Move[,] killerMoves, SearchLogger logger)
@@ -81,6 +82,7 @@ public class Search
         logger.currentDiagnostics.msPerIteration = new int[maxDepth];
 
         searchTimer.Restart();
+        reSearchTimer.Reset();
         moveGenTimer.Reset();
         moveOrderTimer.Reset();
         makeUnmakeTimer.Reset();
@@ -131,11 +133,12 @@ public class Search
 
             //Only save times for the fully searched depths
             iterationTimer.Stop();
-            logger.currentDiagnostics.msPerIteration[depth] = (int)iterationTimer.ElapsedMilliseconds;
+            logger.currentDiagnostics.msPerIteration[depth - 1] = (int)iterationTimer.ElapsedMilliseconds;
         }
 
 
         logger.currentDiagnostics.totalSearchTime = searchTimer.Elapsed;
+        logger.currentDiagnostics.reSearchTime = reSearchTimer.Elapsed;
         logger.currentDiagnostics.moveGenTime = moveGenTimer.Elapsed;
         logger.currentDiagnostics.moveOrderTime = moveOrderTimer.Elapsed;
         logger.currentDiagnostics.makeUnmakeTime = makeUnmakeTimer.Elapsed;
@@ -169,6 +172,7 @@ public class Search
         //Quiescence search
         if (depth <= 0)
         {
+            logger.currentDiagnostics.nodesSearched++;
             quiescenceTimer.Start();
             int eval = QuiescenceSearch(alpha, beta, plyFromRoot + 1);
             quiescenceTimer.Stop();
@@ -178,8 +182,6 @@ public class Search
         moveGenTimer.Start();
         List<Move> legalMoves = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn);
         moveGenTimer.Stop();
-        logger.currentDiagnostics.nodesSearched++;
-
         int numLegalMoves = legalMoves.Count;
 
         //Check for mate or stalemate
@@ -226,7 +228,7 @@ public class Search
             //Test 5: reductions = Math.Min(depth / 2, (i + 1) * depth / 30);
             if (i >= 3 && depth > 3)
             {
-                reductions++;
+                reductions = Math.Min(depth / 2, (int)(Math.Log(i + 1) * depth / 8));
             }
 
             //First search including reductions
@@ -237,7 +239,9 @@ public class Search
             {
                 reductions = 0;
                 logger.currentDiagnostics.timesReSearched_LMR++;
+                reSearchTimer.Start();
                 eval = -SearchMoves(depth + searchExtensions - 1, plyFromRoot + 1, -beta, -alpha, numExtensions + searchExtensions);
+                reSearchTimer.Stop();
             }
             else { logger.currentDiagnostics.timesNotReSearched_LMR++; }
 

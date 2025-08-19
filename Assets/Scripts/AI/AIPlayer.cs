@@ -11,9 +11,11 @@ public class AIPlayer : Player
     Board board;
     OpeningBook openingBook;
     AISettings aiSettings;
+
     
     public Search search;
     public SearchLogger logger;
+    public SearchDiagnostics currentDiagnostics;
 
     public TimeSpan MoveTimeLimit;
     private CancellationTokenSource moveTimeoutTokenSource;
@@ -25,7 +27,7 @@ public class AIPlayer : Player
     public AIPlayer(string name)
     {
         this.name = name;
-        logger = new SearchLogger(name, logPath);
+        logger = new SearchLogger(name, logPath, false);
     }
 
     public override void NewGame(Board board, AISettings aiSettings, BookLoader bookLoader)
@@ -95,6 +97,7 @@ public class AIPlayer : Player
                 // Start monitoring in background
                 Task.Run(() => MonitorMoveTime(moveTimeoutTokenSource.Token));
             }
+            logger.startNewSearch();
             Task.Run(() => search.StartSearch());
         }
         
@@ -105,7 +108,6 @@ public class AIPlayer : Player
         try
         {
             await Task.Delay(MoveTimeLimit, token);
-            logger.AddToLog("Time ran out");
             search.EndSearch();
         }
         //Expected when search finishes earlier
@@ -125,6 +127,7 @@ public class AIPlayer : Player
         {
             moveTimeoutTokenSource.Cancel();
         }
+        logger.logSingleSearch();
         ChoseMove(move, name);
     }
 

@@ -43,5 +43,13 @@ LOS: 100.00 %, DrawRatio: 24.43 %, PairsRatio: 4.82
 Games: 262, Wins: 123, Losses: 28, Draws: 111, Points: 178.5 (68.13 %)
 SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
-v1.1.2 Added null move pruning
+v1.1.2 Added diagnostics system - found major issue with Quiescence move ordering
+--------------------------------------------------
+Results of nooby_fixed vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 107.26 +/- 22.70, nElo: 207.32 +/- 41.14
+LOS: 100.00 %, DrawRatio: 42.34 %, PairsRatio: 14.80
+Games: 274, Wins: 91, Losses: 9, Draws: 174, Points: 178.0 (64.96 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+
 

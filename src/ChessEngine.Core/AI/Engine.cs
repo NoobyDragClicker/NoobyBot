@@ -7,16 +7,19 @@ public class Engine
     Board board;
     BookLoader bookLoader;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.1.4";
+    const string name = "Nooby Bot v1.1.5";
 
 
-    static readonly string[] positionLabels = new[] { "position", "fen", "moves" };
-    static readonly string[] goLabels = new[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
-    static readonly string[] perftLabels = new[] { "perft", "position", "perftSuite" };
-    static readonly string[] searchLabels = new[] { "search", "depth", "positions" };
+    static readonly string[] positionLabels = { "position", "fen", "moves" };
+    static readonly string[] goLabels = { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
+    static readonly string[] perftLabels = { "perft", "position", "perftSuite" };
+    static readonly string[] searchLabels = { "search", "depth", "positions" };
 
     public Engine()
     {
+        board = new Board();
+        board.setPosition(Board.startPos);
+
         bookLoader = new BookLoader();
         player = new AIPlayer(name);
         player.onMoveChosen += MakeMove;
@@ -98,13 +101,13 @@ public class Engine
         // FEN
         if (message.ToLower().Contains("startpos"))
         {
-            board.setPosition(Board.startPos, new MoveGenerator());
+            board.setPosition(Board.startPos);
             player.ResetOpeningBook(bookLoader);
         }
         else if (message.ToLower().Contains("fen"))
         {
             string customFen = TryGetLabelledValue(message, "fen", positionLabels);
-            board.setPosition(customFen, new MoveGenerator());
+            board.setPosition(customFen);
             player.isInBook = false;
         }
         else

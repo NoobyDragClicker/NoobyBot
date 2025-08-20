@@ -27,8 +27,7 @@ public static class Piece
     const int colorMask = whiteMask | blackMask;
 
     //Utilities
-    public static bool IsColour(int piece, int color){
-        
+    public static bool IsColour(int piece, int color){ 
         return (piece & colorMask) == color;
     }
 

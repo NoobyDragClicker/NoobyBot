@@ -88,7 +88,7 @@ public class BookLoader
         Move[] moves = new Move[16];
         int index = 0;
         Board board = new Board();
-        board.setPosition(Board.startPos, new MoveGenerator());
+        board.setPosition(Board.startPos);
 
         for (int x = 0; x < sections.Count(); x++)
         {

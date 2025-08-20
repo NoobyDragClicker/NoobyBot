@@ -2,12 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-public class MoveGenerator
+public static class MoveGenerator
 {
 
-    public MoveGenerator(){}
     //Used for a player when clicking on a piece
-    public List<Move> GeneratePieceMove(int piece, int index, Board board){
+    public static List<Move> GeneratePieceMove(int piece, int index, Board board){
         board.GenerateMoveGenInfo();
         int pieceType = Piece.PieceType(piece);
         int pieceColor = Piece.Color(piece);
@@ -41,7 +40,7 @@ public class MoveGenerator
     }
 
     //Returns all legal moves in a position
-    public List<Move> GenerateLegalMoves(Board board, int pieceColor , bool isCapturesOnly=false){
+    public static List<Move> GenerateLegalMoves(Board board, int pieceColor , bool isCapturesOnly=false){
         board.GenerateMoveGenInfo();
         
         List<Move> legalMoves = new List<Move>();
@@ -71,7 +70,7 @@ public class MoveGenerator
     }
     
     //Returns a 64 int long array, with 0 being safe and 1 being attacked
-    public int[,] GenerateAllAttackedSquares(Board board){
+    public static int[,] GenerateAllAttackedSquares(Board board){
         int[,] attackedSquares = new int[2, 64];
         List<Move> whitePossibleMoves = new List<Move>();
         List<Move> blackPossibleMoves = new List<Move>();
@@ -123,7 +122,7 @@ public class MoveGenerator
     }
 
     //Self explanatory
-    public List<Move> GeneratePawnMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck, bool isCapturesOnly=false){
+    public static List<Move> GeneratePawnMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck, bool isCapturesOnly=false){
         List<Move> legalMoves = new List<Move>();
         int dirVal = (pieceColor == Piece.White)? -1 : 1;
         
@@ -221,7 +220,7 @@ public class MoveGenerator
         
         return legalMoves;
     }
-    public List<Move> GenerateKnightMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck,  bool isCapturesOnly=false){
+    public static List<Move> GenerateKnightMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck,  bool isCapturesOnly=false){
         List<Move> legalMoves = new List<Move>();
         List<int> legalMoveIndexes = new List<int>();
         int file = board.IndexToFile(index);
@@ -283,7 +282,7 @@ public class MoveGenerator
         }
         return legalMoves;
     }
-    public List<Move> GenerateBishopMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck,  bool isCapturesOnly=false){
+    public static List<Move> GenerateBishopMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck,  bool isCapturesOnly=false){
         List<Move> legalMoves = new List<Move>();
         //bottom right diag
         for(int currentIndex = index + 9; currentIndex < 64 && currentIndex > -1 && board.IndexToFile(currentIndex) > board.IndexToFile(index); currentIndex += 9){
@@ -351,7 +350,7 @@ public class MoveGenerator
         }
         return legalMoves;
     }
-    public List<Move> GenerateRookMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck, bool isCapturesOnly=false){
+    public static List<Move> GenerateRookMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck, bool isCapturesOnly=false){
         List<Move> legalMoves = new List<Move>();
 
         //Right
@@ -428,13 +427,13 @@ public class MoveGenerator
         }
         return legalMoves;
     }
-    public List<Move> GenerateQueenMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck, bool isCapturesOnly=false){
+    public static List<Move> GenerateQueenMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck, bool isCapturesOnly=false){
         List<Move> legalMoves = GenerateBishopMoves(index, pieceColor, board, squaresAttacked, isInCheck, isCapturesOnly);
         List<Move> legalRookMoves = GenerateRookMoves(index, pieceColor, board, squaresAttacked, isInCheck, isCapturesOnly);
         legalMoves.AddRange(legalRookMoves);
         return legalMoves;
     }
-    public List<Move> GenerateKingMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isCapturesOnly=false){
+    public static List<Move> GenerateKingMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isCapturesOnly=false){
         List<int> potentialIndexes = new List<int>();
         List<Move> legalMoves = new List<Move>();
 
@@ -505,7 +504,7 @@ public class MoveGenerator
     }
     
     //Outputs list of indexes where said piece type is    
-    public List<int> GetPosByPieceType(int pieceType, int pieceColor, Board board){
+    public static List<int> GetPosByPieceType(int pieceType, int pieceColor, Board board){
         List<int> pieces = new List<int>();
         for(int index = 0; index<64; index++){
             if(Piece.IsColour(board.board[index], pieceColor) && Piece.PieceType(board.board[index]) == pieceType){
@@ -516,7 +515,7 @@ public class MoveGenerator
     }
 
     //Changes the board to see what it would be like after en passant
-    bool InCheckAfterEnPassant (Board board, int startSquare, int targetSquare, int epCapturedPawnSquare) {
+    static bool InCheckAfterEnPassant (Board board, int startSquare, int targetSquare, int epCapturedPawnSquare) {
 
 		// Update board to reflect en-passant capture
         int movedPiece = board.board[startSquare];
@@ -540,7 +539,7 @@ public class MoveGenerator
 	}
 
     //Returns king's position
-    public int GetKingIndex(int kingColor, Board board){
+    public static int GetKingIndex(int kingColor, Board board){
         for(int index = 0; index<64; index++){
             if(Piece.Color(board.board[index]) == kingColor && Piece.PieceType(board.board[index]) == Piece.King){
                 return index;
@@ -550,7 +549,7 @@ public class MoveGenerator
     }
 
     //Returns list of pieces checking the king
-    public List<int> KingCheckIndexes(int kingColor, Board board){
+    public static List<int> KingCheckIndexes(int kingColor, Board board){
         int kingIndex = GetKingIndex(kingColor, board);
         List<int> kingCheckIndexes = new List<int>();
         List<Move> bishopChecks = GenerateBishopMoves(kingIndex, kingColor, board, false, false);
@@ -612,7 +611,7 @@ public class MoveGenerator
     }
 
     //Removes moves that don't block or remove a check if they are in check
-    public List<Move> PruneIllegalMoves(List<Move> startingMoves, List<int> allowedIndexes){
+    public static List<Move> PruneIllegalMoves(List<Move> startingMoves, List<int> allowedIndexes){
         List<Move> allowedMoves = new List<Move>();
         for(int x = 0; x< startingMoves.Count; x++){
             if(allowedIndexes.Contains(startingMoves[x].newIndex)){
@@ -623,7 +622,7 @@ public class MoveGenerator
     }
     
     //Returns indexes that can be used to block a check or a pin
-    public List<int> BlockableIndexes(int kingIndex, int attackingPieceIndex, Board board){
+    public static List<int> BlockableIndexes(int kingIndex, int attackingPieceIndex, Board board){
         List<int> blockableIndexes = new List<int> {attackingPieceIndex};  //checking piece can be captured
         int kingRank = board.IndexToRank(kingIndex);
         int kingFile = board.IndexToFile(kingIndex);
@@ -675,7 +674,7 @@ public class MoveGenerator
     }
     
     //Returns the indexes of all pinned pieces of the king's color
-    public List<PinnedPair> PinnedIndexes(int kingIndex, Board board){
+    public static List<PinnedPair> PinnedIndexes(int kingIndex, Board board){
         List<PinnedPair> pinnedIndexes = new List<PinnedPair>();
         int file = board.IndexToFile(kingIndex);
         int rank = board.IndexToRank(kingIndex);
@@ -854,7 +853,7 @@ public class MoveGenerator
     }
     
     //Adds all of the different types of promotions (knight, rook etc)
-    public List<Move> AddPromotionsToList(List<Move> moves){
+    public static List<Move> AddPromotionsToList(List<Move> moves){
         List<Move> promoteMoves = new List<Move>();
         Move promoteToKnight;
         Move promoteToQueen;
@@ -878,7 +877,7 @@ public class MoveGenerator
     }
 
     //Takes the pinned piece index and the list of pairs and returns the corresponding pinning piece
-    public int GetPinningPiece(int pinnedPieceIndex, List<PinnedPair> pinnedPairs){
+    public static int GetPinningPiece(int pinnedPieceIndex, List<PinnedPair> pinnedPairs){
         for(int x = 0; x< pinnedPairs.Count(); x++){
             if(pinnedPairs[x].PinnedPiece == pinnedPieceIndex){
                 return pinnedPairs[x].PinningPiece;

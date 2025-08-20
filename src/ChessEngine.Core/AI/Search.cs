@@ -71,8 +71,8 @@ public class Search
 
         if (bestMove == null)
         {
-            bestMove = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
-            logger.AddToLog($"Timed out, no move found. Num moves: {board.moveGenerator.GenerateLegalMoves(board, board.colorTurn).Count}. Generating random");
+            bestMove = MoveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
+            logger.AddToLog($"Timed out, no move found. Num moves: {MoveGenerator.GenerateLegalMoves(board, board.colorTurn).Count}. Generating random");
         }
 
         onSearchComplete?.Invoke(bestMove);
@@ -183,7 +183,7 @@ public class Search
         }
 
         moveGenTimer.Start();
-        List<Move> legalMoves = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn);
+        List<Move> legalMoves = MoveGenerator.GenerateLegalMoves(board, board.colorTurn);
         moveGenTimer.Stop();
         int numLegalMoves = legalMoves.Count;
 
@@ -336,7 +336,7 @@ public class Search
         }
 
         quiescenceGenTimer.Start();
-        List<Move> captures = board.moveGenerator.GenerateLegalMoves(board, board.colorTurn, true);
+        List<Move> captures = MoveGenerator.GenerateLegalMoves(board, board.colorTurn, true);
         quiescenceGenTimer.Stop();
 
         moveOrderTimer.Start();

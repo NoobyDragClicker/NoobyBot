@@ -345,12 +345,12 @@ public class Evaluation
 
     int EvaluateBishopMobility(Board board, int pieceIndex, int pieceColor)
     {
-        int numMoves = board.moveGenerator.GenerateBishopMoves(pieceIndex, pieceColor, board, true, false).Count;
+        int numMoves = MoveGenerator.GenerateBishopMoves(pieceIndex, pieceColor, board, true, false).Count;
         return (numMoves * 2) - 10;
     }
     int EvaluateRookMobility(Board board, int pieceIndex, int pieceColor)
     {
-        int numMoves = board.moveGenerator.GenerateBishopMoves(pieceIndex, pieceColor, board, true, false).Count;
+        int numMoves = MoveGenerator.GenerateBishopMoves(pieceIndex, pieceColor, board, true, false).Count;
         return (numMoves * 2) - 10;
     }
 

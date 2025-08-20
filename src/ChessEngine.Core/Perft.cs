@@ -8,7 +8,6 @@ using System.Linq;
 
 public class Perft
 {
-    MoveGenerator moveGenerator;
 
     // Timers
     Stopwatch moveGenTimer = new Stopwatch();
@@ -31,7 +30,6 @@ public class Perft
 
     public void StartSearchDivide(Board board, int maxDepth)
     {
-        moveGenerator = new MoveGenerator();
         try
         {
             Task.Factory.StartNew(() => SearchDivide(maxDepth, maxDepth, board), TaskCreationOptions.LongRunning);
@@ -45,7 +43,6 @@ public class Perft
 
     public void StartSuite(int numPositions, int maxDepth, bool testQuiescence)
     {
-        moveGenerator = new MoveGenerator();
         try
         {
             Task.Factory.StartNew(() => RunSuite(numPositions, maxDepth, testQuiescence), TaskCreationOptions.LongRunning);
@@ -77,7 +74,7 @@ public class Perft
             string fenString = fenAndExpectedResult.ElementAt(x).Key;
             ulong expected = fenAndExpectedResult.ElementAt(x).Value;
             Board board = new Board();
-            board.setPosition(fenString, new MoveGenerator());
+            board.setPosition(fenString);
             ulong result = 0;
             try
             {
@@ -138,12 +135,12 @@ public class Perft
 
     ulong Search(int depth, Board board, bool testQuiescence)
     {
-        var moves = moveGenerator.GenerateLegalMoves(board, board.colorTurn);
+        var moves = MoveGenerator.GenerateLegalMoves(board, board.colorTurn);
         int numCaptures = 0;
         int expectedCaptures = 0;
         if (testQuiescence)
         {
-            numCaptures = moveGenerator.GenerateLegalMoves(board, board.colorTurn, true).Count();
+            numCaptures = MoveGenerator.GenerateLegalMoves(board, board.colorTurn, true).Count();
         }
 
         //Regular perft
@@ -197,7 +194,7 @@ public class Perft
     //Prints the start index and how many moves stem from it
     ulong SearchDivide(int startDepth, int currentDepth, Board board)
     {
-        var moves = moveGenerator.GenerateLegalMoves(board, board.colorTurn);
+        var moves = MoveGenerator.GenerateLegalMoves(board, board.colorTurn);
 
         if (currentDepth == 1)
         {

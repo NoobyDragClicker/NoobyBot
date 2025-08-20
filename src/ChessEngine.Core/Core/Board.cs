@@ -9,6 +9,8 @@ public class Board
     public const int WhiteIndex = 0;
     public const int BlackIndex = 1;
 
+    public ulong[,] pieceBitboards = new ulong[2, 7];
+    public ulong[] sideBitboard = new ulong[2];
 
     public bool isCurrentPlayerInCheck;
     public bool isCurrentPlayerInDoubleCheck;
@@ -23,8 +25,7 @@ public class Board
     //Saves the index where a pawn can capture
     public int enPassantIndex;
     public int fiftyMoveCounter;
-    public MoveGenerator moveGenerator;
-    public int[] board;
+    public int[] board = new int[64];
 
     //Saves info about the game
     Stack<GameState> gameStateHistory = new Stack<GameState>();
@@ -37,14 +38,12 @@ public class Board
     public int plyFromStart;
 
 
-    public void setPosition(string fenPosition, MoveGenerator generator)
+    public void setPosition(string fenPosition)
     {
         zobristHistory.Clear();
         gameMoveHistory.Clear();
         gameStateHistory.Clear();
         currentGameState = new GameState();
-
-        moveGenerator = generator;
         board = ConvertFromFEN(fenPosition);
         try
         {
@@ -472,8 +471,12 @@ public class Board
                 if (Char.IsLetter(c))
                 {
                     int pieceColour = Char.IsUpper(c) ? Piece.White : Piece.Black;
+                    int colorIndex = (pieceColour == Piece.White) ? WhiteIndex : BlackIndex;
+
                     int pieceType = pieceTypeFromSymbol[char.ToLower(c)];
                     position[index] = pieceType | pieceColour;
+
+                    BitboardHelper.SetSquare(ref pieceBitboards[colorIndex, pieceType], index);
                     index++;
                 }
                 else if (Char.IsNumber(c))
@@ -509,19 +512,19 @@ public class Board
     public bool IsDraw()
     {
         //Stalemate
-        if (moveGenerator.GenerateLegalMoves(this, colorTurn).Count == 0 && !isCurrentPlayerInCheck) { return true; }
+        if (MoveGenerator.GenerateLegalMoves(this, colorTurn).Count == 0 && !isCurrentPlayerInCheck) { return true; }
         //50 move rule
         if (fiftyMoveCounter >= 100) { return true; }
         if (IsRepetitionDraw()) { return true; }
 
         //Can be improved with dedicated function
-        int numQueens = moveGenerator.GetPosByPieceType(Piece.Queen, Piece.Black, this).Count + moveGenerator.GetPosByPieceType(Piece.Queen, Piece.White, this).Count;
-        int numWhiteBishop = moveGenerator.GetPosByPieceType(Piece.Bishop, Piece.White, this).Count;
-        int numBlackBishop = moveGenerator.GetPosByPieceType(Piece.Bishop, Piece.Black, this).Count;
-        int numWhiteKnight = moveGenerator.GetPosByPieceType(Piece.Knight, Piece.White, this).Count;
-        int numBlackKnight = moveGenerator.GetPosByPieceType(Piece.Knight, Piece.Black, this).Count;
-        int numRook = moveGenerator.GetPosByPieceType(Piece.Rook, Piece.Black, this).Count + moveGenerator.GetPosByPieceType(Piece.Rook, Piece.White, this).Count;
-        int numPawn = moveGenerator.GetPosByPieceType(Piece.Pawn, Piece.Black, this).Count + moveGenerator.GetPosByPieceType(Piece.Pawn, Piece.White, this).Count;
+        int numQueens = MoveGenerator.GetPosByPieceType(Piece.Queen, Piece.Black, this).Count + MoveGenerator.GetPosByPieceType(Piece.Queen, Piece.White, this).Count;
+        int numWhiteBishop = MoveGenerator.GetPosByPieceType(Piece.Bishop, Piece.White, this).Count;
+        int numBlackBishop = MoveGenerator.GetPosByPieceType(Piece.Bishop, Piece.Black, this).Count;
+        int numWhiteKnight = MoveGenerator.GetPosByPieceType(Piece.Knight, Piece.White, this).Count;
+        int numBlackKnight = MoveGenerator.GetPosByPieceType(Piece.Knight, Piece.Black, this).Count;
+        int numRook = MoveGenerator.GetPosByPieceType(Piece.Rook, Piece.Black, this).Count + MoveGenerator.GetPosByPieceType(Piece.Rook, Piece.White, this).Count;
+        int numPawn = MoveGenerator.GetPosByPieceType(Piece.Pawn, Piece.Black, this).Count + MoveGenerator.GetPosByPieceType(Piece.Pawn, Piece.White, this).Count;
 
         //Insufficient material
         if (numPawn > 0 || numQueens > 0 || numRook > 0) { return false; }
@@ -534,7 +537,7 @@ public class Board
 
     public void GenerateMoveGenInfo()
     {
-        attackedSquares = moveGenerator.GenerateAllAttackedSquares(this);
+        attackedSquares = MoveGenerator.GenerateAllAttackedSquares(this);
         UpdateCheckingInfo();
         UpdatePinnedInfo();
     }
@@ -555,18 +558,18 @@ public class Board
 
     public bool IsCheckmate(int color)
     {
-        int kingIndex = moveGenerator.GetKingIndex(color, this);
+        int kingIndex = MoveGenerator.GetKingIndex(color, this);
         if (isCurrentPlayerInCheck)
         {
             //If there are any valid king moves
-            if (moveGenerator.GenerateKingMoves(kingIndex, color, this, false).Count != 0)
+            if (MoveGenerator.GenerateKingMoves(kingIndex, color, this, false).Count != 0)
             {
                 return false;
             }
             //check if there are any blocks
             else
             {
-                if (moveGenerator.GenerateLegalMoves(this, color).Count == 0) { return true; }
+                if (MoveGenerator.GenerateLegalMoves(this, color).Count == 0) { return true; }
                 else { return false; }
             }
         }
@@ -579,7 +582,7 @@ public class Board
     //More efficient than checking multiple times for checks
     public void UpdateCheckingInfo()
     {
-        checkingPieces = moveGenerator.KingCheckIndexes(colorTurn, this);
+        checkingPieces = MoveGenerator.KingCheckIndexes(colorTurn, this);
         if (checkingPieces.Count > 1)
         {
             blockableIndexes.Clear();
@@ -590,7 +593,7 @@ public class Board
         {
             isCurrentPlayerInCheck = true;
             isCurrentPlayerInDoubleCheck = false;
-            blockableIndexes = moveGenerator.BlockableIndexes(moveGenerator.GetKingIndex(colorTurn, this), checkingPieces[0], this);
+            blockableIndexes = MoveGenerator.BlockableIndexes(MoveGenerator.GetKingIndex(colorTurn, this), checkingPieces[0], this);
         }
         else
         {
@@ -605,7 +608,7 @@ public class Board
     public void UpdatePinnedInfo()
     {
         pinnedIndexes.Clear();
-        pinnedIndexes = moveGenerator.PinnedIndexes(moveGenerator.GetKingIndex(colorTurn, this), this);
+        pinnedIndexes = MoveGenerator.PinnedIndexes(MoveGenerator.GetKingIndex(colorTurn, this), this);
         pinnedPieceIndexes.Clear();
         for (int x = 0; x < pinnedIndexes.Count; x++)
         {
@@ -657,7 +660,6 @@ public class Board
         }
         else { return false; }
     }
-
 
     public int EnPassantFileToIndex(int pieceColor, int epFile)
     {

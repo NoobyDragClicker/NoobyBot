@@ -5,6 +5,6 @@
 		}
 	],
 	"settings": {
-		"dotnet.defaultSolution": "Chess.sln"
+		"dotnet.defaultSolution": "ChessEnginge.sln"
 	}
 }

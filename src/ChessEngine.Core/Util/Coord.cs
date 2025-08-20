@@ -106,11 +106,11 @@ public static class Coord
                     int pieceNum = 0; 
                     List<Move> validMoves = new List<Move>();
                     switch (pieceType){
-                        case 'N': validMoves = board.moveGenerator.GenerateKnightMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Knight; break;
-                        case 'B': validMoves = board.moveGenerator.GenerateBishopMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Bishop; break;
-                        case 'Q': validMoves = board.moveGenerator.GenerateQueenMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Queen; break;
-                        case 'R': validMoves = board.moveGenerator.GenerateRookMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Rook; break;
-                        case 'K': validMoves = board.moveGenerator.GenerateKingMoves(endIndex, board.colorTurn, board, true); pieceNum = Piece.King; break;
+                        case 'N': validMoves = MoveGenerator.GenerateKnightMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Knight; break;
+                        case 'B': validMoves = MoveGenerator.GenerateBishopMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Bishop; break;
+                        case 'Q': validMoves = MoveGenerator.GenerateQueenMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Queen; break;
+                        case 'R': validMoves = MoveGenerator.GenerateRookMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Rook; break;
+                        case 'K': validMoves = MoveGenerator.GenerateKingMoves(endIndex, board.colorTurn, board, true); pieceNum = Piece.King; break;
                     }
                     List<int> possibleStartIndexes = new List<int>();
 

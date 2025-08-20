@@ -44,7 +44,7 @@ public class SearchTester
         if (currentTestNumber < numTests)
         {
             Board board = new Board();
-            board.setPosition(fenPositions[currentTestNumber], new MoveGenerator());
+            board.setPosition(fenPositions[currentTestNumber]);
             currentTestNumber++;
             search = new Search(board, aiSettings, new Move[1024, 3], new int[64, 64], logger);
             search.onSearchComplete += RunNextSearch;

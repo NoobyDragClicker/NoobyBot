@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChessEngine.Core\ChessEngine.Core.csproj"/>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>NoobyBot-v1.1.5</AssemblyName>
+    <Version>1.1.5</Version>
+
+    <OutputPath>C:\Users\Spencer\Desktop\Chess\Versions</OutputPath>
+  </PropertyGroup>
+
+</Project>

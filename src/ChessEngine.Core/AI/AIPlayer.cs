@@ -9,7 +9,6 @@ public class AIPlayer : Player
     OpeningBook openingBook;
     AISettings aiSettings;
 
-    
     public Search search;
     public SearchLogger logger;
     public SearchDiagnostics currentDiagnostics;

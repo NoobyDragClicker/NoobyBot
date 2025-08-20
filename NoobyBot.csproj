@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType> 
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems> 
+    <AssemblyName>NoobyBot-v1.1.4</AssemblyName>
+    <Version>1.1.4</Version>
+    <OutputPath>C:\Users\Spencer\Desktop\Chess\Versions\</OutputPath>
+  </PropertyGroup>
+
+   <!-- Only include the wanted folders -->
+  <ItemGroup>
+    <Compile Include="Assets/Scripts/AI/**/*.cs" />
+    <Compile Include="Assets/Scripts/Core/**/*.cs" />
+    <Compile Include="Assets/Scripts/Logs/**/*.cs" />
+    <Compile Include="Assets/Scripts/Opening Book/**/*.cs" />
+    <Compile Include="Assets/Scripts/Util/**/*.cs" />
+    <Compile Include="Assets/Scripts/Testing/Perft.cs" />
+    <Compile Include="Assets/Scripts/Testing/SearchTester.cs" />
+  </ItemGroup>
+
+</Project>

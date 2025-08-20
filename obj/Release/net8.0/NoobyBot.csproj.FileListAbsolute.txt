@@ -1,0 +1,15 @@
+C:\Users\Spencer\Chess\obj\Release\net8.0\NoobyBot.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Spencer\Chess\obj\Release\net8.0\NoobyBot.AssemblyInfoInputs.cache
+C:\Users\Spencer\Chess\obj\Release\net8.0\NoobyBot.AssemblyInfo.cs
+C:\Users\Spencer\Chess\obj\Release\net8.0\NoobyBot.csproj.CoreCompileInputs.cache
+C:\Users\Spencer\Chess\obj\Release\net8.0\NoobyBot.sourcelink.json
+C:\Users\Spencer\Chess\obj\Release\net8.0\NoobyBot.genruntimeconfig.cache
+C:\Users\Spencer\Desktop\Chess\Versions\net8.0\NoobyBot-v1.1.4.exe
+C:\Users\Spencer\Desktop\Chess\Versions\net8.0\NoobyBot-v1.1.4.deps.json
+C:\Users\Spencer\Desktop\Chess\Versions\net8.0\NoobyBot-v1.1.4.runtimeconfig.json
+C:\Users\Spencer\Desktop\Chess\Versions\net8.0\NoobyBot-v1.1.4.dll
+C:\Users\Spencer\Desktop\Chess\Versions\net8.0\NoobyBot-v1.1.4.pdb
+C:\Users\Spencer\Chess\obj\Release\net8.0\NoobyBot-v1.1.4.dll
+C:\Users\Spencer\Chess\obj\Release\net8.0\refint\NoobyBot-v1.1.4.dll
+C:\Users\Spencer\Chess\obj\Release\net8.0\NoobyBot-v1.1.4.pdb
+C:\Users\Spencer\Chess\obj\Release\net8.0\ref\NoobyBot-v1.1.4.dll

@@ -1,0 +1,63 @@
+v1.0.1 Added search extensions (maxdepth of 10)
+--------------------------------------------------
+Elo: 29.60 +/- 20.89, nElo: 34.32 +/- 24.08
+LOS: 99.74 %, DrawRatio: 34.50 %, PairsRatio: 1.36
+Games: 800, Wins: 337, Losses: 269, Draws: 194, Points: 434.0 (54.25 %)
+--------------------------------------------------
+v1.0.2 Added quiescence search
+--------------------------------------------------
+Elo: 232.79 +/- 46.30, nElo: 325.23 +/- 48.15
+LOS: 100.00 %, DrawRatio: 20.00 %, PairsRatio: 25.67
+Games: 200, Wins: 138, Losses: 21, Draws: 41, Points: 158.5 (79.25 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+v1.0.3 Added basic killer move heuristic
+--------------------------------------------------
+Elo: 114.64 +/- 33.14, nElo: 148.67 +/- 39.85
+LOS: 100.00 %, DrawRatio: 34.93 %, PairsRatio: 4.00
+Games: 292, Wins: 146, Losses: 53, Draws: 93, Points: 192.5 (65.92 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+v1.0.4 Added node tracking to infoline
+v1.0.5 Added LMR -1 for any move past the 3rd ordered move
+--------------------------------------------------
+Results of nooby_LMR vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 14.60 +/- 14.13, nElo: 22.29 +/- 21.53
+LOS: 97.88 %, DrawRatio: 43.00 %, PairsRatio: 1.23
+Games: 1000, Wins: 249, Losses: 207, Draws: 544, Points: 521.0 (52.10 %)
+--------------------------------------------------
+v1.1.0 Fixed bug in movegen that crippled performance - maybe, added better logging support
+--------------------------------------------------
+Results of nooby_Fixed vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: -0.47 +/- 18.40, nElo: -0.64 +/- 25.03
+LOS: 48.00 %, DrawRatio: 32.70 %, PairsRatio: 0.99
+Games: 740, Wins: 185, Losses: 186, Draws: 369, Points: 369.5 (49.93 %)
+Ptnml(0-2): [25, 100, 121, 99, 25], WL/DD Ratio: 0.42
+LLR: -0.35 (-11.7%) (-2.94, 2.94) [0.00, 10.00]
+--------------------------------------------------
+v1.1.1 Added tapered eval
+--------------------------------------------------
+Results of nooby_Tapered vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 131.98 +/- 34.55, nElo: 177.41 +/- 42.07
+LOS: 100.00 %, DrawRatio: 24.43 %, PairsRatio: 4.82
+Games: 262, Wins: 123, Losses: 28, Draws: 111, Points: 178.5 (68.13 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+v1.1.2 Added diagnostics system + search testing,  found major issue with Quiescence move ordering
+--------------------------------------------------
+Results of nooby_fixed vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 107.26 +/- 22.70, nElo: 207.32 +/- 41.14
+LOS: 100.00 %, DrawRatio: 42.34 %, PairsRatio: 14.80
+Games: 274, Wins: 91, Losses: 9, Draws: 174, Points: 178.0 (64.96 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+v1.1.3 Added history heuristic + searched promotions earlier
+--------------------------------------------------
+Results of nooby_History vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 51.56 +/- 16.93, nElo: 99.50 +/- 32.17
+LOS: 100.00 %, DrawRatio: 51.79 %, PairsRatio: 3.70
+Games: 448, Wins: 106, Losses: 40, Draws: 302, Points: 257.0 (57.37 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+v1.1.4 Pawn shield, doubled pawn penalties, defended pawn bonus
+

@@ -13,22 +13,24 @@ public class Search
     Evaluation evaluation;
     MoveOrder moveOrder;
     public TranspositionTable tt;
-    
 
-    
+
+
     Move bestMove = null;
     Move bestMoveThisIteration;
     int bestEvalThisIteration;
     int bestEval;
     Move[,] killerMoves;
+    int[,] history;
 
     bool abortSearch = false;
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
+    const int HISTORY_MAX = 32768;
     public event Action<Move> onSearchComplete;
-    
-    
+
+
     Stopwatch iterationTimer = new Stopwatch();
     Stopwatch evaluationTimer = new Stopwatch();
     Stopwatch moveGenTimer = new Stopwatch();
@@ -40,12 +42,13 @@ public class Search
     Stopwatch reSearchTimer = new Stopwatch();
     SearchLogger logger;
 
-    public Search(Board board, AISettings aiSettings, Move[,] killerMoves, SearchLogger logger)
+    public Search(Board board, AISettings aiSettings, Move[,] killerMoves, int[,] history, SearchLogger logger)
     {
         this.logger = logger;
         this.board = board;
         this.aiSettings = aiSettings;
         this.killerMoves = killerMoves;
+        this.history = history;
         evaluation = new Evaluation();
         tt = new TranspositionTable(board, 256);
         moveOrder = new MoveOrder();
@@ -92,7 +95,7 @@ public class Search
 
         for (int depth = 1; depth <= maxDepth; depth++)
         {
-
+            DecayHistory();
             iterationTimer.Restart();
             SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
 
@@ -198,13 +201,13 @@ public class Search
         }
 
         moveOrderTimer.Start();  //                          first search move                   
-        legalMoves = moveOrder.OrderMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove(), killerMoves, aiSettings);
+        moveOrder.OrderMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove(), killerMoves, history, aiSettings);
         moveOrderTimer.Stop();
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
         string bestMovesTracker = "pv progression: ";
-        
+
         for (int i = 0; i < legalMoves.Count; i++)
         {
             makeUnmakeTimer.Start();
@@ -216,7 +219,7 @@ public class Search
 
             //Search extensions for promotion and checks
             if ((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && numExtensions < aiSettings.maxSearchExtensionDepth) { searchExtensions++; }
-            
+
             int eval;
             int reductions = 0;
             //More aggressive LMR (depth > 3), sorted best to worst
@@ -267,6 +270,9 @@ public class Search
                             break;
                         }
                     }
+
+                    int historyVal = history[legalMoves[i].oldIndex, legalMoves[i].newIndex] + depth * depth;
+                    history[legalMoves[i].oldIndex, legalMoves[i].newIndex] = (historyVal < HISTORY_MAX) ? historyVal : HISTORY_MAX;
                 }
                 return beta;
             }
@@ -292,8 +298,8 @@ public class Search
         {
             logger.AddToLog(bestMovesTracker);
         }
-        
-        tt.StoreEvaluation(depth + ((numLegalMoves == 1)? 1:0), plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);
+
+        tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);
 
         return alpha;
     }
@@ -365,8 +371,19 @@ public class Search
         const int maxMatePly = 150;
         return Math.Abs(score) > (positiveInfinity - maxMatePly);
     }
-    public void EndSearch() { abortSearch = true;}
+    public void EndSearch() { abortSearch = true; }
 
+    void DecayHistory()
+    {
+        for (int f = 0; f < 64; f++)
+        {
+            for (int t = 0; t < 64; t++)
+            {
+                history[f, t] -= history[f, t] >> 2; // ~75% retain; cheap & fast}
+            }
+
+        }
+    }
 
 }
 

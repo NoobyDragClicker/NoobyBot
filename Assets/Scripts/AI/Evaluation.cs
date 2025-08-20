@@ -1,3 +1,6 @@
+using System;
+using System.Net.Security;
+
 public class Evaluation
 {
 
@@ -170,14 +173,16 @@ public class Evaluation
                         totalMaterial += pawnValue;
                         if (pieceColor == Piece.White)
                         {
-                           
-                            mgMaterialCount += pawnValue + mg_pawn_table[x]; 
+
+                            mgMaterialCount += pawnValue + mg_pawn_table[x];
                             egMaterialCount += pawnValue + eg_pawn_table[x];
+                            //egMaterialCount += EvaluatePawnStrength(board, x, pieceColor);
                         }
                         else
                         {
-                            mgMaterialCount -= pawnValue + mg_pawn_table[63 - x]; 
+                            mgMaterialCount -= pawnValue + mg_pawn_table[63 - x];
                             egMaterialCount -= pawnValue + eg_pawn_table[63 - x];
+                            //egMaterialCount -= EvaluatePawnStrength(board, x, pieceColor);
                         }
                         break;
                     case Piece.Knight:
@@ -201,11 +206,13 @@ public class Evaluation
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += bishopValue + mg_bishop_table[x];
+                            mgMaterialCount += EvaluateBishopMobility(board, x, pieceColor);
                             egMaterialCount += bishopValue + eg_bishop_table[x];
                         }
                         else
                         {
                             mgMaterialCount -= bishopValue + mg_bishop_table[63 - x];
+                            mgMaterialCount -= EvaluateBishopMobility(board, x, pieceColor);
                             egMaterialCount -= bishopValue + eg_bishop_table[63 - x];
                         }
                         break;
@@ -216,11 +223,13 @@ public class Evaluation
                         {
                             mgMaterialCount += rookValue + mg_rook_table[x];
                             egMaterialCount += rookValue + eg_rook_table[x];
+                            egMaterialCount += EvaluateRookMobility(board, x, pieceColor);
                         }
                         else
                         {
                             mgMaterialCount -= rookValue + mg_rook_table[63 - x];
                             egMaterialCount -= rookValue + eg_rook_table[63 - x];
+                            egMaterialCount -= EvaluateRookMobility(board, x, pieceColor);
                         }
                         break;
                     case Piece.Queen:
@@ -241,11 +250,13 @@ public class Evaluation
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += mg_king_table[x];
+                            //mgMaterialCount += EvaluateKingSafety(board, x, pieceColor);
                             egMaterialCount += eg_king_table[x];
                         }
                         else
                         {
                             mgMaterialCount -= mg_king_table[63 - x];
+                            //mgMaterialCount -= EvaluateKingSafety(board, x, pieceColor);
                             egMaterialCount -= eg_king_table[63 - x];
                         }
                         break;
@@ -318,7 +329,7 @@ public class Evaluation
             //Defended from left
             if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex + 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 7]) == Piece.White) { bonus += 5; }
             //Defended from right
-            if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex + 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 9]) == Piece.White) { bonus += 5; } 
+            if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex + 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 9]) == Piece.White) { bonus += 5; }
         }
         else
         {
@@ -331,4 +342,16 @@ public class Evaluation
         }
         return bonus;
     }
+
+    int EvaluateBishopMobility(Board board, int pieceIndex, int pieceColor)
+    {
+        int numMoves = board.moveGenerator.GenerateBishopMoves(pieceIndex, pieceColor, board, true, false).Count;
+        return (numMoves * 2) - 10;
+    }
+    int EvaluateRookMobility(Board board, int pieceIndex, int pieceColor)
+    {
+        int numMoves = board.moveGenerator.GenerateBishopMoves(pieceIndex, pieceColor, board, true, false).Count;
+        return (numMoves * 2) - 10;
+    }
+
 }

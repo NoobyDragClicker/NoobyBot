@@ -46,7 +46,7 @@ public class SearchTester
             Board board = new Board();
             board.setPosition(fenPositions[currentTestNumber], new MoveGenerator());
             currentTestNumber++;
-            search = new Search(board, aiSettings, new Move[1024, 3], logger);
+            search = new Search(board, aiSettings, new Move[1024, 3], new int[64, 64], logger);
             search.onSearchComplete += RunNextSearch;
             Task.Run(() => search.StartSearch());
         }

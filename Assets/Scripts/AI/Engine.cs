@@ -7,7 +7,7 @@ public class Engine
     Board board;
     BookLoader bookLoader;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.1.2";
+    const string name = "Nooby Bot v1.1.4";
 
 
     static readonly string[] positionLabels = new[] { "position", "fen", "moves" };

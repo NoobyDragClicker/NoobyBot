@@ -21,6 +21,7 @@ public class AIPlayer : Player
     private CancellationTokenSource moveTimeoutTokenSource;
     public bool isInBook;
     Move[,] killers;
+    int[,] history;
     const string logPath = "C:/Users/Spencer/Desktop/Chess/Logs/";
 
 
@@ -35,7 +36,8 @@ public class AIPlayer : Player
         this.board = board;
         this.aiSettings = aiSettings;
         killers = new Move[1024, 3];
-        search = new Search(this.board, aiSettings, killers, logger);
+        history = new int[64, 64];
+        search = new Search(this.board, aiSettings, killers, history, logger);
         search.onSearchComplete += OnSearchComplete;
 
         if (aiSettings.openingBookDepth > 0)

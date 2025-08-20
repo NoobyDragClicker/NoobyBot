@@ -5,14 +5,13 @@ public class MoveOrder
 {
     const int million = 1000000;
     int[] moveScores;
-    public List<Move> OrderMoves(Board board, List<Move> legalMoves, Move firstMove, Move[,] killerMoves, AISettings aiSettings)
+    public void OrderMoves(Board board, List<Move> moves, Move firstMove, Move[,] killerMoves, int[,] history, AISettings aiSettings)
     {
-        List<Move> moves = legalMoves;
-        moveScores = new int[legalMoves.Count];
+        moveScores = new int[moves.Count];
 
-        for (int x = 0; x < legalMoves.Count; x++)
+        for (int x = 0; x < moves.Count; x++)
         {
-            Move move = legalMoves[x];
+            Move move = moves[x];
             int score = 0;
             if (firstMove != null && move.GetIntValue() == firstMove.GetIntValue())
             {
@@ -30,44 +29,42 @@ public class MoveOrder
             {
                 score = million + 1;
             }
-            else
+            else if (move.isCapture())
             {
                 int movedPieceValue;
-                if (move.isCapture())
+                int capturedPieceValue;
+                //en passant
+                if (move.flag == 7)
                 {
-
-                    int capturedPieceValue;
-                    //en passant
-                    if (move.flag == 7)
+                    if (Piece.IsColour(board.board[moves[x].oldIndex], Piece.White))
                     {
-                        if (Piece.IsColour(board.board[legalMoves[x].oldIndex], Piece.White))
-                        {
-                            capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex + 8]));
-                        }
-                        else
-                        {
-                            capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex - 8]));
-                        }
+                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[moves[x].newIndex + 8]));
                     }
                     else
                     {
-                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].newIndex]));
+                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[moves[x].newIndex - 8]));
                     }
-                    movedPieceValue = GetPieceValue(Piece.PieceType(board.board[legalMoves[x].oldIndex]));
-
-                    //Basically MVV LVA, *10 to give more space for killers 
-                    score = million + ((capturedPieceValue - movedPieceValue) * 10);
                 }
-                else if (move.flag == 5)
+                else
                 {
-                    score = 3;
+                    capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[moves[x].newIndex]));
                 }
-                else if (move.isPromotion())
-                {
-                    score = 9;
-                }
+                movedPieceValue = GetPieceValue(Piece.PieceType(board.board[moves[x].oldIndex]));
 
-                int attackedSquaresIndex = (Piece.Color(board.board[legalMoves[x].oldIndex]) == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
+                //Basically MVV LVA, * 10 to give more space for killers 
+                score = million + ((capturedPieceValue - movedPieceValue) * 10);
+            }
+            else if (move.isPromotion())
+            {
+                score = million + GetPieceValue(move.PromotedPieceType()) * 10;
+            }
+            else if (history[move.oldIndex, move.newIndex] != 0)
+            {
+                score = history[move.oldIndex, move.newIndex] + 100000;
+            }
+            else
+            {
+                int attackedSquaresIndex = (Piece.Color(board.board[moves[x].oldIndex]) == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
                 //Penalty for moving to attacked square
                 if (board.attackedSquares[attackedSquaresIndex, move.newIndex] == 1)
                 {
@@ -87,11 +84,10 @@ public class MoveOrder
             moveScores[x] = score;
         }
 
-        moves = Sort(moves);
+        Sort(moves);
         Array.Clear(moveScores, 0, moveScores.Length);
-        return moves;
     }
-    List<Move> Sort(List<Move> moves)
+    void Sort(List<Move> moves)
     {
         for (int i = 0; i < moves.Count - 1; i++)
         {
@@ -105,7 +101,6 @@ public class MoveOrder
                 }
             }
         }
-        return moves;
     }
     static int GetPieceValue(int pieceType)
     {
@@ -161,6 +156,6 @@ public class MoveOrder
             moveScores[x] = score;
         }
 
-        captures = Sort(captures);
+        Sort(captures);
     }
 }

@@ -124,8 +124,8 @@ public class AIPlayer : Player
         if (!isInBook)
         {
             moveTimeoutTokenSource.Cancel();
+            logger.logSingleSearch();
         }
-        logger.logSingleSearch();
         ChoseMove(move, name);
     }
 

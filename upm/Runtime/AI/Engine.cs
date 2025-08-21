@@ -18,7 +18,13 @@ public class Engine
     public Engine()
     {
         board = new Board();
-        board.setPosition(Board.startPos);
+        board.setPosition("r3k2r/ppp1pppp/8/8/3pP3/8/PPPP1PPP/R3K2R b KQkq e3 0 1");
+        Console.WriteLine(BitboardHelper.convertToPrintableBitboard(board.pieceBitboards[Board.WhiteIndex, Piece.Pawn]));
+        Console.WriteLine(BitboardHelper.convertToPrintableBitboard(board.pieceBitboards[Board.BlackIndex, Piece.Pawn]));
+        board.Move(new Move(35, 44, false, 7), false);
+        Console.WriteLine(BitboardHelper.convertToPrintableBitboard(board.pieceBitboards[Board.WhiteIndex, Piece.Pawn]));
+        Console.WriteLine(BitboardHelper.convertToPrintableBitboard(board.pieceBitboards[Board.BlackIndex, Piece.Pawn]));
+
 
         bookLoader = new BookLoader();
         player = new AIPlayer(name);

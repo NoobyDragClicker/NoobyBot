@@ -15,7 +15,7 @@ public static class MoveGenerator
 
         if(board.isCurrentPlayerInDoubleCheck){
             if(pieceType == Piece.King){
-                legalMoves = GenerateKingMoves(index, pieceColor, board, false);
+                legalMoves = GenerateKingMoves(pieceColor, board);
             }
             return legalMoves;
         }
@@ -33,7 +33,7 @@ public static class MoveGenerator
             } else if(pieceType == Piece.Queen){
                 legalMoves = GenerateQueenMoves(index, pieceColor, board, false, board.isCurrentPlayerInCheck);
             } else if(pieceType == Piece.King){
-                legalMoves = GenerateKingMoves(index, pieceColor, board, false);
+                legalMoves = GenerateKingMoves(pieceColor, board);
             }
         }
         return legalMoves;
@@ -45,7 +45,7 @@ public static class MoveGenerator
         
         List<Move> legalMoves = new List<Move>();
         int kingIndex = GetKingIndex(pieceColor, board);
-        legalMoves = GenerateKingMoves(kingIndex, pieceColor, board, false, isCapturesOnly);
+        legalMoves = GenerateKingMoves( pieceColor, board, isCapturesOnly);
         //Double check
         if(board.isCurrentPlayerInDoubleCheck){
             return legalMoves;
@@ -69,77 +69,77 @@ public static class MoveGenerator
         return legalMoves;
     }
     
-    //Returns a 64 int long array, with 0 being safe and 1 being attacked
-    public static int[,] GenerateAllAttackedSquares(Board board){
-        int[,] attackedSquares = new int[2, 64];
-        List<Move> whitePossibleMoves = new List<Move>();
-        List<Move> blackPossibleMoves = new List<Move>();
 
-        for (int x = 0; x < 64; x++)
+
+    public static ulong GenerateAttackedSquares(Board board, int attackingPieceColor)
+    {
+        int colorIndex = (attackingPieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+        int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;
+
+        ulong attacks = BitboardHelper.GetAllPawnAttacks(board.pieceBitboards[colorIndex, Piece.Pawn], attackingPieceColor);
+        ulong king = board.pieceBitboards[colorIndex, Piece.King];
+
+        attacks |= BitboardHelper.kingAttacks[BitboardHelper.PopLSB(ref king)];
+
+        ulong piecesExceptEnemyKing = board.allPiecesBitboard ^ board.pieceBitboards[oppositeColorIndex, Piece.King];
+        ulong queens = board.pieceBitboards[colorIndex, Piece.Queen];
+        ulong rooks = board.pieceBitboards[colorIndex, Piece.Rook];
+        ulong bishops = board.pieceBitboards[colorIndex, Piece.Bishop];
+        ulong knights = board.pieceBitboards[colorIndex, Piece.Knight];
+
+        while (queens != 0)
         {
-            if (board.board[x] != 0)
-            {
-
-                int pieceColor = Piece.Color(board.board[x]);
-                List<Move> correctList = (pieceColor == Piece.Black) ? blackPossibleMoves : whitePossibleMoves;
-                int pieceType = Piece.PieceType(board.board[x]);
-
-                switch (pieceType)
-                {
-                    case Piece.Pawn:
-                        correctList.AddRange(GeneratePawnMoves(x, pieceColor, board, true, false));
-                        break;
-                    case Piece.Knight:
-                        correctList.AddRange(GenerateKnightMoves(x, pieceColor, board, true, false));
-                        break;
-                    case Piece.Bishop:
-                        correctList.AddRange(GenerateBishopMoves(x, pieceColor, board, true, false));
-                        break;
-                    case Piece.Rook:
-                        correctList.AddRange(GenerateRookMoves(x, pieceColor, board, true, false));
-                        break;
-                    case Piece.Queen:
-                        correctList.AddRange(GenerateQueenMoves(x, pieceColor, board, true, false));
-                        break;
-                    case Piece.King:
-                        correctList.AddRange(GenerateKingMoves(x, pieceColor, board, true));
-                        break;
-                }
-            }
+            int index = BitboardHelper.PopLSB(ref queens);
+            attacks |= BitboardHelper.GetBishopAttacks(index, piecesExceptEnemyKing);
+            attacks |= BitboardHelper.GetRookAttacks(index, piecesExceptEnemyKing);
         }
 
-        for (int x = 0; x < whitePossibleMoves.Count; x++)
+        while (rooks != 0)
         {
-            attackedSquares[Board.WhiteIndex, whitePossibleMoves[x].newIndex] = 1;
+            int index = BitboardHelper.PopLSB(ref rooks);
+            attacks |= BitboardHelper.GetRookAttacks(index, piecesExceptEnemyKing);
         }
 
-        for (int x = 0; x < blackPossibleMoves.Count; x++)
+        while (bishops != 0)
         {
-            attackedSquares[Board.BlackIndex, blackPossibleMoves[x].newIndex] = 1;
+            int index = BitboardHelper.PopLSB(ref bishops);
+            attacks |= BitboardHelper.GetBishopAttacks(index, piecesExceptEnemyKing);
         }
-
-        return attackedSquares;
+        while (knights != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref knights);
+            attacks |= BitboardHelper.knightAttacks[index];
+        }
+        return attacks;
     }
 
     //Self explanatory
-    public static List<Move> GeneratePawnMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck, bool isCapturesOnly=false){
+    public static List<Move> GeneratePawnMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck, bool isCapturesOnly = false)
+    {
         List<Move> legalMoves = new List<Move>();
-        int dirVal = (pieceColor == Piece.White)? -1 : 1;
-        
-        if(!squaresAttacked && !isCapturesOnly){
+        int dirVal = (pieceColor == Piece.White) ? -1 : 1;
+
+        if (!squaresAttacked && !isCapturesOnly)
+        {
             //1 square forward
-            if(board.board[index + (8*dirVal)] == 0){
-                legalMoves.Add(new Move(index, index  + (8*dirVal), false));
+            if (board.board[index + (8 * dirVal)] == 0)
+            {
+                legalMoves.Add(new Move(index, index + (8 * dirVal), false));
             }
-            
+
             //2 moves forward
-            if(dirVal == -1 && board.IndexToRank(index) == 2){
-                if(board.board[index + (16*dirVal)] == 0 && board.board[index + (8*dirVal)] == 0){
-                    legalMoves.Add(new Move(index, index  + (16*dirVal), false, 6));   
+            if (dirVal == -1 && board.IndexToRank(index) == 2)
+            {
+                if (board.board[index + (16 * dirVal)] == 0 && board.board[index + (8 * dirVal)] == 0)
+                {
+                    legalMoves.Add(new Move(index, index + (16 * dirVal), false, 6));
                 }
-            } else if (dirVal == 1 && board.IndexToRank(index) == 7){
-                if(board.board[index + (16*dirVal)] == 0 && board.board[index + (8*dirVal)] == 0){
-                    legalMoves.Add(new Move(index, index  + (16*dirVal), false, 6));
+            }
+            else if (dirVal == 1 && board.IndexToRank(index) == 7)
+            {
+                if (board.board[index + (16 * dirVal)] == 0 && board.board[index + (8 * dirVal)] == 0)
+                {
+                    legalMoves.Add(new Move(index, index + (16 * dirVal), false, 6));
                 }
             }
         }
@@ -147,77 +147,97 @@ public static class MoveGenerator
 
         //Captures
         List<int> attackedIndexes = new List<int>();
-        if(pieceColor == Piece.White){
+        if (pieceColor == Piece.White)
+        {
             //On the right side
-            if(board.IndexToFile(index) == 8 && index - 9 > -1){
+            if (board.IndexToFile(index) == 8 && index - 9 > -1)
+            {
                 attackedIndexes.Add(index - 9);
-            } 
+            }
             //On the right side
-            else if(board.IndexToFile(index) == 1 && index - 7 > -1){
-                attackedIndexes.Add(index -7);
+            else if (board.IndexToFile(index) == 1 && index - 7 > -1)
+            {
+                attackedIndexes.Add(index - 7);
             }
             //Not on the side
-            else {
-                if(index - 7 > -1){
-                    attackedIndexes.Add(index -7);
+            else
+            {
+                if (index - 7 > -1)
+                {
+                    attackedIndexes.Add(index - 7);
                 }
-                if(index-9 > -1){
+                if (index - 9 > -1)
+                {
                     attackedIndexes.Add(index - 9);
                 }
             }
 
-        } else if(pieceColor == Piece.Black){
+        }
+        else if (pieceColor == Piece.Black)
+        {
             //On the right side
-            if(board.IndexToFile(index) == 8 && index + 7 < 64){
+            if (board.IndexToFile(index) == 8 && index + 7 < 64)
+            {
                 attackedIndexes.Add(index + 7);
-            } 
+            }
             //On the right side
-            else if(board.IndexToFile(index) == 1 && index + 9 < 64){
+            else if (board.IndexToFile(index) == 1 && index + 9 < 64)
+            {
                 attackedIndexes.Add(index + 9);
             }
             //Not on the side
-            else {
-                if(index + 7 < 64){
-                    attackedIndexes.Add(index +7);
+            else
+            {
+                if (index + 7 < 64)
+                {
+                    attackedIndexes.Add(index + 7);
                 }
-                if(index + 9 < 64){
+                if (index + 9 < 64)
+                {
                     attackedIndexes.Add(index + 9);
                 }
             }
         }
         List<Move> enPassantLegal = new List<Move>();
         //Loops through the squares where the pawn can capture
-        for(int x = 0; x< attackedIndexes.Count; x++){
+        for (int x = 0; x < attackedIndexes.Count; x++)
+        {
             //If there's a piece or we are getting the attacked squares
-            if(board.board[attackedIndexes[x]] != 0 || squaresAttacked){
+            if (board.board[attackedIndexes[x]] != 0 || squaresAttacked)
+            {
                 //Regular capturing
-                if(Piece.Color(board.board[attackedIndexes[x]]) != pieceColor || squaresAttacked){
+                if (Piece.Color(board.board[attackedIndexes[x]]) != pieceColor || squaresAttacked)
+                {
                     legalMoves.Add(new Move(index, attackedIndexes[x], true, 0));
                 }
             } //En passant
-            else if(attackedIndexes[x] == board.enPassantIndex){
-                
+            else if (attackedIndexes[x] == board.enPassantIndex)
+            {
+
                 int enPassantAttackedIndex = (pieceColor == Piece.White) ? (board.enPassantIndex + 8) : (board.enPassantIndex - 8);
-                if(!InCheckAfterEnPassant(board, index, attackedIndexes[x], enPassantAttackedIndex)){
+                if (!InCheckAfterEnPassant(board, index, attackedIndexes[x], enPassantAttackedIndex))
+                {
                     enPassantLegal.Add(new Move(index, attackedIndexes[x], true, 7));
                 }
             }
         }
 
-        if(isInCheck){
+        if (isInCheck)
+        {
             legalMoves = PruneIllegalMoves(legalMoves, board.blockableIndexes);
-        } 
+        }
         legalMoves.AddRange(enPassantLegal);
 
-        if(board.pinnedPieceIndexes.Contains(index) && !squaresAttacked){
+        if (board.pinnedPieceIndexes.Contains(index) && !squaresAttacked)
+        {
             int pinningPieceIndex = GetPinningPiece(index, board.pinnedIndexes);
             legalMoves = PruneIllegalMoves(legalMoves, BlockableIndexes(GetKingIndex(pieceColor, board), pinningPieceIndex, board));
         }
 
         //If this piece's next move is about to promote
-        if(pieceColor == Piece.White && board.IndexToRank(index) == 7){List<Move> possibleMoves = AddPromotionsToList(legalMoves); legalMoves = possibleMoves;}
-        else if(pieceColor == Piece.Black && board.IndexToRank(index) == 2){List<Move> possibleMoves = AddPromotionsToList(legalMoves); legalMoves = possibleMoves;}
-        
+        if (pieceColor == Piece.White && board.IndexToRank(index) == 7) { List<Move> possibleMoves = AddPromotionsToList(legalMoves); legalMoves = possibleMoves; }
+        else if (pieceColor == Piece.Black && board.IndexToRank(index) == 2) { List<Move> possibleMoves = AddPromotionsToList(legalMoves); legalMoves = possibleMoves; }
+
         return legalMoves;
     }
     public static List<Move> GenerateKnightMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isInCheck,  bool isCapturesOnly=false){
@@ -433,74 +453,52 @@ public static class MoveGenerator
         legalMoves.AddRange(legalRookMoves);
         return legalMoves;
     }
-    public static List<Move> GenerateKingMoves(int index, int pieceColor, Board board, bool squaresAttacked, bool isCapturesOnly=false){
-        List<int> potentialIndexes = new List<int>();
-        List<Move> legalMoves = new List<Move>();
+    public static List<Move> GenerateKingMoves(int pieceColor, Board board, bool isCapturesOnly = false)
+    {
+        int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+        int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;
 
-        if(!squaresAttacked && !isCapturesOnly){
-            int illegalSquaresIndex = (pieceColor == Piece.White) ? Board.BlackIndex: Board.WhiteIndex;
-            //Loads generic castling data
-            bool canCastleShort = board.HasKingsideRight(pieceColor);
-            bool canCastleLong = board.HasQueensideRight(pieceColor);
+        //Getting king index
+        ulong kingIndexes = board.pieceBitboards[colorIndex, Piece.King];
+        int index = BitboardHelper.PopLSB(ref kingIndexes);
 
-            //Castling
-            if(canCastleLong || canCastleShort){
-                //Empty squares to the right and rook of the same color and not in check and square about to be moved to is not in check
-                if(canCastleShort && index < 61 && board.board[index + 1] == 0 && board.board[index + 2] == 0 && board.board[index + 3] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && board.attackedSquares[illegalSquaresIndex, index + 2] == 0 && board.attackedSquares[illegalSquaresIndex, index + 1] == 0){
-                    legalMoves.Add(new Move(index, index + 2, false, 5));
-                }
-                //Empty squares to the left and rook of the same color and not in check and square about to be moved to is not in check
-                if(canCastleLong && index > 3 && board.board[index - 1] == 0 && board.board[index - 2] == 0 && board.board[index - 3] == 0 && board.board[index - 4] == (pieceColor | Piece.Rook) && !board.isCurrentPlayerInCheck && board.attackedSquares[illegalSquaresIndex, index - 2] == 0 && board.attackedSquares[illegalSquaresIndex, index - 1] == 0){
-                    legalMoves.Add(new Move(index, index - 2, false, 5));
-                }
-            }
-        }
-        
+        //Removing squares attacked by the enemy
+        ulong kingMoves = BitboardHelper.kingAttacks[index];
+        kingMoves &= ~board.attackedSquares[oppositeColorIndex];
+        kingMoves &= ~board.sideBitboard[colorIndex];
 
-        int file = board.IndexToFile(index);
-        int rank = board.IndexToRank(index);
-        //Left side check
-        if(file > 1){
-            if(rank > 1){
-                potentialIndexes.Add(index + 7);
-            }
-            if(rank < 8 ){
-                potentialIndexes.Add(index - 9);
-            }
-            potentialIndexes.Add(index - 1);
+        ulong kingCaptures = kingMoves & board.sideBitboard[oppositeColorIndex];
+        kingMoves &= ~board.sideBitboard[oppositeColorIndex];
+
+        List<Move> moves = new List<Move>();
+        while (kingCaptures != 0)
+        {
+            moves.Add(new Move(index, BitboardHelper.PopLSB(ref kingCaptures), true));
         }
-        //Right side check
-        if(file < 8){
-            if(rank > 1){
-                potentialIndexes.Add(index + 9);
-            }
-            if(rank < 8 ){
-                potentialIndexes.Add(index - 7);
-            }
-            potentialIndexes.Add(index + 1);
+        if (isCapturesOnly)
+        {
+            return moves;
         }
-        if(rank < 8){potentialIndexes.Add(index - 8);}
-        if(rank > 1){potentialIndexes.Add(index + 8);}
-        
-        if(squaresAttacked){
-            for(int x = 0; x< potentialIndexes.Count; x++){
-                legalMoves.Add(new Move(index, potentialIndexes[x], false));
-            }
-            return legalMoves;
+
+        while (kingMoves != 0)
+        {
+            moves.Add(new Move(index, BitboardHelper.PopLSB(ref kingMoves), false));
         }
-        
-        for(int x = 0; x< potentialIndexes.Count; x++){
-            int illegalSquaresIndex = (pieceColor == Piece.White) ? Board.BlackIndex: Board.WhiteIndex;
-            if (board.board[potentialIndexes[x]] == 0 && board.attackedSquares[illegalSquaresIndex, potentialIndexes[x]] == 0 && !isCapturesOnly)
-            {
-                legalMoves.Add(new Move(index, potentialIndexes[x], false));
-            }
-            else if (!Piece.IsColour(board.board[potentialIndexes[x]], pieceColor) && board.attackedSquares[illegalSquaresIndex, potentialIndexes[x]] == 0 && board.board[potentialIndexes[x]] != 0)
-            {
-                legalMoves.Add(new Move(index, potentialIndexes[x], true));
-            }
+
+        //Add castling
+        ulong piecesAndAttackedSquares = board.attackedSquares[oppositeColorIndex] | board.allPiecesBitboard;
+        if (board.HasKingsideRight(pieceColor) && !board.isCurrentPlayerInCheck)
+        {
+            //No pieces/attacked squares between castling points
+            if (pieceColor == Piece.White && (piecesAndAttackedSquares & BitboardHelper.whiteKingsideCastleMask) == 0) { moves.Add(new Move(index, 62, false, 5)); }
+            else if (pieceColor == Piece.Black && (piecesAndAttackedSquares & BitboardHelper.blackKingsideCastleMask) == 0) { moves.Add(new Move(index, 6, false, 5)); }
         }
-        return legalMoves;
+        if (board.HasQueensideRight(pieceColor) && !board.isCurrentPlayerInCheck)
+        {
+            if (pieceColor == Piece.White && (board.attackedSquares[oppositeColorIndex] & BitboardHelper.whiteQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.whiteQueensidePieceCastleMask) == 0) { moves.Add(new Move(index, 58, false, 5)); }
+            else if (pieceColor == Piece.Black && (board.attackedSquares[oppositeColorIndex] & BitboardHelper.blackQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.blackQueensidePieceCastleMask) == 0) { moves.Add(new Move(index, 2, false, 5)); }
+        }
+        return moves;
     }
     
     //Outputs list of indexes where said piece type is    
@@ -539,70 +537,82 @@ public static class MoveGenerator
 	}
 
     //Returns king's position
-    public static int GetKingIndex(int kingColor, Board board){
-        for(int index = 0; index<64; index++){
-            if(Piece.Color(board.board[index]) == kingColor && Piece.PieceType(board.board[index]) == Piece.King){
-                return index;
-            }
-        }
-        return 0;
+    public static int GetKingIndex(int kingColor, Board board)
+    {
+        int colorIndex = (kingColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+        ulong kingBitboard = board.pieceBitboards[colorIndex, Piece.King];
+        return (kingBitboard != 0) ? BitboardHelper.PopLSB(ref kingBitboard) : 0;
     }
 
     //Returns list of pieces checking the king
-    public static List<int> KingCheckIndexes(int kingColor, Board board){
+    public static List<int> KingCheckIndexes(int kingColor, Board board)
+    {
         int kingIndex = GetKingIndex(kingColor, board);
         List<int> kingCheckIndexes = new List<int>();
         List<Move> bishopChecks = GenerateBishopMoves(kingIndex, kingColor, board, false, false);
         List<Move> rookChecks = GenerateRookMoves(kingIndex, kingColor, board, false, false);
         List<Move> knightChecks = GenerateKnightMoves(kingIndex, kingColor, board, false, false);
         List<int> pawnCheckIndexes = new List<int>();
-        if(kingColor == Piece.White){
-            if(board.IndexToFile(kingIndex) != 1 && (kingIndex -9 > -1)){
+        if (kingColor == Piece.White)
+        {
+            if (board.IndexToFile(kingIndex) != 1 && (kingIndex - 9 > -1))
+            {
                 pawnCheckIndexes.Add(kingIndex - 9);
-            }if(board.IndexToFile(kingIndex) != 8 && (kingIndex - 7 > -1)){
+            }
+            if (board.IndexToFile(kingIndex) != 8 && (kingIndex - 7 > -1))
+            {
                 pawnCheckIndexes.Add(kingIndex - 7);
             }
-            
-        } else{
-            if(board.IndexToFile(kingIndex) != 1 && (kingIndex + 7 < 64)){
+
+        }
+        else
+        {
+            if (board.IndexToFile(kingIndex) != 1 && (kingIndex + 7 < 64))
+            {
                 pawnCheckIndexes.Add(kingIndex + 7);
-            }if(board.IndexToFile(kingIndex) != 8 && (kingIndex + 9 <64)){
+            }
+            if (board.IndexToFile(kingIndex) != 8 && (kingIndex + 9 < 64))
+            {
                 pawnCheckIndexes.Add(kingIndex + 9);
             }
         }
         //Bishop
-        for(int x = 0; x < bishopChecks.Count; x++)
+        for (int x = 0; x < bishopChecks.Count; x++)
         {
             int index = bishopChecks[x].newIndex;
             //Checks if there is a opposite color piece of type bishop or queen
-            if(board.board[index] !=0 && !Piece.IsColour(board.board[index], kingColor) && (Piece.PieceType(board.board[index]) == Piece.Bishop || Piece.PieceType(board.board[index]) == Piece.Queen)){
+            if (board.board[index] != 0 && !Piece.IsColour(board.board[index], kingColor) && (Piece.PieceType(board.board[index]) == Piece.Bishop || Piece.PieceType(board.board[index]) == Piece.Queen))
+            {
                 kingCheckIndexes.Add(index);
             }
         }
         //Rook
-        for(int x = 0; x< rookChecks.Count; x++)
+        for (int x = 0; x < rookChecks.Count; x++)
         {
             int index = rookChecks[x].newIndex;
             //Checks if there is a opposite color piece of type rook or queen
-            if(board.board[index] !=0 && !Piece.IsColour(board.board[index], kingColor) && (Piece.PieceType(board.board[index]) == Piece.Rook || Piece.PieceType(board.board[index]) == Piece.Queen)){
+            if (board.board[index] != 0 && !Piece.IsColour(board.board[index], kingColor) && (Piece.PieceType(board.board[index]) == Piece.Rook || Piece.PieceType(board.board[index]) == Piece.Queen))
+            {
                 kingCheckIndexes.Add(index);
             }
         }
         //Knight
-        for(int x = 0; x< knightChecks.Count; x++)
+        for (int x = 0; x < knightChecks.Count; x++)
         {
             int index = knightChecks[x].newIndex;
             //Checks if there is a opposite color piece of type knight
-            if(board.board[index] !=0 && !Piece.IsColour(board.board[index], kingColor) && Piece.PieceType(board.board[index]) == Piece.Knight){
+            if (board.board[index] != 0 && !Piece.IsColour(board.board[index], kingColor) && Piece.PieceType(board.board[index]) == Piece.Knight)
+            {
                 kingCheckIndexes.Add(index);
             }
         }
         //Pawn
-        for(int x = 0; x< pawnCheckIndexes.Count; x++)
+        for (int x = 0; x < pawnCheckIndexes.Count; x++)
         {
             int index = pawnCheckIndexes[x];
             //Checks if there is a opposite color piece of type knight
-            if(board.board[index] !=0 && !Piece.IsColour(board.board[index], kingColor) && Piece.PieceType(board.board[index]) == Piece.Pawn){
+            if (board.board[index] != 0 && !Piece.IsColour(board.board[index], kingColor) && Piece.PieceType(board.board[index]) == Piece.Pawn)
+            {
                 kingCheckIndexes.Add(index);
             }
         }

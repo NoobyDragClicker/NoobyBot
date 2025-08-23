@@ -110,7 +110,7 @@ public static class Coord
                         case 'B': validMoves = MoveGenerator.GenerateBishopMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Bishop; break;
                         case 'Q': validMoves = MoveGenerator.GenerateQueenMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Queen; break;
                         case 'R': validMoves = MoveGenerator.GenerateRookMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Rook; break;
-                        case 'K': validMoves = MoveGenerator.GenerateKingMoves(endIndex, board.colorTurn, board, true); pieceNum = Piece.King; break;
+                        case 'K': validMoves = MoveGenerator.GenerateKingMoves(board.colorTurn, board); pieceNum = Piece.King; break;
                     }
                     List<int> possibleStartIndexes = new List<int>();
 

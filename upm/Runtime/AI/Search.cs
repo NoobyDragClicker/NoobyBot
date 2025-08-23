@@ -15,7 +15,6 @@ public class Search
     public TranspositionTable tt;
 
 
-
     Move bestMove = null;
     Move bestMoveThisIteration;
     int bestEvalThisIteration;

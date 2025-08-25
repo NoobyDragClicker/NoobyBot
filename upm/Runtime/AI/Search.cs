@@ -213,7 +213,7 @@ public class Search
             board.Move(legalMoves[i], true);
             makeUnmakeTimer.Stop();
 
-            board.UpdateCheckingInfo();
+            board.GenerateMoveGenInfo();
             int searchExtensions = (numLegalMoves == 1) ? 1 : 0;
 
             //Search extensions for promotion and checks
@@ -230,7 +230,7 @@ public class Search
             //Test 5: reductions = Math.Min(depth / 2, (i + 1) * depth / 30);
             if (i >= 3 && depth > 3)
             {
-                reductions = Math.Min(depth / 2, (int)(Math.Log(i + 1) * depth / 8));
+                reductions = (int)(0.99 + Math.Log(depth) * Math.Log(i)/3.14);
             }
 
             //First search including reductions

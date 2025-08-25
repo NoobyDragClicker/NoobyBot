@@ -13,16 +13,15 @@ public class Board
     public ulong[] sideBitboard = new ulong[2];
     public ulong[] attackedSquares = new ulong[2];
     public ulong allPiecesBitboard;
+    public ulong diagPins = 0;
+    public ulong straightPins = 0;
+    public ulong checkIndexes = 0;
 
     public bool isCurrentPlayerInCheck;
     public bool isCurrentPlayerInDoubleCheck;
-
-    public List<int> checkingPieces = new List<int>();
-    public List<int> blockableIndexes = new List<int>();
-    public List<PinnedPair> pinnedIndexes = new List<PinnedPair>();
-    public List<int> pinnedPieceIndexes = new List<int>();
     
     public int colorTurn;
+    public int numCheckingPieces;
 
     //Saves the index where a pawn can capture
     public int enPassantIndex;
@@ -584,16 +583,38 @@ public class Board
         if (IsRepetitionDraw()) { return true; }
 
         //Can be improved with dedicated function
-        int numQueens = MoveGenerator.GetPosByPieceType(Piece.Queen, Piece.Black, this).Count + MoveGenerator.GetPosByPieceType(Piece.Queen, Piece.White, this).Count;
-        int numWhiteBishop = MoveGenerator.GetPosByPieceType(Piece.Bishop, Piece.White, this).Count;
-        int numBlackBishop = MoveGenerator.GetPosByPieceType(Piece.Bishop, Piece.Black, this).Count;
-        int numWhiteKnight = MoveGenerator.GetPosByPieceType(Piece.Knight, Piece.White, this).Count;
-        int numBlackKnight = MoveGenerator.GetPosByPieceType(Piece.Knight, Piece.Black, this).Count;
-        int numRook = MoveGenerator.GetPosByPieceType(Piece.Rook, Piece.Black, this).Count + MoveGenerator.GetPosByPieceType(Piece.Rook, Piece.White, this).Count;
-        int numPawn = MoveGenerator.GetPosByPieceType(Piece.Pawn, Piece.Black, this).Count + MoveGenerator.GetPosByPieceType(Piece.Pawn, Piece.White, this).Count;
+        int numWhiteBishop = 0;
+        ulong whiteBishops = pieceBitboards[WhiteIndex, Piece.Bishop];
+        while (whiteBishops != 0)
+        {
+            BitboardHelper.PopLSB(ref whiteBishops);
+            numWhiteBishop++;
+        }
+        int numBlackBishop = 0;
+        ulong blackBishops = pieceBitboards[BlackIndex, Piece.Bishop];
+        while (blackBishops != 0)
+        {
+            BitboardHelper.PopLSB(ref blackBishops);
+            numBlackBishop++;
+        }
+
+        int numWhiteKnight = 0;
+        ulong whiteKnights = pieceBitboards[WhiteIndex, Piece.Knight];
+        while (whiteBishops != 0)
+        {
+            BitboardHelper.PopLSB(ref whiteKnights);
+            numWhiteKnight++;
+        }
+        int numBlackKnight = 0;
+        ulong blackKnights = pieceBitboards[BlackIndex, Piece.Knight];
+        while (blackBishops != 0)
+        {
+            BitboardHelper.PopLSB(ref blackKnights);
+            numBlackKnight++;
+        }
 
         //Insufficient material
-        if (numPawn > 0 || numQueens > 0 || numRook > 0) { return false; }
+        if (pieceBitboards[WhiteIndex, Piece.Pawn] > 0 || pieceBitboards[BlackIndex, Piece.Pawn] > 0 || pieceBitboards[WhiteIndex, Piece.Queen] > 0 || pieceBitboards[BlackIndex, Piece.Queen] > 0 || pieceBitboards[WhiteIndex, Piece.Rook] > 0 || pieceBitboards[BlackIndex, Piece.Rook] > 0) { return false; }
         else if ((numWhiteBishop + numWhiteKnight) > 1 || (numBlackBishop + numBlackKnight) > 1) { return false; }
         else
         {
@@ -605,8 +626,9 @@ public class Board
     {
         attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
         attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
-        UpdateCheckingInfo();
-        UpdatePinnedInfo();
+        MoveGenerator.UpdateChecksAndPins(this);
+        isCurrentPlayerInCheck = (numCheckingPieces > 0) ? true : false;
+        isCurrentPlayerInDoubleCheck = (numCheckingPieces > 1) ? true : false;
     }
 
     public bool IsRepetitionDraw()
@@ -646,42 +668,6 @@ public class Board
         }
     }
 
-    //More efficient than checking multiple times for checks
-    public void UpdateCheckingInfo()
-    {
-        checkingPieces = MoveGenerator.KingCheckIndexes(colorTurn, this);
-        if (checkingPieces.Count > 1)
-        {
-            blockableIndexes.Clear();
-            isCurrentPlayerInCheck = true;
-            isCurrentPlayerInDoubleCheck = true;
-        }
-        else if (checkingPieces.Count == 1)
-        {
-            isCurrentPlayerInCheck = true;
-            isCurrentPlayerInDoubleCheck = false;
-            blockableIndexes = MoveGenerator.BlockableIndexes(MoveGenerator.GetKingIndex(colorTurn, this), checkingPieces[0], this);
-        }
-        else
-        {
-            isCurrentPlayerInCheck = false;
-            isCurrentPlayerInDoubleCheck = false;
-            blockableIndexes.Clear();
-        }
-
-    }
-
-    //More efficient than checking multiple times for pinned pieces
-    public void UpdatePinnedInfo()
-    {
-        pinnedIndexes.Clear();
-        pinnedIndexes = MoveGenerator.PinnedIndexes(MoveGenerator.GetKingIndex(colorTurn, this), this);
-        pinnedPieceIndexes.Clear();
-        for (int x = 0; x < pinnedIndexes.Count; x++)
-        {
-            pinnedPieceIndexes.Add(pinnedIndexes[x].PinnedPiece);
-        }
-    }
 
     //Utilities
     public int IndexToRank(int index)

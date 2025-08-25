@@ -24,7 +24,14 @@ public static class BitboardHelper
 
     public static readonly ulong[] kingAttacks;
     public static readonly ulong[] wPawnAttacks;
+    public static readonly ulong[] wPawnMoves;
+    public static readonly ulong[] wPawnDouble;
+    public static readonly ulong[] wPawnDoubleMask;
+
     public static readonly ulong[] bPawnAttacks;
+    public static readonly ulong[] bPawnMoves;
+    public static readonly ulong[] bPawnDouble;
+    public static readonly ulong[] bPawnDoubleMask;
 
     public static readonly (int x, int y)[] knightJumps = { (-2, -1), (2, -1), (2, 1), (-2, 1), (-1, -2), (-1, 2), (1, 2), (1, -2) };
     public static readonly (int x, int y)[] kingDirections = { (1, 0), (1, -1), (1, 1), (-1, 0), (-1, -1), (-1, 1), (0, -1), (0, 1) };
@@ -71,26 +78,22 @@ public static class BitboardHelper
         return ((bitboard >> square) & 1) != 0;
     }
 
-    private static readonly int[] MultiplyDeBruijnBitPosition64 = new int[64]
+    private static readonly int[] index64 = new int[64]
     {
-        0, 1, 2, 53, 3, 7, 54, 27,
-        4, 38, 41, 8, 34, 55, 48, 28,
-        62, 5, 39, 46, 44, 42, 22, 9,
-        24, 35, 59, 56, 49, 18, 29, 11,
-        63, 52, 6, 26, 37, 40, 33, 47,
-        61, 45, 43, 21, 23, 58, 17, 10,
-        51, 25, 36, 32, 60, 20, 57, 16,
-        50, 31, 19, 15, 30, 14, 13, 12
+        0,  1, 48,  2, 57, 49, 28,  3,
+        61, 58, 50, 42, 38, 29, 17,  4,
+        62, 55, 59, 36, 53, 51, 43, 22,
+        45, 39, 33, 30, 24, 18, 12,  5,
+        63, 47, 56, 27, 60, 41, 37, 16,
+        54, 35, 52, 21, 44, 32, 23, 11,
+        46, 26, 40, 15, 34, 20, 31, 10,
+        25, 14, 19,  9, 13,  8,  7,  6
     };
 
-    public static int TrailingZeroCount(ulong v)
+    public static int TrailingZeroCount(ulong bb)
     {
-        if (v == 0) return 64;
-        unchecked
-        {
-            ulong isolated = v & (ulong)-(long)v;
-            return MultiplyDeBruijnBitPosition64[(isolated * 0x022FDD63CC95386DUL) >> 58];
-        }
+        const ulong debruijn64 = 0x03f79d71b4cb0a89UL;
+        return index64[((bb & (~bb + 1)) * debruijn64) >> 58];
     }
 
     //Creates a list of all the possible blocker combinations
@@ -192,6 +195,12 @@ public static class BitboardHelper
         kingAttacks = new ulong[64];
         wPawnAttacks = new ulong[64];
         bPawnAttacks = new ulong[64];
+        wPawnMoves = new ulong[64];
+        bPawnMoves = new ulong[64];
+        wPawnDouble = new ulong[64];
+        bPawnDouble = new ulong[64];
+        wPawnDoubleMask = new ulong[64];
+        bPawnDoubleMask = new ulong[64];
 
         //Filling in the attack bitboards
         for (int x = 0; x < 8; x++)
@@ -201,6 +210,7 @@ public static class BitboardHelper
                 int startIndex = y * 8 + x;
                 int attackIndex;
 
+                //King
                 for (int direction = 0; direction < kingDirections.Length; direction++)
                 {
                     if (ValidSquareIndex(x + kingDirections[direction].x, y + kingDirections[direction].y, out attackIndex))
@@ -258,6 +268,16 @@ public static class BitboardHelper
                 {
                     wPawnAttacks[startIndex] |= 1ul << attackIndex;
                 }
+                if (ValidSquareIndex(x, y - 1, out attackIndex))
+                {
+                    wPawnMoves[startIndex] |= 1ul << attackIndex;
+                }
+                if (ValidSquareIndex(x, y - 2, out attackIndex) && y == 6)
+                {
+                    wPawnDouble[startIndex] |= 1ul << attackIndex;
+                    wPawnDoubleMask[startIndex] = wPawnMoves[startIndex] | wPawnDouble[startIndex];
+                }
+
 
                 //Black Pawn
                 if (ValidSquareIndex(x + 1, y + 1, out attackIndex))
@@ -267,6 +287,15 @@ public static class BitboardHelper
                 if (ValidSquareIndex(x - 1, y + 1, out attackIndex))
                 {
                     bPawnAttacks[startIndex] |= 1ul << attackIndex;
+                }
+                if (ValidSquareIndex(x, y + 1, out attackIndex))
+                {
+                    bPawnMoves[startIndex] |= 1ul << attackIndex;
+                }
+                if (ValidSquareIndex(x, y + 2, out attackIndex) && y == 1)
+                {
+                    bPawnDouble[startIndex] |= 1ul << attackIndex;
+                    bPawnDoubleMask[startIndex] = bPawnMoves[startIndex] | bPawnDouble[startIndex]; 
                 }
 
 
@@ -303,7 +332,7 @@ public static class BitboardHelper
         }
     }
 
-    static bool ValidSquareIndex(int x, int y, out int index)
+    public static bool ValidSquareIndex(int x, int y, out int index)
     {
         index = y * 8 + x;
         return x >= 0 && x < 8 && y >= 0 && y < 8;

@@ -250,13 +250,11 @@ public class Evaluation
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += mg_king_table[x];
-                            //mgMaterialCount += EvaluateKingSafety(board, x, pieceColor);
                             egMaterialCount += eg_king_table[x];
                         }
                         else
                         {
                             mgMaterialCount -= mg_king_table[63 - x];
-                            //mgMaterialCount -= EvaluateKingSafety(board, x, pieceColor);
                             egMaterialCount -= eg_king_table[63 - x];
                         }
                         break;
@@ -345,12 +343,16 @@ public class Evaluation
 
     int EvaluateBishopMobility(Board board, int pieceIndex, int pieceColor)
     {
-        int numMoves = MoveGenerator.GenerateBishopMoves(pieceIndex, pieceColor, board, true, false).Count;
+        int numMoves = 0;
+        ulong simpleBishopMoves = BitboardHelper.GetBishopAttacks(pieceIndex, board.allPiecesBitboard) & board.sideBitboard[pieceColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex];
+        while(simpleBishopMoves != 0){ numMoves++;  BitboardHelper.PopLSB(ref simpleBishopMoves); }
         return (numMoves * 2) - 10;
     }
     int EvaluateRookMobility(Board board, int pieceIndex, int pieceColor)
     {
-        int numMoves = MoveGenerator.GenerateBishopMoves(pieceIndex, pieceColor, board, true, false).Count;
+        int numMoves = 0;
+        ulong simpleRookMoves = BitboardHelper.GetRookAttacks(pieceIndex, board.allPiecesBitboard) & board.sideBitboard[pieceColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex];
+        while(simpleRookMoves != 0){ numMoves++;  BitboardHelper.PopLSB(ref simpleRookMoves); }
         return (numMoves * 2) - 10;
     }
 

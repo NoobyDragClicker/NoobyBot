@@ -59,5 +59,14 @@ LOS: 100.00 %, DrawRatio: 51.79 %, PairsRatio: 3.70
 Games: 448, Wins: 106, Losses: 40, Draws: 302, Points: 257.0 (57.37 %)
 SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
-v1.1.4 Pawn shield, doubled pawn penalties, defended pawn bonus
+v1.1.4 Not rly sure, pretty sure I just removed everything unity related
+v1.1.5 Bitboards
+--------------------------------------------------
+Results of nooby_Bitboards vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 90.56 +/- 20.53, nElo: 179.81 +/- 38.93
+LOS: 100.00 %, DrawRatio: 47.06 %, PairsRatio: 12.50
+Games: 306, Wins: 89, Losses: 11, Draws: 206, Points: 192.0 (62.75 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+
 

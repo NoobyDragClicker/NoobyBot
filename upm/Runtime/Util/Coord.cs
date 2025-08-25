@@ -106,11 +106,15 @@ public static class Coord
                     int pieceNum = 0; 
                     List<Move> validMoves = new List<Move>();
                     switch (pieceType){
-                        case 'N': validMoves = MoveGenerator.GenerateKnightMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Knight; break;
-                        case 'B': validMoves = MoveGenerator.GenerateBishopMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Bishop; break;
-                        case 'Q': validMoves = MoveGenerator.GenerateQueenMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Queen; break;
-                        case 'R': validMoves = MoveGenerator.GenerateRookMoves(endIndex, board.colorTurn, board, true, false); pieceNum = Piece.Rook; break;
-                        case 'K': validMoves = MoveGenerator.GenerateKingMoves(endIndex, board.colorTurn, board, true); pieceNum = Piece.King; break;
+                        case 'N': validMoves = MoveGenerator.GenerateKnightMoves(board.colorTurn, board); pieceNum = Piece.Knight; break;
+                        case 'B': validMoves = MoveGenerator.GenerateBishopMoves(board.colorTurn, board) ; pieceNum = Piece.Bishop; break;
+                        case 'Q':
+                            validMoves = MoveGenerator.GenerateBishopMoves(board.colorTurn, board);
+                            validMoves.AddRange(MoveGenerator.GenerateRookMoves(board.colorTurn, board));
+                            pieceNum = Piece.Queen;
+                            break;
+                        case 'R': validMoves = MoveGenerator.GenerateRookMoves(board.colorTurn, board); pieceNum = Piece.Rook; break;
+                        case 'K': validMoves = MoveGenerator.GenerateKingMoves(board.colorTurn, board); pieceNum = Piece.King; break;
                     }
                     List<int> possibleStartIndexes = new List<int>();
 
@@ -159,7 +163,7 @@ public static class Coord
 
                     } else if (strMove.Length == 1 && possibleStartIndexes.Count > 1){
                         for(int x = 0; x< possibleStartIndexes.Count; x++){
-                            if (board.pinnedPieceIndexes.Contains(possibleStartIndexes[x])){
+                            if (((board.diagPins | board.straightPins) & (1ul << possibleStartIndexes[x])) != 0){
                                 possibleStartIndexes.RemoveAt(x);
                             }
                         }

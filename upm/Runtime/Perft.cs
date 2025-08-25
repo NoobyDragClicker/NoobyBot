@@ -18,7 +18,7 @@ public class Perft
     List<String> failedFenPositions = new List<string>();
     List<String> failedQuiescence = new List<string>();
     int numPassed;
-    int numTotal;
+    ulong numTotal;
     ulong endNodesSearched;
     bool hasQuiescencePassed = true;
     SearchLogger logger;
@@ -37,7 +37,7 @@ public class Perft
         catch (Exception e)
         {
             logger.AddToLog(e.Message);
-            Console.WriteLine(e.Message);
+            Console.WriteLine(e);
         }
     }
 
@@ -50,7 +50,7 @@ public class Perft
         catch (Exception e)
         {
             logger.AddToLog(e.Message);
-            Console.WriteLine(e.Message);
+            Console.WriteLine(e);
         }
         Console.WriteLine($"Started suite, depth {maxDepth}");
     }
@@ -68,7 +68,7 @@ public class Perft
         GetDepthDict(numPositions, maxDepth);
 
         moveGenTimer.Start();
-        numTotal = fenAndExpectedResult.Count;
+        numTotal = (ulong)fenAndExpectedResult.Count;
         for (int x = 0; x < fenAndExpectedResult.Count; x++)
         {
             string fenString = fenAndExpectedResult.ElementAt(x).Key;
@@ -83,7 +83,7 @@ public class Perft
             catch (Exception e)
             {
                 logger.AddToLog(e.Message);
-                Console.WriteLine(e.Message);
+                Console.WriteLine(e);
             }
 
             if (result != expected) { failedFenPositions.Add(fenString); }
@@ -102,14 +102,14 @@ public class Perft
 
         moveGenTimer.Stop();
         Console.WriteLine("Passed " + numPassed);
-        Console.WriteLine("Failed " + (numTotal - numPassed));
+        Console.WriteLine("Failed " + (numTotal - (ulong)numPassed));
         Console.WriteLine("Quiescence Failed " + failedQuiescence.Count);
         Console.WriteLine("Total time: " + moveGenTimer.Elapsed);
         Console.WriteLine("Total end nodes searched: " + endNodesSearched);
         Console.WriteLine("Nodes/second: " + (float)endNodesSearched / moveGenTimer.ElapsedMilliseconds * 1000f);
 
         logger.AddToLog("Passed " + numPassed);
-        logger.AddToLog("Failed " + (numTotal - numPassed));
+        logger.AddToLog("Failed " + (numTotal - (ulong)numPassed));
         logger.AddToLog("Quiescence Failed " + failedQuiescence.Count);
         logger.AddToLog("Total time: " + moveGenTimer.Elapsed);
         logger.AddToLog("Total end nodes searched: " + endNodesSearched);
@@ -212,7 +212,7 @@ public class Perft
 
             if (currentDepth == startDepth)
             {
-                numTotal += (int)numMovesForThisNode;
+                numTotal += numMovesForThisNode;
                 logger.AddToLog(Coord.GetMoveNotation(moves[i].oldIndex, moves[i].newIndex) + " " + numMovesForThisNode);
                 Console.WriteLine(Coord.GetMoveNotation(moves[i].oldIndex, moves[i].newIndex) + " " + numMovesForThisNode);
                 if (i == moves.Count - 1)

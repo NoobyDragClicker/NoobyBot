@@ -7,7 +7,7 @@ public class Engine
     Board board;
     BookLoader bookLoader;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.1.5";
+    const string name = "Nooby Bot v1.1.6";
 
 
     static readonly string[] positionLabels = { "position", "fen", "moves" };
@@ -17,9 +17,7 @@ public class Engine
 
     public Engine()
     {
-        board = new Board();
-        board.setPosition(Board.startPos);
-
+        board = new Board();        
         bookLoader = new BookLoader();
         player = new AIPlayer(name);
         player.onMoveChosen += MakeMove;

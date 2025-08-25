@@ -66,7 +66,7 @@ public class MoveOrder
             {
                 int attackedSquaresIndex = (Piece.Color(board.board[moves[x].oldIndex]) == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
                 //Penalty for moving to attacked square
-                if (board.attackedSquares[attackedSquaresIndex, move.newIndex] == 1)
+                if (BitboardHelper.ContainsSquare(board.attackedSquares[attackedSquaresIndex], move.newIndex))
                 {
                     score -= 4;
                 }

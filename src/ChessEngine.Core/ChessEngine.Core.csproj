@@ -6,4 +6,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks> <!-- if you use them -->
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\upm\Runtime\**\*.cs" />
+  </ItemGroup>
+
 </Project>

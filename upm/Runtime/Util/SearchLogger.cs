@@ -116,15 +116,23 @@ public class SearchLogger
             totaldiagnostics.makeUnmakeTime += diagnostics[index].makeUnmakeTime;
             totaldiagnostics.evaluationTime += diagnostics[index].evaluationTime;
 
-            /*for (int iteration = 0; iteration < diagnostics[index].msPerIteration.Length; iteration++)
+            if (diagnostics[index].msPerIteration != null)
             {
-                totaldiagnostics.msPerIteration[iteration] += diagnostics[index].msPerIteration[iteration];
+                for (int iteration = 0; iteration < diagnostics[index].msPerIteration.Length; iteration++)
+                {
+                    totaldiagnostics.msPerIteration[iteration] += diagnostics[index].msPerIteration[iteration];
+                }
             }
-
-            for (int moveNumber = 0; moveNumber < diagnostics[index].numBestMovesPerIndex.Length; moveNumber++)
+            if (diagnostics[index].numBestMovesPerIndex != null)
             {
-                totaldiagnostics.numBestMovesPerIndex[moveNumber] += diagnostics[index].numBestMovesPerIndex[moveNumber];
-            }*/
+                for (int moveNumber = 0; moveNumber < diagnostics[index].numBestMovesPerIndex.Length; moveNumber++)
+                {
+                    totaldiagnostics.numBestMovesPerIndex[moveNumber] += diagnostics[index].numBestMovesPerIndex[moveNumber];
+                }
+            }
+            
+
+            
         }
 
         currentDiagnostics = totaldiagnostics;

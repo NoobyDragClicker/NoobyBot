@@ -1,6 +1,6 @@
 {
   "name": "com.spencer.chessengine",
-  "version": "1.1.4",
+  "version": "1.1.6",
   "displayName": "Chess Engine",
   "description": "Pure C# chess engine core (UCI), Unity-compatible.",
   "unity": "2022.3",

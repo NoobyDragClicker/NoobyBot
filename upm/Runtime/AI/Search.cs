@@ -5,7 +5,7 @@ using System.Diagnostics.Tracing;
 using System.Linq;
 
 
-
+//todo tonight: use spans, add TT stats
 public class Search
 {
     Board board;
@@ -91,7 +91,6 @@ public class Search
         quiescenceGenTimer.Reset();
         quiescenceTimer.Reset();
         evaluationTimer.Reset();
-
         for (int depth = 1; depth <= maxDepth; depth++)
         {
             DecayHistory();
@@ -151,7 +150,7 @@ public class Search
         return bestEvalThisIteration;
     }
 
-    int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numExtensions)
+    int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numCheckExtensions)
     {
         if (abortSearch) { return 0; }
         if (board.IsRepetitionDraw()) { return 0; }
@@ -181,6 +180,7 @@ public class Search
             return eval;
         }
 
+
         moveGenTimer.Start();
         List<Move> legalMoves = MoveGenerator.GenerateLegalMoves(board, board.colorTurn);
         moveGenTimer.Stop();
@@ -200,41 +200,40 @@ public class Search
         }
 
         moveOrderTimer.Start();  //                          first search move                   
-        moveOrder.OrderMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove(), killerMoves, history, aiSettings);
+        int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove(), killerMoves, history, aiSettings);
         moveOrderTimer.Stop();
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = null;
         string bestMovesTracker = "pv progression: ";
 
-        for (int i = 0; i < legalMoves.Count; i++)
+        for (int i = 0; i < numLegalMoves; i++)
         {
+            moveOrderTimer.Start(); 
+            moveOrder.GetNextBestMove(moveScores, legalMoves, i);
+            moveOrderTimer.Stop();
+
             makeUnmakeTimer.Start();
             board.Move(legalMoves[i], true);
             makeUnmakeTimer.Stop();
 
             board.GenerateMoveGenInfo();
-            int searchExtensions = (numLegalMoves == 1) ? 1 : 0;
-
-            //Search extensions for promotion and checks
-            if ((legalMoves[i].isPromotion() || board.isCurrentPlayerInCheck) && numExtensions < aiSettings.maxSearchExtensionDepth) { searchExtensions++; }
 
             int eval;
             int reductions = 0;
-            //More aggressive LMR (depth > 3), sorted best to worst
-            //Test 1: reductions = Math.Min(depth / 2, (i + 1) * depth / 24);
-            //Test 2: reductions = Math.Min(depth / 2, (int)(Math.Sqrt(i - 2) * depth / 6));
-            //Test 3: reductions = Math.Min(depth / 2, (int)(Math.Log(i + 1) * depth / 8));
-            //Test 4: reductions = Math.Min(depth / 2, ((i - 2) * depth) / 16);
-            //Test 6: reductions = Math.Min(depth / 2, (i + 1) * depth / 20);
-            //Test 5: reductions = Math.Min(depth / 2, (i + 1) * depth / 30);
             if (i >= 3 && depth > 3)
             {
-                reductions = (int)(0.99 + Math.Log(depth) * Math.Log(i)/3.14);
+                reductions++;
             }
 
+            int extension = (numLegalMoves == 1) ? 1 : 0;
+            if (board.isCurrentPlayerInCheck && numCheckExtensions < 15 && extension == 0)
+            {
+                extension = 1;
+                numCheckExtensions++;
+            }
             //First search including reductions
-            eval = -SearchMoves(depth + searchExtensions - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numExtensions + searchExtensions);
+            eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
 
             //Reduced depth failed high; research
             if (eval > alpha && reductions > 0)
@@ -242,7 +241,7 @@ public class Search
                 reductions = 0;
                 logger.currentDiagnostics.timesReSearched_LMR++;
                 reSearchTimer.Start();
-                eval = -SearchMoves(depth + searchExtensions - 1, plyFromRoot + 1, -beta, -alpha, numExtensions + searchExtensions);
+                eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
                 reSearchTimer.Stop();
             }
             else { logger.currentDiagnostics.timesNotReSearched_LMR++; }
@@ -339,11 +338,12 @@ public class Search
         quiescenceGenTimer.Stop();
 
         moveOrderTimer.Start();
-        moveOrder.OrderCaptures(board, captures);
+        int[] moveScores = moveOrder.ScoreCaptures(board, captures);
         moveOrderTimer.Stop();
 
         for (int i = 0; i < captures.Count; i++)
         {
+            moveOrder.GetNextBestMove(moveScores, captures, i);
             makeUnmakeTimer.Start();
             board.Move(captures[i], true);
             makeUnmakeTimer.Stop();

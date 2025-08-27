@@ -320,8 +320,6 @@ public class Board
     {
         gameMoveHistory.Pop();
 
-        
-
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
         int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
         int oppositeColorIndex = 1 - currentColorIndex;
@@ -470,6 +468,7 @@ public class Board
         fiftyMoveCounter += 1;
         plyFromStart += 1;
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
+        int oldEPFile = currentGameState.enPassantFile;
         currentGameState.fiftyMoveCounter = fiftyMoveCounter;
         currentGameState.enPassantFile = 0;
         currentGameState.capturedPiece = 0;
@@ -478,6 +477,8 @@ public class Board
         enPassantIndex = -1;
 
         zobristKey ^= Zobrist.sideToMove;
+        zobristKey ^= Zobrist.enPassantFile[oldEPFile];
+        zobristKey ^= Zobrist.enPassantFile[currentGameState.enPassantFile];
         zobristHistory.Push(zobristKey);
     }
     public void UnmakeNullMove()
@@ -490,13 +491,6 @@ public class Board
         gameStateHistory.Pop();
         currentGameState = gameStateHistory.Peek();
         enPassantIndex = EnPassantFileToIndex(colorTurn, currentGameState.enPassantFile);
-    }
-
-    public bool hasNonPawn(int colorTurn)
-    {
-        int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
-        ulong nonPawns = pieceBitboards[currentColorIndex, Piece.Bishop] | pieceBitboards[currentColorIndex, Piece.Knight] | pieceBitboards[currentColorIndex, Piece.Rook] | pieceBitboards[currentColorIndex, Piece.Queen];
-        return nonPawns != 0;
     }
 
     public int[] ConvertFromFEN(string fenPosition)

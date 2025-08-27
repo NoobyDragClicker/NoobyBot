@@ -12,12 +12,13 @@ public class TranspositionTable
     //How many can be stored    
     public readonly ulong count;
 
-    public TranspositionTable(Board board, int sizeMB){
+    public TranspositionTable(Board board, int sizeMB)
+    {
         this.board = board;
         int ttEntrySizeBytes = System.Runtime.InteropServices.Marshal.SizeOf<Entry>();
         int desiredTableSizeInBytes = sizeMB * 1024 * 1024;
-		int numEntries = desiredTableSizeInBytes / ttEntrySizeBytes;
-        count = (ulong) numEntries;
+        int numEntries = desiredTableSizeInBytes / ttEntrySizeBytes;
+        count = (ulong)numEntries;
         entries = new Entry[numEntries];
     }
 

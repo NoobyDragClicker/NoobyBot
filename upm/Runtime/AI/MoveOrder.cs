@@ -4,10 +4,9 @@ using System.Collections.Generic;
 public class MoveOrder
 {
     const int million = 1000000;
-    int[] moveScores;
-    public void OrderMoves(Board board, List<Move> moves, Move firstMove, Move[,] killerMoves, int[,] history, AISettings aiSettings)
+    public int[] ScoreMoves(Board board, List<Move> moves, Move firstMove, Move[,] killerMoves, int[,] history, AISettings aiSettings)
     {
-        moveScores = new int[moves.Count];
+        int[] moveScores = new int[moves.Count];
 
         for (int x = 0; x < moves.Count; x++)
         {
@@ -83,24 +82,26 @@ public class MoveOrder
             }
             moveScores[x] = score;
         }
-
-        Sort(moves);
-        Array.Clear(moveScores, 0, moveScores.Length);
+        return moveScores;
     }
-    void Sort(List<Move> moves)
+
+    public void GetNextBestMove(int[] moveScores, List<Move> moves, int currentMoveIndex)
     {
-        for (int i = 0; i < moves.Count - 1; i++)
+        //Take the index the search is currently at
+        int highest = currentMoveIndex;
+        for (int i = highest + 1; i < moveScores.Length; i++)
         {
-            for (int j = i + 1; j > 0; j--)
-            {
-                int swapIndex = j - 1;
-                if (moveScores[swapIndex] < moveScores[j])
-                {
-                    (moves[j], moves[swapIndex]) = (moves[swapIndex], moves[j]);
-                    (moveScores[j], moveScores[swapIndex]) = (moveScores[swapIndex], moveScores[j]);
-                }
-            }
+            //Find the next highest score
+            if (moveScores[i] > moveScores[highest]) { highest = i; }
         }
+
+        //Swap the next highest move into the spot that is about to be searched, hoping for a quick beta cutoff
+        Move tempMove = moves[highest];
+        int tempScore = moveScores[highest];
+        moves[highest] = moves[currentMoveIndex];
+        moveScores[highest] = moveScores[currentMoveIndex];
+        moves[currentMoveIndex] = tempMove;
+        moveScores[currentMoveIndex] = tempScore;
     }
     static int GetPieceValue(int pieceType)
     {
@@ -124,9 +125,9 @@ public class MoveOrder
         }
     }
 
-    public void OrderCaptures(Board board, List<Move> captures)
+    public int[] ScoreCaptures(Board board, List<Move> captures)
     {
-        moveScores = new int[captures.Count];
+        int[] moveScores = new int[captures.Count];
         for (int x = 0; x < captures.Count; x++)
         {
             int capturedPieceValue;
@@ -156,6 +157,6 @@ public class MoveOrder
             moveScores[x] = score;
         }
 
-        Sort(captures);
+        return moveScores;
     }
 }

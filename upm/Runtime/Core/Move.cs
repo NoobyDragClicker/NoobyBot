@@ -1,4 +1,4 @@
-public class Move
+public struct Move
 {
     public int oldIndex;
     public int newIndex;
@@ -31,8 +31,14 @@ public class Move
         }
     }
 
+    public bool isNull()
+    {
+        return oldIndex == 0 && newIndex == 0;
+    }
 
-    public bool isCapture(){
+
+    public bool isCapture()
+    {
         return capture;
     }
 

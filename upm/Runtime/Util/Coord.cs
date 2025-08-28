@@ -104,21 +104,21 @@ public static class Coord
                 if(Char.IsUpper(strMove[0])){
                     char pieceType = strMove[0];
                     int pieceNum = 0; 
-                    List<Move> validMoves = new List<Move>();
+                    Span<Move> validMoves = new Move[256];
                     switch (pieceType){
-                        case 'N': validMoves = MoveGenerator.GenerateKnightMoves(board.colorTurn, board); pieceNum = Piece.Knight; break;
-                        case 'B': validMoves = MoveGenerator.GenerateBishopMoves(board.colorTurn, board) ; pieceNum = Piece.Bishop; break;
+                        case 'N': MoveGenerator.GenerateKnightMoves(validMoves, 0, board.colorTurn, board); pieceNum = Piece.Knight; break;
+                        case 'B': MoveGenerator.GenerateBishopMoves(validMoves, 0, board.colorTurn, board) ; pieceNum = Piece.Bishop; break;
                         case 'Q':
-                            validMoves = MoveGenerator.GenerateBishopMoves(board.colorTurn, board);
-                            validMoves.AddRange(MoveGenerator.GenerateRookMoves(board.colorTurn, board));
+                            int moveIndex = MoveGenerator.GenerateBishopMoves(validMoves, 0, board.colorTurn,  board);
+                            MoveGenerator.GenerateRookMoves(validMoves, moveIndex, board.colorTurn, board);
                             pieceNum = Piece.Queen;
                             break;
-                        case 'R': validMoves = MoveGenerator.GenerateRookMoves(board.colorTurn, board); pieceNum = Piece.Rook; break;
-                        case 'K': validMoves = MoveGenerator.GenerateKingMoves(board.colorTurn, board); pieceNum = Piece.King; break;
+                        case 'R': MoveGenerator.GenerateRookMoves(validMoves, 0, board.colorTurn, board); pieceNum = Piece.Rook; break;
+                        case 'K': MoveGenerator.GenerateKingMoves(validMoves, 0, board.colorTurn, board); pieceNum = Piece.King; break;
                     }
                     List<int> possibleStartIndexes = new List<int>();
 
-                    for (int x = 0; x< validMoves.Count; x++){
+                    for (int x = 0; x< validMoves.Length; x++){
                         //There is the correct piece + color at that square, this was a possible starting point
                         if(board.board[validMoves[x].newIndex] == (board.colorTurn | pieceNum)){
                             possibleStartIndexes.Add(validMoves[x].newIndex);

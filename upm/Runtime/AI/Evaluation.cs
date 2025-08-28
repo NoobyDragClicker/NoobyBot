@@ -161,6 +161,7 @@ public class Evaluation
         int totalMaterial = 0;
         int mgMaterialCount = 0;
         int egMaterialCount = 0;
+        
         for (int x = 0; x < 64; x++)
         {
             if (board.board[x] != 0)

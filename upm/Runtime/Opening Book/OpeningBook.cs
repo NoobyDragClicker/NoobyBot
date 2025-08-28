@@ -14,7 +14,7 @@ public class OpeningBook
 
     public Move getBookMove(Board board){
         int depth = board.gameMoveHistory.Count();
-        Move chosenMove = null;
+        Move chosenMove = Search.nullMove;
         Dictionary<int, int> possibleMovesInPos = new Dictionary<int, int>();
         
         int totalLines = 0;

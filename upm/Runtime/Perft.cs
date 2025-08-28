@@ -135,24 +135,26 @@ public class Perft
 
     ulong Search(int depth, Board board, bool testQuiescence)
     {
-        var moves = MoveGenerator.GenerateLegalMoves(board, board.colorTurn);
+        Span<Move> moves = stackalloc Move[218];
+        MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
         int numCaptures = 0;
         int expectedCaptures = 0;
         if (testQuiescence)
         {
-            numCaptures = MoveGenerator.GenerateLegalMoves(board, board.colorTurn, true).Count();
+            Span<Move> captures = stackalloc Move[218];
+            numCaptures = MoveGenerator.GenerateLegalMoves(board, ref captures, board.colorTurn, true);
         }
 
         //Regular perft
         if (depth == 1 && !testQuiescence)
         {
-            endNodesSearched += (ulong)moves.Count;
-            return (ulong)moves.Count;
+            endNodesSearched += (ulong)moves.Length;
+            return (ulong)moves.Length;
         }
         //For testing quiescence
         else if (depth == 1)
         {
-            for (int i = 0; i < moves.Count; i++)
+            for (int i = 0; i < moves.Length; i++)
             {
                 if (moves[i].isCapture())
                 {
@@ -163,14 +165,14 @@ public class Perft
             {
                 hasQuiescencePassed = false;
             }
-            endNodesSearched += (ulong)moves.Count;
-            return (ulong)moves.Count();
+            endNodesSearched += (ulong)moves.Length;
+            return (ulong)moves.Length;
         }
 
 
         ulong numLocalNodes = 0;
 
-        for (int i = 0; i < moves.Count; i++)
+        for (int i = 0; i < moves.Length; i++)
         {
             if (testQuiescence && moves[i].isCapture())
             {
@@ -194,16 +196,17 @@ public class Perft
     //Prints the start index and how many moves stem from it
     ulong SearchDivide(int startDepth, int currentDepth, Board board)
     {
-        var moves = MoveGenerator.GenerateLegalMoves(board, board.colorTurn);
+        Span<Move> moves = stackalloc Move[218];
+        MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
 
         if (currentDepth == 1)
         {
-            return (ulong)moves.Count;
+            return (ulong)moves.Length;
         }
 
         ulong numLocalNodes = 0;
 
-        for (int i = 0; i < moves.Count; i++)
+        for (int i = 0; i < moves.Length; i++)
         {
             board.Move(moves[i], true);
             ulong numMovesForThisNode = SearchDivide(startDepth, currentDepth - 1, board);
@@ -215,7 +218,7 @@ public class Perft
                 numTotal += numMovesForThisNode;
                 logger.AddToLog(Coord.GetMoveNotation(moves[i].oldIndex, moves[i].newIndex) + " " + numMovesForThisNode);
                 Console.WriteLine(Coord.GetMoveNotation(moves[i].oldIndex, moves[i].newIndex) + " " + numMovesForThisNode);
-                if (i == moves.Count - 1)
+                if (i == moves.Length - 1)
                 {
                     logger.AddToLog(numTotal.ToString());
                     Console.WriteLine(numTotal.ToString());

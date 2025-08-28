@@ -13,9 +13,10 @@ public class Search
     Evaluation evaluation;
     MoveOrder moveOrder;
     public TranspositionTable tt;
+    public static readonly Move nullMove = new Move(0, 0, false);
 
 
-    Move bestMove = null;
+    Move bestMove = nullMove;
     Move bestMoveThisIteration;
     int bestEvalThisIteration;
     int bestEval;
@@ -56,8 +57,8 @@ public class Search
     public void StartSearch()
     {
         logger.AddToLog("Search started");
-        bestMove = null;
-        bestMoveThisIteration = null;
+        bestMove = nullMove;
+        bestMoveThisIteration = nullMove;
         abortSearch = false;
         try
         {
@@ -68,10 +69,12 @@ public class Search
             logger.AddToLog("Iterative deepening error: " + e.Message);
         }
 
-        if (bestMove == null)
+        if (bestMove.isNull())
         {
-            bestMove = MoveGenerator.GenerateLegalMoves(board, board.colorTurn)[0];
-            logger.AddToLog($"Timed out, no move found. Num moves: {MoveGenerator.GenerateLegalMoves(board, board.colorTurn).Count}. Generating random");
+            Span<Move> legalMoves = new Move[256];
+            int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
+            bestMove = legalMoves[0];
+            logger.AddToLog($"Timed out, no move found. Num moves: {numMoves}. Generating random");
         }
 
         onSearchComplete?.Invoke(bestMove);
@@ -97,7 +100,7 @@ public class Search
             iterationTimer.Restart();
             SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
 
-            if (bestMoveThisIteration != null)
+            if (!bestMoveThisIteration.isNull())
             {
                 bestMove = bestMoveThisIteration;
                 bestEval = bestEvalThisIteration;
@@ -182,9 +185,9 @@ public class Search
 
 
         moveGenTimer.Start();
-        List<Move> legalMoves = MoveGenerator.GenerateLegalMoves(board, board.colorTurn);
+        Span<Move> legalMoves = stackalloc Move[218];
+        int numLegalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
         moveGenTimer.Stop();
-        int numLegalMoves = legalMoves.Count;
 
         //Check for mate or stalemate
         if (numLegalMoves == 0)
@@ -204,7 +207,7 @@ public class Search
         moveOrderTimer.Stop();
 
         int evaluationBound = TranspositionTable.UpperBound;
-        Move bestMoveInThisPosition = null;
+        Move bestMoveInThisPosition = nullMove;
         string bestMovesTracker = "pv progression: ";
 
         for (int i = 0; i < numLegalMoves; i++)
@@ -262,7 +265,7 @@ public class Search
                 {
                     for (int moveNum = 0; moveNum < 3; moveNum++)
                     {
-                        if (killerMoves[board.plyFromStart, moveNum] == null)
+                        if (!killerMoves[board.plyFromStart, moveNum].isNull())
                         {
                             killerMoves[board.plyFromStart, moveNum] = legalMoves[i];
                             break;
@@ -310,16 +313,8 @@ public class Search
         }
 
         evaluationTimer.Start();
-        int eval = 0;
-        try
-        {
-            eval = evaluation.EvaluatePosition(board, aiSettings);
-        }
-        catch (Exception e)
-        {
-            logger.AddToLog("Evaluation error: " + e);
-        }
-
+        int eval = evaluation.EvaluatePosition(board, aiSettings);
+        int standPat = eval;
         evaluationTimer.Stop();
 
         //Cutoffs
@@ -332,26 +327,33 @@ public class Search
         {
             alpha = eval;
         }
+        //If even after winning a queen it is still worse, don't bother searching
+        if (eval + Evaluation.queenValue < alpha) { return alpha; }
 
         quiescenceGenTimer.Start();
-        List<Move> captures = MoveGenerator.GenerateLegalMoves(board, board.colorTurn, true);
+        Span<Move> legalMoves = stackalloc Move[218];
+        int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
         quiescenceGenTimer.Stop();
 
         moveOrderTimer.Start();
-        int[] moveScores = moveOrder.ScoreCaptures(board, captures);
+        int[] moveScores = moveOrder.ScoreCaptures(board, legalMoves);
         moveOrderTimer.Stop();
 
-        for (int i = 0; i < captures.Count; i++)
+        for (int i = 0; i < numMoves; i++)
         {
-            moveOrder.GetNextBestMove(moveScores, captures, i);
+            moveOrder.GetNextBestMove(moveScores, legalMoves, i);
+
+            //Delta pruning
+            if ((standPat + getCapturedPieceVal(legalMoves[i]) + 200) < alpha){ continue; }
+
             makeUnmakeTimer.Start();
-            board.Move(captures[i], true);
+            board.Move(legalMoves[i], true);
             makeUnmakeTimer.Stop();
 
             eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
 
             makeUnmakeTimer.Start();
-            board.UndoMove(captures[i]);
+            board.UndoMove(legalMoves[i]);
             makeUnmakeTimer.Stop();
             if (eval >= beta)
             {
@@ -363,6 +365,25 @@ public class Search
             }
         }
         return alpha;
+    }
+
+    int getCapturedPieceVal(Move move) {
+        int pieceVal = 0;
+        if (move.flag != 7)
+        {
+            int pieceType = Piece.PieceType(board.board[move.newIndex]);
+
+            switch (pieceType)
+            {
+                case Piece.Pawn: pieceVal = Evaluation.pawnValue; break;
+                case Piece.Knight: pieceVal = Evaluation.knightValue; break;
+                case Piece.Rook: pieceVal = Evaluation.rookValue; break;
+                case Piece.Bishop: pieceVal = Evaluation.bishopValue; break;
+                case Piece.Queen: pieceVal = Evaluation.queenValue; break;
+            }
+        }
+        else { pieceVal = Evaluation.pawnValue; }
+        return pieceVal;
     }
 
     public static bool IsMateScore(int score)

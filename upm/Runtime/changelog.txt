@@ -69,7 +69,17 @@ Games: 306, Wins: 89, Losses: 11, Draws: 206, Points: 192.0 (62.75 %)
 SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
 v1.1.6 Improved move sorting - one at a time (no difference)
-v1.1.7 Added null move pruning
+v1.1.7 Removed promotion extensions
+v1.1.8 Transitioned to spans
+--------------------------------------------------
+Results of nooby_Spans vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 33.76 +/- 14.34, nElo: 63.82 +/- 26.92
+LOS: 100.00 %, DrawRatio: 56.56 %, PairsRatio: 2.23
+Games: 640, Wins: 121, Losses: 59, Draws: 460, Points: 351.0 (54.84 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+v1.1.9 Added delta pruning
+
 
 
 

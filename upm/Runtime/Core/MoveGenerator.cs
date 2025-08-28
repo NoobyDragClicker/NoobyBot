@@ -9,7 +9,8 @@ public static class MoveGenerator
     //Used for a player when clicking on a piece
     public static List<Move> GeneratePieceMove(int piece, int index, Board board)
     {
-        List<Move> legalMoves = GenerateLegalMoves(board, board.colorTurn);
+        Span<Move> legalMoves = new Move[256];
+        GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
         List<Move> correctMoves = new List<Move>();
         foreach (Move move in legalMoves)
         {
@@ -23,20 +24,22 @@ public static class MoveGenerator
     }
 
     //Returns all legal moves in a position
-    public static List<Move> GenerateLegalMoves(Board board, int pieceColor, bool isCapturesOnly=false){
+    public static int GenerateLegalMoves(Board board, ref Span<Move> legalMoves, int pieceColor, bool isCapturesOnly = false)
+    {
 
         board.GenerateMoveGenInfo();
-        List<Move> legalMoves = GenerateKingMoves(pieceColor, board, isCapturesOnly);
+        int currMoveIndex = 0;
+        currMoveIndex = GenerateKingMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
         //Double check
-        if(board.isCurrentPlayerInDoubleCheck){
-            return legalMoves;
+        if (!board.isCurrentPlayerInDoubleCheck)
+        {
+            currMoveIndex = GenerateBishopMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
+            currMoveIndex = GenerateRookMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
+            currMoveIndex = GenerateKnightMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
+            currMoveIndex = GeneratePawnMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
         }
-
-        legalMoves.AddRange(GenerateBishopMoves(pieceColor, board, isCapturesOnly));
-        legalMoves.AddRange(GenerateRookMoves(pieceColor, board, isCapturesOnly));
-        legalMoves.AddRange(GenerateKnightMoves(pieceColor, board, isCapturesOnly));
-        legalMoves.AddRange(GeneratePawnMoves(pieceColor, board, isCapturesOnly));
-        return legalMoves;
+        legalMoves = legalMoves.Slice(0, currMoveIndex);
+        return currMoveIndex;
     }
     
     public static ulong GenerateAttackedSquares(Board board, int attackingPieceColor)
@@ -82,9 +85,8 @@ public static class MoveGenerator
     }
 
     //Self explanatory
-    public static List<Move> GeneratePawnMoves(int pieceColor, Board board, bool isCapturesOnly = false)
+    public static int GeneratePawnMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor,  Board board, bool isCapturesOnly = false)
     {
-        List<Move> legalMoves = new List<Move>();
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
 
@@ -110,11 +112,11 @@ public static class MoveGenerator
                     if (board.isCurrentPlayerInCheck) { moves &= board.checkIndexes; }
                     while (moves != 0)
                     {
-                        if (!isMovePromotion){ legalMoves.Add(new Move(index, BitboardHelper.PopLSB(ref moves), true)); }
+                        if (!isMovePromotion){ legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true); }
                         else
                         {
                             int newIndex = BitboardHelper.PopLSB(ref moves);
-                            for (int flag = 1; flag < 5; flag++){ legalMoves.Add(new Move(index, newIndex, true, flag)); }
+                            for (int flag = 1; flag < 5; flag++){ legalMoves[currMoveIndex++] = new Move(index, newIndex, true, flag); }
                         }
                         
                     }
@@ -129,7 +131,7 @@ public static class MoveGenerator
                         {
                             if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex + 8)) | moves)))
                             {
-                                legalMoves.Add(new Move(index, BitboardHelper.PopLSB(ref moves), true, 7));
+                                legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, 7);
                             }
                         }
                     }
@@ -144,7 +146,7 @@ public static class MoveGenerator
                         if(BitboardHelper.ContainsSquare(board.straightPins, index)){moves &= board.straightPins;}
                     }
 
-                    while (moves != 0) { legalMoves.Add(new Move(index, BitboardHelper.PopLSB(ref moves), false, 6)); }
+                    while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, 6); }
 
                     moves = !isDiagPinned ? BitboardHelper.wPawnMoves[index] : 0;
                     moves &= ~blockers;
@@ -153,11 +155,11 @@ public static class MoveGenerator
 
                     while (moves != 0)
                     {
-                        if (!isMovePromotion) { legalMoves.Add(new Move(index, BitboardHelper.PopLSB(ref moves), false)); }
+                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false); }
                         else
                         {
                             int newIndex = BitboardHelper.PopLSB(ref moves);
-                            for (int flag = 1; flag < 5; flag++) { legalMoves.Add(new Move(index, newIndex, false, flag)); }
+                            for (int flag = 1; flag < 5; flag++) { legalMoves[currMoveIndex++] = new Move(index, newIndex, false, flag); }
                         }
                     }
                 }
@@ -173,11 +175,11 @@ public static class MoveGenerator
                     if(isDiagPinned) { moves &= board.diagPins; }
                     while (moves != 0)
                     {
-                        if (!isMovePromotion) { legalMoves.Add(new Move(index, BitboardHelper.PopLSB(ref moves), true)); }
+                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true); }
                         else
                         {
                             int newIndex = BitboardHelper.PopLSB(ref moves);
-                            for (int flag = 1; flag < 5; flag++) { legalMoves.Add(new Move(index, newIndex, true, flag)); }
+                            for (int flag = 1; flag < 5; flag++) { legalMoves[currMoveIndex++] = new Move(index, newIndex, true, flag); }
                         }
 
                     }
@@ -192,7 +194,7 @@ public static class MoveGenerator
                         {
                             if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex - 8)) | moves)))
                             {
-                                legalMoves.Add(new Move(index, BitboardHelper.PopLSB(ref moves), true, 7));
+                                legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, 7);
                             }
                         }
                     }
@@ -207,7 +209,7 @@ public static class MoveGenerator
                         if(BitboardHelper.ContainsSquare(board.straightPins, index)){moves &= board.straightPins;}
                     }
 
-                    while (moves != 0) { legalMoves.Add(new Move(index, BitboardHelper.PopLSB(ref moves), false, 6)); }
+                    while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, 6); }
 
                     moves = !isDiagPinned ? BitboardHelper.bPawnMoves[index] : 0;
                     moves &= ~blockers;
@@ -216,18 +218,18 @@ public static class MoveGenerator
 
                     while (moves != 0)
                     {
-                        if (!isMovePromotion) { legalMoves.Add(new Move(index, BitboardHelper.PopLSB(ref moves), false)); }
+                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false); }
                         else
                         {
                             int newIndex = BitboardHelper.PopLSB(ref moves);
-                            for (int flag = 1; flag < 5; flag++) { legalMoves.Add(new Move(index, newIndex, false, flag)); }
+                            for (int flag = 1; flag < 5; flag++) { legalMoves[currMoveIndex++] = new Move(index, newIndex, false, flag); }
                         }
                     }
                 }
             }
             
         }
-        return legalMoves;
+        return currMoveIndex;
 
         bool isLegalEP(ulong boardMinusPawnsInvolved)
         {
@@ -236,9 +238,8 @@ public static class MoveGenerator
             return (attackingPiecesMask & (board.pieceBitboards[oppositeColorIndex, Piece.Rook] | board.pieceBitboards[oppositeColorIndex, Piece.Queen])) == 0;
         }
     }
-    public static List<Move> GenerateKnightMoves(int pieceColor, Board board, bool isCapturesOnly = false)
+    public static int GenerateKnightMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor, Board board, bool isCapturesOnly = false)
     {
-        List<Move> legalMoves = new List<Move>();
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
 
@@ -263,7 +264,7 @@ public static class MoveGenerator
             while (captures != 0)
             {
                 int newIndex = BitboardHelper.PopLSB(ref captures);
-                legalMoves.Add(new Move(index, newIndex, true));
+                legalMoves[currMoveIndex++] =  new Move(index, newIndex, true);
             }
 
             if (!isCapturesOnly)
@@ -271,15 +272,14 @@ public static class MoveGenerator
                 while (attackedSquares != 0)
                 {
                     int newIndex = BitboardHelper.PopLSB(ref attackedSquares);
-                    legalMoves.Add(new Move(index, newIndex, false));
+                    legalMoves[currMoveIndex++] =  new Move(index, newIndex, false);
                 }
             }
         }
-        return legalMoves;
+        return currMoveIndex;
     }
-    public static List<Move> GenerateBishopMoves(int pieceColor, Board board, bool isCapturesOnly = false)
+    public static int GenerateBishopMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor, Board board, bool isCapturesOnly = false)
     {
-        List<Move> legalMoves = new List<Move>();
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
         ulong bishops = board.pieceBitboards[colorIndex, Piece.Bishop] | board.pieceBitboards[colorIndex, Piece.Queen];
@@ -307,7 +307,7 @@ public static class MoveGenerator
             while (captures != 0)
             {
                 int newIndex = BitboardHelper.PopLSB(ref captures);
-                legalMoves.Add(new Move(index, newIndex, true));
+                legalMoves[currMoveIndex++] =  new Move(index, newIndex, true);
             }
 
             if (!isCapturesOnly)
@@ -315,15 +315,13 @@ public static class MoveGenerator
                 while (attackedSquares != 0)
                 {
                     int newIndex = BitboardHelper.PopLSB(ref attackedSquares);
-                    legalMoves.Add(new Move(index, newIndex, false));
+                    legalMoves[currMoveIndex++] =  new Move(index, newIndex, false);
                 }
             }
         }
-        return legalMoves;
-
+        return currMoveIndex;
     }
-    public static List<Move> GenerateRookMoves(int pieceColor, Board board, bool isCapturesOnly=false){
-        List<Move> legalMoves = new List<Move>();
+    public static int GenerateRookMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor, Board board, bool isCapturesOnly=false){
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
         ulong rooks = board.pieceBitboards[colorIndex, Piece.Rook] | board.pieceBitboards[colorIndex, Piece.Queen];
@@ -351,7 +349,7 @@ public static class MoveGenerator
             while (captures != 0)
             {
                 int newIndex = BitboardHelper.PopLSB(ref captures);
-                legalMoves.Add(new Move(index, newIndex, true));
+                legalMoves[currMoveIndex++] =  new Move(index, newIndex, true);
             }
 
             if (!isCapturesOnly)
@@ -359,13 +357,13 @@ public static class MoveGenerator
                 while (attackedSquares != 0)
                 {
                     int newIndex = BitboardHelper.PopLSB(ref attackedSquares);
-                    legalMoves.Add(new Move(index, newIndex, false));
+                    legalMoves[currMoveIndex++] =  new Move(index, newIndex, false);
                 }
             }
         }
-        return legalMoves;
+        return currMoveIndex;
     }
-    public static List<Move> GenerateKingMoves(int pieceColor, Board board, bool isCapturesOnly = false)
+    public static int GenerateKingMoves(Span<Move> moves, int currMoveIndex, int pieceColor, Board board, bool isCapturesOnly = false)
     {
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;
@@ -383,19 +381,18 @@ public static class MoveGenerator
         ulong kingCaptures = kingMoves & board.sideBitboard[oppositeColorIndex];
         kingMoves &= ~board.sideBitboard[oppositeColorIndex];
 
-        List<Move> moves = new List<Move>();
         while (kingCaptures != 0)
         {
-            moves.Add(new Move(index, BitboardHelper.PopLSB(ref kingCaptures), true));
+            moves[currMoveIndex++] =  new Move(index, BitboardHelper.PopLSB(ref kingCaptures), true);
         }
         if (isCapturesOnly)
         {
-            return moves;
+            return currMoveIndex;
         }
 
         while (kingMoves != 0)
         {
-            moves.Add(new Move(index, BitboardHelper.PopLSB(ref kingMoves), false));
+            moves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref kingMoves), false);
         }
 
         //Add castling
@@ -403,15 +400,15 @@ public static class MoveGenerator
         if (board.HasKingsideRight(pieceColor) && !board.isCurrentPlayerInCheck)
         {
             //No pieces/attacked squares between castling points
-            if (pieceColor == Piece.White && (piecesAndAttackedSquares & BitboardHelper.whiteKingsideCastleMask) == 0) { moves.Add(new Move(index, 62, false, 5)); }
-            else if (pieceColor == Piece.Black && (piecesAndAttackedSquares & BitboardHelper.blackKingsideCastleMask) == 0) { moves.Add(new Move(index, 6, false, 5)); }
+            if (pieceColor == Piece.White && (piecesAndAttackedSquares & BitboardHelper.whiteKingsideCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 62, false, 5); }
+            else if (pieceColor == Piece.Black && (piecesAndAttackedSquares & BitboardHelper.blackKingsideCastleMask) == 0) { moves[currMoveIndex++] = new Move(index, 6, false, 5); }
         }
         if (board.HasQueensideRight(pieceColor) && !board.isCurrentPlayerInCheck)
         {
-            if (pieceColor == Piece.White && (board.attackedSquares[oppositeColorIndex] & BitboardHelper.whiteQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.whiteQueensidePieceCastleMask) == 0) { moves.Add(new Move(index, 58, false, 5)); }
-            else if (pieceColor == Piece.Black && (board.attackedSquares[oppositeColorIndex] & BitboardHelper.blackQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.blackQueensidePieceCastleMask) == 0) { moves.Add(new Move(index, 2, false, 5)); }
+            if (pieceColor == Piece.White && (board.attackedSquares[oppositeColorIndex] & BitboardHelper.whiteQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.whiteQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 58, false, 5); }
+            else if (pieceColor == Piece.Black && (board.attackedSquares[oppositeColorIndex] & BitboardHelper.blackQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.blackQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 2, false, 5); }
         }
-        return moves;
+        return currMoveIndex;
     }
 
     public static void UpdateChecksAndPins(Board board)

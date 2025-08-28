@@ -62,7 +62,7 @@ public class AIPlayer : Player
         if (aiSettings.openingBookDepth > 0 && isInBook)
         {
             Move openingBookMove = openingBook.getBookMove(board);
-            if (openingBookMove != null)
+            if (!openingBookMove.isNull())
             {
                 OnSearchComplete(openingBookMove);
             }

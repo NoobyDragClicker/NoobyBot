@@ -4,27 +4,27 @@ using System.Collections.Generic;
 public class MoveOrder
 {
     const int million = 1000000;
-    public int[] ScoreMoves(Board board, List<Move> moves, Move firstMove, Move[,] killerMoves, int[,] history, AISettings aiSettings)
+    public int[] ScoreMoves(Board board, Span<Move> moves, Move firstMove, Move[,] killerMoves, int[,] history, AISettings aiSettings)
     {
-        int[] moveScores = new int[moves.Count];
+        int[] moveScores = new int[moves.Length];
 
-        for (int x = 0; x < moves.Count; x++)
+        for (int x = 0; x < moves.Length; x++)
         {
             Move move = moves[x];
             int score = 0;
-            if (firstMove != null && move.GetIntValue() == firstMove.GetIntValue())
+            if (!firstMove.isNull() && move.GetIntValue() == firstMove.GetIntValue())
             {
                 score = 8 * million;
             }
-            else if (killerMoves[board.plyFromStart, 0] != null && move.GetIntValue() == killerMoves[board.plyFromStart, 0].GetIntValue())
+            else if (!killerMoves[board.plyFromStart, 0].isNull() && move.GetIntValue() == killerMoves[board.plyFromStart, 0].GetIntValue())
             {
                 score = million + 3;
             }
-            else if (killerMoves[board.plyFromStart, 1] != null && move.GetIntValue() == killerMoves[board.plyFromStart, 1].GetIntValue())
+            else if (!killerMoves[board.plyFromStart, 1].isNull() && move.GetIntValue() == killerMoves[board.plyFromStart, 1].GetIntValue())
             {
                 score = million + 2;
             }
-            else if (killerMoves[board.plyFromStart, 2] != null && move.GetIntValue() == killerMoves[board.plyFromStart, 2].GetIntValue())
+            else if (!killerMoves[board.plyFromStart, 2].isNull() && move.GetIntValue() == killerMoves[board.plyFromStart, 2].GetIntValue())
             {
                 score = million + 1;
             }
@@ -85,7 +85,7 @@ public class MoveOrder
         return moveScores;
     }
 
-    public void GetNextBestMove(int[] moveScores, List<Move> moves, int currentMoveIndex)
+    public void GetNextBestMove(int[] moveScores, Span<Move> moves, int currentMoveIndex)
     {
         //Take the index the search is currently at
         int highest = currentMoveIndex;
@@ -125,10 +125,10 @@ public class MoveOrder
         }
     }
 
-    public int[] ScoreCaptures(Board board, List<Move> captures)
+    public int[] ScoreCaptures(Board board, Span<Move> captures)
     {
-        int[] moveScores = new int[captures.Count];
-        for (int x = 0; x < captures.Count; x++)
+        int[] moveScores = new int[captures.Length];
+        for (int x = 0; x < captures.Length; x++)
         {
             int capturedPieceValue;
             int movedPieceValue;

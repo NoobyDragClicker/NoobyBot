@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 
 public class Board
@@ -571,7 +572,9 @@ public class Board
     public bool IsDraw()
     {
         //Stalemate
-        if (MoveGenerator.GenerateLegalMoves(this, colorTurn).Count == 0 && !isCurrentPlayerInCheck) { return true; }
+        Span<Move> moves = new Move[256];
+        int numMoves = MoveGenerator.GenerateLegalMoves(this, ref moves, colorTurn);
+        if (numMoves == 0 && !isCurrentPlayerInCheck) { return true; }
         //50 move rule
         if (fiftyMoveCounter >= 100) { return true; }
         if (IsRepetitionDraw()) { return true; }
@@ -644,15 +647,19 @@ public class Board
         int kingIndex = MoveGenerator.GetKingIndex(color, this);
         if (isCurrentPlayerInCheck)
         {
+            Span<Move> legalKingMoves = new Move[256];
+            int currMoveIndex = MoveGenerator.GenerateKingMoves(legalKingMoves, 0, color, this);
             //If there are any valid king moves
-            if (MoveGenerator.GenerateKingMoves(color, this).Count != 0)
+            if (currMoveIndex != 0)
             {
                 return false;
             }
             //check if there are any blocks
             else
             {
-                if (MoveGenerator.GenerateLegalMoves(this, color).Count == 0) { return true; }
+                Span<Move> legalMoves = new Move[256];
+                int moveIndex = MoveGenerator.GenerateLegalMoves(this, ref legalMoves, color);
+                if (moveIndex == 0) { return true; }
                 else { return false; }
             }
         }

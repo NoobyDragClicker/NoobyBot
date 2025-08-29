@@ -9,8 +9,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>NoobyBot-v1.1.9</AssemblyName>
-    <Version>1.1.9</Version>
+    <AssemblyName>NoobyBot-v1.2.0</AssemblyName>
+    <Version>1.2.0</Version>
 
     <OutputPath>C:\Users\Spencer\Desktop\Chess\Versions</OutputPath>
   </PropertyGroup>

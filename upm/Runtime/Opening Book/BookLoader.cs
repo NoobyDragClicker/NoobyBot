@@ -6,8 +6,8 @@ using System.Text;
 
 public class BookLoader
 {
-    const string bookPath = "C:/Users/Spencer/Desktop/Chess/book.txt";
-    const string originalFile = "C:/Users/Spencer/Desktop/Chess/8moves_v3.pgn";
+    const string bookPath = Engine.chessRoot+"/book.txt";
+    const string originalFile = Engine.chessRoot+"/8moves_v3.pgn";
     List<Move[]> allLines = new List<Move[]>();
     bool isLoaded = false;
 
@@ -88,7 +88,7 @@ public class BookLoader
         Move[] moves = new Move[16];
         int index = 0;
         Board board = new Board();
-        board.setPosition(Board.startPos);
+        board.setPosition(Board.startPos, new SearchLogger("Opening book trimmer", SearchLogger.LoggingLevel.Diagnostics));
 
         for (int x = 0; x < sections.Count(); x++)
         {

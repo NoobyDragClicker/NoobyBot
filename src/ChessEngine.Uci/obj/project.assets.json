@@ -30,10 +30,10 @@
     "C:\\Users\\Spencer\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "1.1.9",
+    "version": "1.2.0",
     "restore": {
       "projectUniqueName": "C:\\Users\\Spencer\\Chess\\src\\ChessEngine.Uci\\ChessEngine.Uci.csproj",
-      "projectName": "NoobyBot-v1.1.9",
+      "projectName": "NoobyBot-v1.2.0",
       "projectPath": "C:\\Users\\Spencer\\Chess\\src\\ChessEngine.Uci\\ChessEngine.Uci.csproj",
       "packagesPath": "C:\\Users\\Spencer\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\Spencer\\Chess\\src\\ChessEngine.Uci\\obj\\",

@@ -7,7 +7,7 @@ public static class Zobrist
 {
     const int seed = 73448693;
     static Random prng = new Random (seed);
-    const string RandomNumberFile = "C:/Users/Spencer/Desktop/Chess/RandomNumbers.txt";
+    const string RandomNumberFile = Engine.chessRoot + "/RandomNumbers.txt";
     public static readonly ulong[, , ] piecesArray = new ulong[8, 2, 64];
 	public static readonly ulong[] castlingRights = new ulong[16];
 	/// ep file (0 = no ep).

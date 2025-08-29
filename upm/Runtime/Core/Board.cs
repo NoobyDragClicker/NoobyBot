@@ -38,24 +38,18 @@ public class Board
     public Stack<ulong> zobristHistory = new Stack<ulong>();
     public ulong zobristKey;
     public int plyFromStart;
+    SearchLogger logger;
 
 
-    public void setPosition(string fenPosition)
+    public void setPosition(string fenPosition, SearchLogger logger)
     {
+        this.logger = logger;
         zobristHistory.Clear();
         gameMoveHistory.Clear();
         gameStateHistory.Clear();
         currentGameState = new GameState();
         board = ConvertFromFEN(fenPosition);
-        try
-        {
-            zobristKey = Zobrist.CalculateZobrist(this);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-        }
-
+        zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory.Push(zobristKey);
         GenerateMoveGenInfo();
     }
@@ -266,7 +260,7 @@ public class Board
 
                 if (Piece.PieceType(capturedPiece) == Piece.King)
                 {
-                    //logger.AddToLog("King captured");
+                    logger.AddToLog("King captured", SearchLogger.LoggingLevel.Deadly);
                 }
 
                 //Capture resets counter

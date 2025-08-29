@@ -18,13 +18,12 @@ public class AIPlayer : Player
     public bool isInBook;
     Move[,] killers;
     int[,] history;
-    const string logPath = "C:/Users/Spencer/Desktop/Chess/Logs/";
 
 
-    public AIPlayer(string name)
+    public AIPlayer(string name, SearchLogger logger)
     {
         this.name = name;
-        logger = new SearchLogger(name, logPath, true);
+        this.logger = logger;
     }
 
     public override void NewGame(Board board, AISettings aiSettings, BookLoader bookLoader)
@@ -33,7 +32,7 @@ public class AIPlayer : Player
         this.aiSettings = aiSettings;
         killers = new Move[1024, 3];
         history = new int[64, 64];
-        search = new Search(this.board, aiSettings, killers, history, logger);
+        search = new Search(board, aiSettings, killers, history, logger);
         search.onSearchComplete += OnSearchComplete;
 
         if (aiSettings.openingBookDepth > 0)
@@ -55,7 +54,6 @@ public class AIPlayer : Player
         if ((board.gameMoveHistory.Count >= aiSettings.openingBookDepth) && isInBook)
         {
             isInBook = false;
-            logger.AddToLog("Out of book, depth limit reached: " + board.gameMoveHistory.Count);
             needsSearch = true;
         }
 
@@ -69,7 +67,7 @@ public class AIPlayer : Player
             else
             {
                 isInBook = false;
-                logger.AddToLog($"Out of book, no line found, time remaining: {timeRemaining}");
+                logger.AddToLog($"Out of book, no line found, time remaining: {timeRemaining}", SearchLogger.LoggingLevel.Info);
                 needsSearch = true;
             }
         }
@@ -87,8 +85,6 @@ public class AIPlayer : Player
                 {
                     millisecondsForMove = (int)(timeRemaining.TotalMilliseconds * 0.75f);
                 }
-
-                logger.AddToLog($"time for move: {millisecondsForMove}");
                 MoveTimeLimit = TimeSpan.FromMilliseconds(millisecondsForMove);
 
                 moveTimeoutTokenSource = new CancellationTokenSource();
@@ -124,7 +120,14 @@ public class AIPlayer : Player
         if (!isInBook)
         {
             moveTimeoutTokenSource.Cancel();
-            logger.logSingleSearch();
+            try
+            {
+                logger.logSingleSearch();
+            }
+            catch (Exception e)
+            {
+                logger.AddToLog(e.Message, SearchLogger.LoggingLevel.Warning);
+            }
         }
         ChoseMove(move, name);
     }
@@ -133,15 +136,14 @@ public class AIPlayer : Player
 
 public struct AISettings{
     public int maxDepth;
-    public int maxSearchExtensionDepth;
+    public int ttSize;
     public int openingBookDepth;
-    public bool sayMaxDepth;
 
-    public AISettings(int maxDepth, int maxSearchExtensionDepth, int openingBookDepth, bool sayMaxDepth){
+    public AISettings(int maxDepth, int openingBookDepth, int ttSize)
+    {
         this.openingBookDepth = openingBookDepth;
         this.maxDepth = maxDepth;
-        this.maxSearchExtensionDepth = maxSearchExtensionDepth;
-        this.sayMaxDepth = sayMaxDepth;
+        this.ttSize = ttSize;
     }
 
 }

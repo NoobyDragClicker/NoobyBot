@@ -3,11 +3,13 @@ using System;
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(40, 10, 16, false);
+    AISettings aiSettings = new AISettings(40, 16, 256);
     Board board;
     BookLoader bookLoader;
+    SearchLogger logger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.1.9";
+    const string name = "Nooby Bot v1.2.0";
+    public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
 
 
     static readonly string[] positionLabels = { "position", "fen", "moves" };
@@ -19,7 +21,8 @@ public class Engine
     {
         board = new Board();        
         bookLoader = new BookLoader();
-        player = new AIPlayer(name);
+        logger = new SearchLogger(name, SearchLogger.LoggingLevel.Info);
+        player = new AIPlayer(name, logger);
         player.onMoveChosen += MakeMove;
     }
 
@@ -27,7 +30,7 @@ public class Engine
     {
         command = command.Trim();
         string messageType = command.Split(' ')[0].ToLower();
-        if (messageType != "isready") { player.logger.AddToLog("Received: " + command);}
+        if (messageType != "isready") { player.logger.AddToLog("Received: " + command, SearchLogger.LoggingLevel.Info);}
 
         switch (messageType)
         {
@@ -35,13 +38,12 @@ public class Engine
                 Console.WriteLine("id name=NoobyBot");
                 Console.WriteLine("id author=Me");
                 Console.WriteLine("uciok");
-                player.logger.AddToLog("uciok");
+                player.logger.AddToLog("uciok", SearchLogger.LoggingLevel.Info);
                 break;
             case "isready":
                 Console.WriteLine("readyok");
                 break;
             case "ucinewgame":
-                player.logger.AddToLog("##############################");
                 board = new Board();
                 bookLoader.loadBook();
                 player.NewGame(board, aiSettings, bookLoader);
@@ -68,27 +70,23 @@ public class Engine
             case "quit":
                 player.NotifyGameOver();
                 break;
-            case "d":
-                player.logger.AddToLog("n/a");
-                break;
             default:
-                player.logger.AddToLog($"Unrecognized command: {messageType}");
+                player.logger.AddToLog($"Unrecognized command: {messageType}", SearchLogger.LoggingLevel.Warning);
                 break;
         }
     }
 
     void MakeMove(Move move, string name)
     {
-        player.logger.AddToLog("Reached make move");
         try
         {
             board.Move(move, false);
             Console.WriteLine("bestmove " + convertMoveToUCI(move));
-            player.logger.AddToLog("bestmove " + convertMoveToUCI(move));
+            player.logger.AddToLog("bestmove " + convertMoveToUCI(move), SearchLogger.LoggingLevel.Info);
         }
         catch (Exception e)
         {
-            player.logger.AddToLog("MakeMove Error:" + e.Message);
+            player.logger.AddToLog("MakeMove Error:" + e.Message, SearchLogger.LoggingLevel.Deadly);
         }
         
     }
@@ -99,18 +97,18 @@ public class Engine
         // FEN
         if (message.ToLower().Contains("startpos"))
         {
-            board.setPosition(Board.startPos);
+            board.setPosition(Board.startPos, player.logger);
             player.ResetOpeningBook(bookLoader);
         }
         else if (message.ToLower().Contains("fen"))
         {
             string customFen = TryGetLabelledValue(message, "fen", positionLabels);
-            board.setPosition(customFen);
+            board.setPosition(customFen, player.logger);
             player.isInBook = false;
         }
         else
         {
-            player.logger.AddToLog("Invalid position command (expected 'startpos' or 'fen')");
+            player.logger.AddToLog("Invalid position command (expected 'startpos' or 'fen')", SearchLogger.LoggingLevel.Warning);
         }
 
         // Moves

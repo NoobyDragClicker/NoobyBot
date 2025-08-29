@@ -50,13 +50,12 @@ public class Search
         this.killerMoves = killerMoves;
         this.history = history;
         evaluation = new Evaluation();
-        tt = new TranspositionTable(board, 256);
+        tt = new TranspositionTable(board, aiSettings.ttSize);
         moveOrder = new MoveOrder();
     }
 
     public void StartSearch()
     {
-        logger.AddToLog("Search started");
         bestMove = nullMove;
         bestMoveThisIteration = nullMove;
         abortSearch = false;
@@ -66,7 +65,7 @@ public class Search
         }
         catch (Exception e)
         {
-            logger.AddToLog("Iterative deepening error: " + e.Message);
+            logger.AddToLog("Iterative deepening error: " + e.Message, SearchLogger.LoggingLevel.Deadly);
         }
 
         if (bestMove.isNull())
@@ -74,7 +73,7 @@ public class Search
             Span<Move> legalMoves = new Move[256];
             int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
             bestMove = legalMoves[0];
-            logger.AddToLog($"Timed out, no move found. Num moves: {numMoves}. Generating random");
+            logger.AddToLog($"Timed out, no move found. Num moves: {numMoves}. Generating random", SearchLogger.LoggingLevel.Deadly);
         }
 
         onSearchComplete?.Invoke(bestMove);
@@ -98,7 +97,15 @@ public class Search
         {
             DecayHistory();
             iterationTimer.Restart();
-            SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
+            try
+            {
+                SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
+            }
+            catch (Exception e)
+            {
+                logger.AddToLog("SearchMoves error: " + e.Message, SearchLogger.LoggingLevel.Deadly);
+            }
+            
 
             if (!bestMoveThisIteration.isNull())
             {
@@ -107,7 +114,7 @@ public class Search
             }
             else
             {
-                logger.AddToLog("best move was null");
+                logger.AddToLog("best move was null", SearchLogger.LoggingLevel.Warning);
             }
 
 
@@ -121,7 +128,7 @@ public class Search
                 infoLine = $"info depth {depth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000}";
             }
             Console.WriteLine(infoLine);
-            logger.AddToLog($"info depth {depth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000}");
+            logger.AddToLog($"info depth {depth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000}", SearchLogger.LoggingLevel.Info);
 
             if (abortSearch)
             {
@@ -210,11 +217,13 @@ public class Search
         Move bestMoveInThisPosition = nullMove;
         string bestMovesTracker = "pv progression: ";
 
+
         for (int i = 0; i < numLegalMoves; i++)
         {
-            moveOrderTimer.Start(); 
+            moveOrderTimer.Start();
             moveOrder.GetNextBestMove(moveScores, legalMoves, i);
             moveOrderTimer.Stop();
+
 
             makeUnmakeTimer.Start();
             board.Move(legalMoves[i], true);
@@ -222,32 +231,32 @@ public class Search
 
             board.GenerateMoveGenInfo();
 
-            int eval;
-            int reductions = 0;
-            if (i >= 3 && depth > 3)
-            {
-                reductions++;
-            }
-
             int extension = (numLegalMoves == 1) ? 1 : 0;
             if (board.isCurrentPlayerInCheck && numCheckExtensions < 15 && extension == 0)
             {
                 extension = 1;
                 numCheckExtensions++;
             }
+
+            int eval;
+            int reductions = 0;
+            if (i >= 3 && depth > 3)
+            {
+                reductions++;
+                if (i > 15) { reductions++; }
+            }
+
             //First search including reductions
             eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
 
-            //Reduced depth failed high; research
             if (eval > alpha && reductions > 0)
             {
-                reductions = 0;
-                logger.currentDiagnostics.timesReSearched_LMR++;
+                logger.currentDiagnostics.timesReSearched_Main++;
                 reSearchTimer.Start();
                 eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
                 reSearchTimer.Stop();
             }
-            else { logger.currentDiagnostics.timesNotReSearched_LMR++; }
+            else if (reductions > 0) { logger.currentDiagnostics.timesNotReSearched_Main++; }
 
             makeUnmakeTimer.Start();
             board.UndoMove(legalMoves[i]);
@@ -297,7 +306,7 @@ public class Search
         }
         if (plyFromRoot == 0)
         {
-            logger.AddToLog(bestMovesTracker);
+            logger.AddToLog(bestMovesTracker, SearchLogger.LoggingLevel.Diagnostics);
         }
 
         tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);
@@ -313,7 +322,16 @@ public class Search
         }
 
         evaluationTimer.Start();
-        int eval = evaluation.EvaluatePosition(board, aiSettings);
+        int eval = 0;
+        try
+        {
+            eval = evaluation.EvaluatePosition(board, aiSettings);
+        }
+        catch (Exception e)
+        {
+            logger.AddToLog("Evaluation error: " + e.Message, SearchLogger.LoggingLevel.Deadly);
+        }
+        
         int standPat = eval;
         evaluationTimer.Stop();
 
@@ -328,7 +346,7 @@ public class Search
             alpha = eval;
         }
         //If even after winning a queen it is still worse, don't bother searching
-        if (eval + Evaluation.queenValue < alpha) { return alpha; }
+        //if (eval + Evaluation.queenValue < alpha) { return alpha; }
 
         quiescenceGenTimer.Start();
         Span<Move> legalMoves = stackalloc Move[218];

@@ -7,7 +7,7 @@ using System;
 public class SearchTester
 {
     List<string> fenPositions = new List<string>();
-    const string positionsFile = "C:/Users/Spencer/Desktop/Chess/depth6only.txt";
+    const string positionsFile = Engine.chessRoot+"/depth6only.txt";
     SearchLogger logger;
     int numTests;
     int currentTestNumber;
@@ -44,7 +44,7 @@ public class SearchTester
         if (currentTestNumber < numTests)
         {
             Board board = new Board();
-            board.setPosition(fenPositions[currentTestNumber]);
+            board.setPosition(fenPositions[currentTestNumber], logger);
             currentTestNumber++;
             search = new Search(board, aiSettings, new Move[1024, 3], new int[64, 64], logger);
             search.onSearchComplete += RunNextSearch;

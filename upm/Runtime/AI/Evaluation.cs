@@ -207,13 +207,13 @@ public class Evaluation
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += bishopValue + mg_bishop_table[x];
-                            mgMaterialCount += EvaluateBishopMobility(board, x, pieceColor);
+                            //mgMaterialCount += EvaluateBishopMobility(board, x, pieceColor);
                             egMaterialCount += bishopValue + eg_bishop_table[x];
                         }
                         else
                         {
                             mgMaterialCount -= bishopValue + mg_bishop_table[63 - x];
-                            mgMaterialCount -= EvaluateBishopMobility(board, x, pieceColor);
+                            //mgMaterialCount -= EvaluateBishopMobility(board, x, pieceColor);
                             egMaterialCount -= bishopValue + eg_bishop_table[63 - x];
                         }
                         break;
@@ -224,13 +224,13 @@ public class Evaluation
                         {
                             mgMaterialCount += rookValue + mg_rook_table[x];
                             egMaterialCount += rookValue + eg_rook_table[x];
-                            egMaterialCount += EvaluateRookMobility(board, x, pieceColor);
+                            //egMaterialCount += EvaluateRookMobility(board, x, pieceColor);
                         }
                         else
                         {
                             mgMaterialCount -= rookValue + mg_rook_table[63 - x];
                             egMaterialCount -= rookValue + eg_rook_table[63 - x];
-                            egMaterialCount -= EvaluateRookMobility(board, x, pieceColor);
+                            //egMaterialCount -= EvaluateRookMobility(board, x, pieceColor);
                         }
                         break;
                     case Piece.Queen:

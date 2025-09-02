@@ -12,7 +12,7 @@ public class SearchTester
     int numTests;
     int currentTestNumber;
     bool isTestRunning = false;
-    AISettings aiSettings = new AISettings(40, 10, 16, false);
+    AISettings aiSettings = new AISettings(40, 16, 256);
 
     Search search;
 

@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using System.Net.Security;
 
 public class Evaluation
@@ -10,6 +11,7 @@ public class Evaluation
     public const int bishopValue = 330;
     public const int rookValue = 500;
     public const int queenValue = 900;
+    readonly int[] passedPawnBonuses  = { 0, 15, 25, 40, 60, 100, 100, 0 };
     AISettings aiSettings;
 
     int[] mg_pawn_table = {
@@ -177,13 +179,13 @@ public class Evaluation
 
                             mgMaterialCount += pawnValue + mg_pawn_table[x];
                             egMaterialCount += pawnValue + eg_pawn_table[x];
-                            //egMaterialCount += EvaluatePawnStrength(board, x, pieceColor);
+                            egMaterialCount += EvaluatePawnStrength(board, x, pieceColor);
                         }
                         else
                         {
                             mgMaterialCount -= pawnValue + mg_pawn_table[63 - x];
                             egMaterialCount -= pawnValue + eg_pawn_table[63 - x];
-                            //egMaterialCount -= EvaluatePawnStrength(board, x, pieceColor);
+                            egMaterialCount -= EvaluatePawnStrength(board, x, pieceColor);
                         }
                         break;
                     case Piece.Knight:
@@ -207,13 +209,11 @@ public class Evaluation
                         if (pieceColor == Piece.White)
                         {
                             mgMaterialCount += bishopValue + mg_bishop_table[x];
-                            //mgMaterialCount += EvaluateBishopMobility(board, x, pieceColor);
                             egMaterialCount += bishopValue + eg_bishop_table[x];
                         }
                         else
                         {
                             mgMaterialCount -= bishopValue + mg_bishop_table[63 - x];
-                            //mgMaterialCount -= EvaluateBishopMobility(board, x, pieceColor);
                             egMaterialCount -= bishopValue + eg_bishop_table[63 - x];
                         }
                         break;
@@ -224,13 +224,11 @@ public class Evaluation
                         {
                             mgMaterialCount += rookValue + mg_rook_table[x];
                             egMaterialCount += rookValue + eg_rook_table[x];
-                            //egMaterialCount += EvaluateRookMobility(board, x, pieceColor);
                         }
                         else
                         {
                             mgMaterialCount -= rookValue + mg_rook_table[63 - x];
                             egMaterialCount -= rookValue + eg_rook_table[63 - x];
-                            //egMaterialCount -= EvaluateRookMobility(board, x, pieceColor);
                         }
                         break;
                     case Piece.Queen:
@@ -323,6 +321,9 @@ public class Evaluation
         int bonus = 0;
         if (pawnColor == Piece.White)
         {
+            int ppBonusIndex = Coord.IndexToRank(pawnIndex) - 1;
+            //Passed pawn
+            if ((board.pieceBitboards[Board.BlackIndex, Piece.Pawn] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
             if (Piece.PieceType(board.board[pawnIndex - 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 8]) == Piece.White) { bonus -= 20; }
             //Defended from left
@@ -332,6 +333,9 @@ public class Evaluation
         }
         else
         {
+            int ppBonusIndex = 8 - Coord.IndexToRank(pawnIndex);
+            //Passed pawn
+            if ((board.pieceBitboards[Board.WhiteIndex, Piece.Pawn] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
             if (Piece.PieceType(board.board[pawnIndex + 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 8]) == Piece.Black) { bonus -= 20; }
             //Defended from left

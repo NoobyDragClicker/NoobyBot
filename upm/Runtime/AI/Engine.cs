@@ -8,7 +8,7 @@ public class Engine
     BookLoader bookLoader;
     SearchLogger logger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.2.0";
+    const string name = "Nooby Bot v1.2.2";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
 
 
@@ -21,7 +21,7 @@ public class Engine
     {
         board = new Board();        
         bookLoader = new BookLoader();
-        logger = new SearchLogger(name, SearchLogger.LoggingLevel.Info);
+        logger = new SearchLogger(name, SearchLogger.LoggingLevel.Warning);
         player = new AIPlayer(name, logger);
         player.onMoveChosen += MakeMove;
     }

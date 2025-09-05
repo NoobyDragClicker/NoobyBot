@@ -94,7 +94,14 @@ LOS: 99.86 %, DrawRatio: 59.56 %, PairsRatio: 1.31
 Games: 1894, Wins: 268, Losses: 204, Draws: 1422, Points: 979.0 (51.69 %)
 SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
-v1.2.1 Added doubled pawn penalty, protected pawn bonus
+v1.2.1 Added doubled pawn penalty, protected pawn bonus, isolated pawn penalty, passed pawn penalty
+--------------------------------------------------
+Results of nooby_PawnEval vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 13.58 +/- 8.33, nElo: 28.10 +/- 17.23
+LOS: 99.93 %, DrawRatio: 60.05 %, PairsRatio: 1.42
+Games: 1562, Wins: 232, Losses: 171, Draws: 1159, Points: 811.5 (51.95 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
 
 
 Small tweaks to test

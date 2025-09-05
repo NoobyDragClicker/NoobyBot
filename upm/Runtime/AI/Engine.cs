@@ -8,7 +8,7 @@ public class Engine
     BookLoader bookLoader;
     SearchLogger logger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.2.2";
+    const string name = "Nooby Bot v1.2.1";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
 
 
@@ -149,7 +149,7 @@ public class Engine
         }
         else if (message.Contains("static"))
         {
-            Evaluation evaluator = new Evaluation();
+            Evaluation evaluator = new Evaluation(logger);
             Console.WriteLine(evaluator.EvaluatePosition(board, new AISettings()));
         }
         else if (message.Contains("search"))

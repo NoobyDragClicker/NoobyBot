@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NoobyBot-v1.2.1")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.2.1.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.2.1+e147bb80156f7f44ab90bf682fcc7af528d9dde4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.2.1+5aea2e0e2d07b33443e27033e092f62e0e022930")]
 [assembly: System.Reflection.AssemblyProductAttribute("NoobyBot-v1.2.1")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NoobyBot-v1.2.1")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.2.1.0")]

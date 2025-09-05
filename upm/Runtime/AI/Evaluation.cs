@@ -11,8 +11,14 @@ public class Evaluation
     public const int bishopValue = 330;
     public const int rookValue = 500;
     public const int queenValue = 900;
-    readonly int[] passedPawnBonuses  = { 0, 15, 25, 40, 60, 100, 100, 0 };
+    readonly int[] passedPawnBonuses = { 0, 15, 25, 40, 60, 100, 100, 0 };
+    readonly int[] isolatedPawnPenalty = { 0, -15, -30, -50, -75, -75, -75, -75, -75 };
+
+    int numWhiteIsolatedPawns;
+    int numBlackIsolatedPawns;
+
     AISettings aiSettings;
+    SearchLogger logger;
 
     int[] mg_pawn_table = {
       0,   0,   0,   0,   0,   0,  0,   0,
@@ -147,11 +153,18 @@ public class Evaluation
     };
 
     int playerTurnMultiplier;
+    public Evaluation(SearchLogger logger)
+    {
+        this.logger = logger;
+    }
     public int EvaluatePosition(Board board, AISettings aiSettings)
     {
         this.aiSettings = aiSettings;
         colorTurn = board.colorTurn;
         playerTurnMultiplier = (colorTurn == Piece.White) ? 1 : -1;
+
+        numWhiteIsolatedPawns = 0;
+        numBlackIsolatedPawns = 0;
         return CountMaterial(board);
     }
 
@@ -163,7 +176,9 @@ public class Evaluation
         int totalMaterial = 0;
         int mgMaterialCount = 0;
         int egMaterialCount = 0;
-        
+
+        int pawnEval = 0;
+
         for (int x = 0; x < 64; x++)
         {
             if (board.board[x] != 0)
@@ -179,13 +194,13 @@ public class Evaluation
 
                             mgMaterialCount += pawnValue + mg_pawn_table[x];
                             egMaterialCount += pawnValue + eg_pawn_table[x];
-                            egMaterialCount += EvaluatePawnStrength(board, x, pieceColor);
+                            pawnEval += EvaluatePawnStrength(board, x, pieceColor);
                         }
                         else
                         {
                             mgMaterialCount -= pawnValue + mg_pawn_table[63 - x];
                             egMaterialCount -= pawnValue + eg_pawn_table[63 - x];
-                            egMaterialCount -= EvaluatePawnStrength(board, x, pieceColor);
+                            pawnEval -= EvaluatePawnStrength(board, x, pieceColor);
                         }
                         break;
                     case Piece.Knight:
@@ -261,8 +276,13 @@ public class Evaluation
             }
         }
 
+        pawnEval += isolatedPawnPenalty[numWhiteIsolatedPawns];
+        pawnEval -= isolatedPawnPenalty[numBlackIsolatedPawns];
+
+        int egScore = egMaterialCount + pawnEval;
+
         if (phase > 24) { phase = 24; }
-        return (mgMaterialCount * phase + egMaterialCount * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
+        return (mgMaterialCount * phase + egScore * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
     }
 
     int EvaluateKingSafety(Board board, int kingIndex, int kingColor)
@@ -330,6 +350,7 @@ public class Evaluation
             if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex + 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 7]) == Piece.White) { bonus += 5; }
             //Defended from right
             if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex + 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 9]) == Piece.White) { bonus += 5; }
+            if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.WhiteIndex, Piece.Pawn]) == 0) { numWhiteIsolatedPawns++; }
         }
         else
         {
@@ -342,7 +363,9 @@ public class Evaluation
             if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex - 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 9]) == Piece.Black) { bonus += 5; }
             //Defended from right
             if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex - 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 7]) == Piece.Black) { bonus += 5; }
+            if((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.BlackIndex, Piece.Pawn]) == 0){ numBlackIsolatedPawns++; }
         }
+
         return bonus;
     }
 
@@ -350,14 +373,14 @@ public class Evaluation
     {
         int numMoves = 0;
         ulong simpleBishopMoves = BitboardHelper.GetBishopAttacks(pieceIndex, board.allPiecesBitboard) & board.sideBitboard[pieceColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex];
-        while(simpleBishopMoves != 0){ numMoves++;  BitboardHelper.PopLSB(ref simpleBishopMoves); }
+        while (simpleBishopMoves != 0) { numMoves++; BitboardHelper.PopLSB(ref simpleBishopMoves); }
         return (numMoves * 2) - 10;
     }
     int EvaluateRookMobility(Board board, int pieceIndex, int pieceColor)
     {
         int numMoves = 0;
         ulong simpleRookMoves = BitboardHelper.GetRookAttacks(pieceIndex, board.allPiecesBitboard) & board.sideBitboard[pieceColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex];
-        while(simpleRookMoves != 0){ numMoves++;  BitboardHelper.PopLSB(ref simpleRookMoves); }
+        while (simpleRookMoves != 0) { numMoves++; BitboardHelper.PopLSB(ref simpleRookMoves); }
         return (numMoves * 2) - 10;
     }
 

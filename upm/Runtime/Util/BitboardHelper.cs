@@ -34,6 +34,7 @@ public static class BitboardHelper
     public static readonly ulong[] bPawnDouble;
     public static readonly ulong[] bPawnDoubleMask;
     public static readonly ulong[] bPawnPassedMask;
+    public static readonly ulong[] isolatedPawnMask;
 
     public static readonly (int x, int y)[] knightJumps = { (-2, -1), (2, -1), (2, 1), (-2, 1), (-1, -2), (-1, 2), (1, 2), (1, -2) };
     public static readonly (int x, int y)[] kingDirections = { (1, 0), (1, -1), (1, 1), (-1, 0), (-1, -1), (-1, 1), (0, -1), (0, 1) };
@@ -205,6 +206,7 @@ public static class BitboardHelper
         bPawnDoubleMask = new ulong[64];
         wPawnPassedMask = new ulong[64];
         bPawnPassedMask = new ulong[64];
+        isolatedPawnMask = new ulong[64];
 
         //Filling in the attack bitboards
         for (int x = 0; x < 8; x++)
@@ -283,8 +285,10 @@ public static class BitboardHelper
                 }
                 ulong singleWhiteFile = FILE_1 >> (64 - startIndex);
                 wPawnPassedMask[startIndex] = singleWhiteFile;
-                if(x != 0){ wPawnPassedMask[startIndex] |= singleWhiteFile >> 1; };
-                if(x != 7){ wPawnPassedMask[startIndex] |= singleWhiteFile << 1; };
+                if (x != 0) { wPawnPassedMask[startIndex] |= singleWhiteFile >> 1; }
+                ;
+                if (x != 7) { wPawnPassedMask[startIndex] |= singleWhiteFile << 1; }
+                ;
                 if (startIndex < 8) { wPawnPassedMask[startIndex] = 0; }
 
                 //Black Pawn
@@ -305,13 +309,18 @@ public static class BitboardHelper
                     bPawnDouble[startIndex] |= 1ul << attackIndex;
                     bPawnDoubleMask[startIndex] = bPawnMoves[startIndex] | bPawnDouble[startIndex];
                 }
-                
+
                 bPawnPassedMask[startIndex] = FILE_1 << (startIndex + 8);
-                if(x != 0){ bPawnPassedMask[startIndex] |= FILE_1 << (startIndex + 7); };
-                if(x != 7){ bPawnPassedMask[startIndex] |= FILE_1 << (startIndex + 9); };
-                if(startIndex > 55){ bPawnPassedMask[startIndex] = 0; }
+                if (x != 0) { bPawnPassedMask[startIndex] |= FILE_1 << (startIndex + 7); }
+                if (x != 7) { bPawnPassedMask[startIndex] |= FILE_1 << (startIndex + 9); }
+                if (startIndex > 55) { bPawnPassedMask[startIndex] = 0; }
+
+
+                if (x != 0) { isolatedPawnMask[startIndex] |= FILE_1 << x - 1; }
+                if (x != 7) { isolatedPawnMask[startIndex] |= FILE_1 << x + 1; }
 
             }
+
         }
         //Don't include edges for bishop mask
         bool ValidBishopSquareIndex(int x, int y, out int index)

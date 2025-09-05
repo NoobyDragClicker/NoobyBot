@@ -49,7 +49,7 @@ public class Search
         this.aiSettings = aiSettings;
         this.killerMoves = killerMoves;
         this.history = history;
-        evaluation = new Evaluation();
+        evaluation = new Evaluation(logger);
         tt = new TranspositionTable(board, aiSettings.ttSize);
         moveOrder = new MoveOrder();
     }

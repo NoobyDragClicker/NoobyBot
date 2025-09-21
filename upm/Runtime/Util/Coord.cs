@@ -1,15 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 
 public static class Coord
 {
-    public static String GetNotationFromIndex(int index){
+    //Return alphanum notation for a square
+    public static String GetNotationFromIndex(int index)
+    {
         string notation;
         int rank = IndexToRank(index);
         int fileInt = IndexToFile(index);
         char file;
-        switch (fileInt){
+        switch (fileInt)
+        {
             case 1: file = 'a'; break;
             case 2: file = 'b'; break;
             case 3: file = 'c'; break;
@@ -24,14 +28,24 @@ public static class Coord
         return notation;
     }
 
-    public static String GetMoveNotation(int index1, int index2){
-        string start = GetNotationFromIndex(index1);
-        string end = GetNotationFromIndex(index2);
+    //Get the UCI move notation from start and end pos
+    public static String GetUCIMoveNotation(Move move)
+    {
+        string start = GetNotationFromIndex(move.oldIndex);
+        string end = GetNotationFromIndex(move.newIndex);
+        string promotion = "";
 
-        return start + " " + end;
+        if(move.flag == 1){ promotion = "q"; }
+        else if (move.flag == 2){ promotion = "b"; }
+        else if (move.flag == 3){ promotion = "n"; }
+        else if (move.flag == 4){ promotion = "r"; }
+
+
+        return start + "" + end + promotion;
     }
 
-    public static int IndexToRank(int index){
+    public static int IndexToRank(int index)
+    {
         return 8 - ((index - (index % 8)) / 8);
     }
 
@@ -40,15 +54,75 @@ public static class Coord
         return file;
     }
 
-    public static int NotationToIndex(string notation){
+    //From alphanum square notation to an index
+    public static int NotationToIndex(string notation)
+    {
         int rank = (int)Char.GetNumericValue(notation[1]);
         int file = LetterToFile(notation[0]);
         return ((8 - rank) * 8) + (file - 1);
     }
 
-    public static int LetterToFile(char letter){
+    public static Move convertUCIMove(Board board, string move)
+    {
+        int startPos = 0;
+        int endPos = 0;
+        try
+        {
+            startPos = NotationToIndex(move.Substring(0, 2));
+            endPos = NotationToIndex(move.Substring(2, 2));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            Console.WriteLine(move);
+        }
+        
+        bool isPromotion = (move.Count() == 5) ? true : false;
+        int flag = 0;
+        bool isCapture = false;
+
+        if (board.board[endPos] != 0)
+        {
+            isCapture = true;
+        }
+        if (Piece.PieceType(board.board[startPos]) == Piece.Pawn)
+        {
+            int distance = Math.Abs(startPos - endPos);
+            //Double pawn push
+            if (distance == 16)
+            {
+                flag = 6;
+            }
+            //En passant
+            else if ((distance == 7 || distance == 9) & !isCapture)
+            {
+                flag = 7;
+            }
+            else if (isPromotion)
+            {
+                if (move[4] == 'q') { flag = 1; }
+                else if (move[4] == 'b') { flag = 2; }
+                else if (move[4] == 'n') { flag = 3; }
+                else if (move[4] == 'r') { flag = 4; }
+            }
+        }
+        else if (Piece.PieceType(board.board[startPos]) == Piece.King)
+        {
+            int distance = Math.Abs(startPos - endPos);
+            //Castling
+            if (distance == 2)
+            {
+                flag = 5;
+            }
+        }
+        return new Move(startPos, endPos, isCapture, flag);
+    }
+
+    public static int LetterToFile(char letter)
+    {
         int file = 0;
-        switch (letter){
+        switch (letter)
+        {
             case 'a': file = 1; break;
             case 'b': file = 2; break;
             case 'c': file = 3; break;
@@ -57,7 +131,7 @@ public static class Coord
             case 'f': file = 6; break;
             case 'g': file = 7; break;
             case 'h': file = 8; break;
-            default:  break;
+            default: break;
         }
         return file;
     }

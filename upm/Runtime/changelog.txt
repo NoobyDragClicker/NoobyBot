@@ -104,12 +104,5 @@ SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
 
 
-Small tweaks to test
-- Big delta pruning in quiescence
-- Pawn shield in eval
-- 
-
-
-
 
 

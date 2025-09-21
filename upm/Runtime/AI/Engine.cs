@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 public class Engine
 {
@@ -7,23 +8,49 @@ public class Engine
     Board board;
     BookLoader bookLoader;
     SearchLogger logger;
+    SearchLogger testingLogger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.2.1";
+    const string name = "Nooby Bot v1.2.2";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
+    public const string tuningRoot = chessRoot + "/Tuning/";
 
 
     static readonly string[] positionLabels = { "position", "fen", "moves" };
     static readonly string[] goLabels = { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
     static readonly string[] perftLabels = { "perft", "position", "perftSuite" };
     static readonly string[] searchLabels = { "search", "depth", "positions" };
+    static readonly string[] tuneLabels = { "positions", "kval", "continue" };
 
     public Engine()
     {
-        board = new Board();        
+        board = new Board();
         bookLoader = new BookLoader();
         logger = new SearchLogger(name, SearchLogger.LoggingLevel.Warning);
+        testingLogger = new SearchLogger(name + "test", SearchLogger.LoggingLevel.Diagnostics);
         player = new AIPlayer(name, logger);
         player.onMoveChosen += MakeMove;
+
+        try
+        {
+            TexelTuner tuner = new TexelTuner(testingLogger);
+
+            Console.WriteLine("10+0.1:");
+            tuner.positionDiagnostic(tuningRoot + "positions10s.epd");
+            Console.WriteLine("");
+            Console.WriteLine("2+0.08:");
+            tuner.positionDiagnostic(tuningRoot + "positions2s.epd");
+            Console.WriteLine("");
+            Console.WriteLine("Combined:");
+            tuner.positionDiagnostic(tuningRoot + "positionsAll.epd");
+            Console.WriteLine("");
+            Console.WriteLine("External:");
+            tuner.positionDiagnostic(tuningRoot + "positionsExternal.epd");
+            
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 
     public void ReceiveCommand(string command)
@@ -63,6 +90,17 @@ public class Engine
                 break;
             case "test":
                 ProcessTestCommand(command);
+                break;
+            case "tune":
+                try
+                {
+                    ProcessTuneCommand(command);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+                
                 break;
             case "stop":
                 player.search.EndSearch();
@@ -128,7 +166,7 @@ public class Engine
     {
         if (message.Contains("perft"))
         {
-            Perft perft = new Perft(player.logger);
+            Perft perft = new Perft(testingLogger);
             int depth = 6;
             if (message.Contains("depth"))
             {
@@ -149,12 +187,12 @@ public class Engine
         }
         else if (message.Contains("static"))
         {
-            Evaluation evaluator = new Evaluation(logger);
-            Console.WriteLine(evaluator.EvaluatePosition(board, new AISettings()));
+            Evaluation evaluator = new Evaluation(testingLogger);
+            Console.WriteLine(evaluator.EvaluatePosition(board));
         }
         else if (message.Contains("search"))
         {
-            SearchTester tester = new SearchTester(player.logger);
+            SearchTester tester = new SearchTester(testingLogger);
             int targetDepth = 6;
             int numPositions = 125;
 
@@ -169,6 +207,53 @@ public class Engine
             tester.RunSearchSuite(numPositions, targetDepth);
         }
     }
+
+    void ProcessTuneCommand(string message)
+    {
+        string[] parameters = message.Split(" ");
+        string posFile = "";
+        string paramFile = "";
+        float kVal = 0.0f;
+
+        for (int paramNum = 0; paramNum < parameters.Length; paramNum++)
+        {
+            if (parameters[paramNum] == tuneLabels[0])
+            {
+                posFile = parameters[paramNum + 1];
+                paramNum++;
+            }
+            else if (parameters[paramNum] == tuneLabels[1])
+            {
+                float.TryParse(parameters[paramNum + 1], out float result);
+                kVal = result;
+                paramNum++;
+            }
+            else if (parameters[paramNum] == tuneLabels[2])
+            {
+                paramFile = parameters[paramNum + 1];
+                paramNum++;
+            }
+            
+
+        }
+
+        Console.WriteLine($"posfile {posFile}, kval  {kVal}, paramFile {paramFile}");
+        TexelTuner tuner = new TexelTuner(testingLogger);
+        if (kVal == 0.0f)
+        {
+            kVal = tuner.TuneKVal(tuningRoot + posFile);
+        }
+        if (paramFile == "")
+        {
+            tuner.SaveParametersFromEval(tuningRoot + "tunedParams.txt");
+            paramFile =  "tunedParams.txt";
+        }
+        tuner.K = kVal;
+        tuner.TuneFromFile(tuningRoot + paramFile, tuningRoot + paramFile, tuningRoot +  posFile, 50000);
+        tuner.CreateCodeFromParams(tuningRoot + paramFile, tuningRoot + "code.txt");
+    }
+
+
     //Synchronises the clock and tells the player to move
     void ProcessGoCommand(string message)
     {

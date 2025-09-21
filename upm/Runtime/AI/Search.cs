@@ -298,7 +298,7 @@ public class Search
                 //If this is a root move, set it to the best move
                 if (plyFromRoot == 0)
                 {
-                    bestMovesTracker += Coord.GetMoveNotation(legalMoves[i].oldIndex, legalMoves[i].newIndex) + $" ({i}), ";
+                    bestMovesTracker += Coord.GetUCIMoveNotation(legalMoves[i]) + $" ({i}), ";
                     bestMoveThisIteration = legalMoves[i];
                     bestEvalThisIteration = eval;
                 }
@@ -314,7 +314,7 @@ public class Search
         return alpha;
     }
 
-    int QuiescenceSearch(int alpha, int beta, int plyFromRoot)
+    public int QuiescenceSearch(int alpha, int beta, int plyFromRoot)
     {
         if (board.IsCheckmate(board.colorTurn))
         {
@@ -325,7 +325,7 @@ public class Search
         int eval = 0;
         try
         {
-            eval = evaluation.EvaluatePosition(board, aiSettings);
+            eval = evaluation.EvaluatePosition(board);
         }
         catch (Exception e)
         {

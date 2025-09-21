@@ -506,8 +506,10 @@ public class Board
         };
         int[] position = new int[64];
 
+        string[] fenComponents = fenPosition.Split(' ');
+
         //Part denoting position of each piece
-        string posString = fenPosition.Split(' ')[0];
+        string posString = fenComponents[0];
         int index = 0;
         foreach (char c in posString)
         {
@@ -558,10 +560,89 @@ public class Board
         if (castling.Contains("k")) { castlingRights += 4; }
         if (castling.Contains("q")) { castlingRights += 8; }
         currentGameState.castlingRights = castlingRights;
+        
         enPassantIndex = -1;
+        if (fenComponents.Length >= 4)
+        {
+            if (fenComponents[3] != "-")
+            {
+                enPassantIndex = Coord.NotationToIndex(fenComponents[3]);
+            }
+        }
+        
         gameStateHistory.Push(currentGameState);
         plyFromStart = 0;
         return position;
+    }
+
+    public string ConvertToFEN()
+    {
+        string fen = "";
+        int emptyCounter = 0;
+        for (int index = 0; index < 64; index++)
+        {
+            //Add line separators
+            if (index % 8 == 0 && index != 0)
+            {
+                if (emptyCounter != 0) { fen += emptyCounter.ToString(); emptyCounter = 0; }
+                fen += "/";
+            }
+
+            if (board[index] == 0)
+            {
+                emptyCounter++;
+            }
+            else
+            {
+                //If empties need to be added, add them
+                if (emptyCounter != 0) { fen += emptyCounter.ToString(); emptyCounter = 0; }
+                int pieceType = Piece.PieceType(board[index]);
+                if (Piece.Color(board[index]) == Piece.White)
+                {
+                    switch (pieceType)
+                    {
+                        case Piece.Pawn: fen += "P"; break;
+                        case Piece.Knight: fen += "N"; break;
+                        case Piece.Bishop: fen += "B"; break;
+                        case Piece.Rook: fen += "R"; break;
+                        case Piece.Queen: fen += "Q"; break;
+                        case Piece.King: fen += "K"; break;
+                    }
+                }
+                else
+                {
+                    switch (pieceType)
+                    {
+                        case Piece.Pawn: fen += "p"; break;
+                        case Piece.Knight: fen += "n"; break;
+                        case Piece.Bishop: fen += "b"; break;
+                        case Piece.Rook: fen += "r"; break;
+                        case Piece.Queen: fen += "q"; break;
+                        case Piece.King: fen += "k"; break;
+                    }
+                }
+
+            }
+
+        }
+
+        fen += (colorTurn == Piece.White) ? " w " : " b ";
+        string castleStr = "";
+        castleStr += HasKingsideRight(Piece.White) ? "K" : "";
+        castleStr += HasQueensideRight(Piece.White) ? "Q" : "";
+        castleStr += HasKingsideRight(Piece.Black) ? "k" : "";
+        castleStr += HasQueensideRight(Piece.Black) ? "q" : "";
+        castleStr = castleStr == "" ? "-" : castleStr;
+
+
+
+        fen += castleStr;
+
+        if (enPassantIndex != -1)
+        {
+            fen += " " + Coord.GetNotationFromIndex(enPassantIndex);
+        } else{ fen += " -"; }
+        return fen;
     }
     public bool IsDraw()
     {

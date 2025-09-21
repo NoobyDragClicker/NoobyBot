@@ -216,8 +216,8 @@ public class Perft
             if (currentDepth == startDepth)
             {
                 numTotal += numMovesForThisNode;
-                logger.AddToLog(Coord.GetMoveNotation(moves[i].oldIndex, moves[i].newIndex) + " " + numMovesForThisNode, SearchLogger.LoggingLevel.Info);
-                Console.WriteLine(Coord.GetMoveNotation(moves[i].oldIndex, moves[i].newIndex) + " " + numMovesForThisNode);
+                logger.AddToLog(Coord.GetUCIMoveNotation(moves[i]) + " " + numMovesForThisNode, SearchLogger.LoggingLevel.Info);
+                Console.WriteLine(Coord.GetUCIMoveNotation(moves[i]) + " " + numMovesForThisNode);
                 if (i == moves.Length - 1)
                 {
                     logger.AddToLog(numTotal.ToString(), SearchLogger.LoggingLevel.Info);

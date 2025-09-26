@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 public class Engine
@@ -34,18 +35,36 @@ public class Engine
         {
             TexelTuner tuner = new TexelTuner(testingLogger);
 
+
+            //tuner.ConvertPGNFileToQuietFens(chessRoot + "/datagen.pgn", tuningRoot + "positions10sDistributed.epd", 10000000, 50000, testingLogger, [(0.5, 0.3), (0.0, 0.35), (1.0, 0.35)]);
+
+
+            
+            /*
+            List<GameInfo> games = TexelTuner.RemovePGNFiller(chessRoot + "/datagen.pgn");
+            List<string> lines = new List<string>(); ;
+
+            foreach (GameInfo game in games)
+            {
+                lines.Add($"Start FEN: {game.startFen}  |  Result: {game.result}  |  Time Control: {game.timeControl}  |  Moves: {game.moves}");
+            }
+
+            File.WriteAllLines(tuningRoot + "testOutput.pgn", lines);
+            */
+            /*
             Console.WriteLine("10+0.1:");
             tuner.positionDiagnostic(tuningRoot + "positions10s.epd");
-            Console.WriteLine("");
-            Console.WriteLine("2+0.08:");
-            tuner.positionDiagnostic(tuningRoot + "positions2s.epd");
             Console.WriteLine("");
             Console.WriteLine("Combined:");
             tuner.positionDiagnostic(tuningRoot + "positionsAll.epd");
             Console.WriteLine("");
+            Console.WriteLine("10+0.1 distributed:");
+            tuner.positionDiagnostic(tuningRoot + "positions10sDistributed.epd");
+            Console.WriteLine("");
             Console.WriteLine("External:");
             tuner.positionDiagnostic(tuningRoot + "positionsExternal.epd");
-            
+            */
+
         }
         catch (Exception e)
         {
@@ -245,8 +264,11 @@ public class Engine
         }
         if (paramFile == "")
         {
-            tuner.SaveParametersFromEval(tuningRoot + "tunedParams.txt");
             paramFile =  "tunedParams.txt";
+        }
+        if (!File.Exists(tuningRoot + paramFile))
+        {
+            tuner.SaveParametersFromEval(tuningRoot + paramFile);
         }
         tuner.K = kVal;
         tuner.TuneFromFile(tuningRoot + paramFile, tuningRoot + paramFile, tuningRoot +  posFile, 50000);

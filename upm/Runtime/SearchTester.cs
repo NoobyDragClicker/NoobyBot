@@ -77,9 +77,4 @@ public class SearchTester
             fenPositions.Add(info[0]);
         }
     }
-
-
-
-
-
 }

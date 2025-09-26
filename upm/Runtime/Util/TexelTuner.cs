@@ -13,8 +13,7 @@ public class TexelTuner
     Evaluation evaluation;
     SearchLogger logger;
     int numParameters = 1;
-    //1.43 for external, 0.75 for internal
-    public float K = 0.75f;
+    public float K = 1.00f;
 
     //Loading from eval, loading from file, and saving to file is known working + all dependancies
 
@@ -131,24 +130,346 @@ public class TexelTuner
     }
 }
 
-    public void ConvertToLabeledFile(string inputFile, string outputFile)
+    //Initially tuning K by brute force
+    public float TuneKVal(string positionsFile)
     {
-        string[] starting = File.ReadAllLines(inputFile);
-        string[,] split = new string[starting.Length, 2];
-        for (int index = 0; index < starting.Length; index++)
-        {
-            split[index, 0] = starting[index].Split('"')[0];
-            split[index, 1] = starting[index].Split('"')[1];
-        }
-        string[] final = new string[starting.Length];
-        for (int index = 0; index < starting.Length; index++)
-        {
-            final[index] = split[index, 0] + "; " + split[index, 1];
-        }
-        File.WriteAllLines(outputFile, final);
+        bool hasImproved = true;
+        string[] fens = File.ReadAllLines(positionsFile);
+        (string, double)[] fensAndResult = convertFensToResults(fens);
+        double meanSquareError = CalculateMeanSquareError(fens.Length, fensAndResult);
+        int dir = 1;
 
-    } 
+        int iteration = 0;
+        Console.WriteLine("Starting first iteration");
+        while (hasImproved && iteration < 100000)
+        {
+            iteration++;
+            hasImproved = false;
+            K += 0.01f * dir;
+            double newMeanSquareError = CalculateMeanSquareError(fens.Length, fensAndResult);
+            if (newMeanSquareError < meanSquareError) { hasImproved = true; meanSquareError = newMeanSquareError; }
+            else
+            {
+                dir *= -1;
+                K += 0.02f * dir;
+                newMeanSquareError = CalculateMeanSquareError(fens.Length, fensAndResult);
+                if (newMeanSquareError < meanSquareError) { hasImproved = true; meanSquareError = newMeanSquareError; }
+            }
+            Console.WriteLine(iteration + " " + K + " " + meanSquareError);
+        }
+        return K;
+    }
 
+    public double CalculateMeanSquareError(int numPosToUse, (string, double)[] fenStrings)
+    {
+        Board board = new Board();
+        double sum = 0;
+        for (int index = 0; index < numPosToUse; index++)
+        {
+            board.setPosition(fenStrings[index].Item1, logger);
+
+            int whiteRelativeEval = (board.colorTurn == Piece.White) ? evaluation.EvaluatePosition(board) : -1 * evaluation.EvaluatePosition(board);
+            double sigmoidEval = Sigmoid(whiteRelativeEval);
+
+            double diff = fenStrings[index].Item2 - sigmoidEval;
+            sum += diff * diff;
+        }
+        return sum / numPosToUse;
+    }
+
+    public double Sigmoid(double s)
+    {
+        return 1.0 / (1.0 + Math.Pow(10, -K * s / 400.0));
+    }
+
+    //Primary function, takes a full match output and converts to a .epd file of quiet fens
+    public void ConvertPGNFileToQuietFens(string inputPath, string outputPath, int numGames, int? targetPerPhase, SearchLogger logger, (double, double)[] resultRatio)
+    {
+        Random rand = new Random();
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
+        Console.WriteLine("Removing PGN filler");
+        List<GameInfo> games = RemovePGNFiller(inputPath);
+        Console.WriteLine("PGN filler removed");
+
+        numGames = (numGames > games.Count) ? games.Count : numGames;
+        Console.WriteLine($"{numGames} games found");
+        List<FenInfo> fensInfo = new List<FenInfo>();
+
+        //Extract all the quiet fens, disregard distribution of positions
+        Console.WriteLine("Converting games");
+        for (int gameIndex = 1; gameIndex < numGames; gameIndex++)
+        {
+            if (games != null)
+            {
+                fensInfo.AddRange(ConvertGameToQuietFens(games[gameIndex]));
+            }
+        }
+        Console.WriteLine("Extracted " + fensInfo.Count() + " positions");
+
+        //Thanks ChatGPT
+        // 1) Group positions by (Phase, Result). The dictionary key is an anonymous object { Phase, Result }.
+        var grouped = fensInfo
+            .GroupBy(p => new { p.phase, p.result })
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // 2) Compute how many positions exist in each phase (sum over results).
+        var phaseTotals = fensInfo.GroupBy(p => p.phase)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        int minPerPhase = phaseTotals.Values.Min();
+        int perPhase = targetPerPhase ?? minPerPhase;
+
+        var filtered = new List<string>();
+
+        // 4) For each phase, allocate samples to results according to resultRatios and randomly take from that bucket.
+        foreach (var phase in phaseTotals.Keys)
+        {
+            int totalPhaseSamples = perPhase;
+
+            foreach (var kvp in resultRatio)
+            {
+                double result = kvp.Item1;
+                double ratio = kvp.Item2;
+
+                // integer truncation here — fractional pieces are dropped
+                int countForBucket = (int)(totalPhaseSamples * ratio);
+
+                // get the list for this (phase, result) if it exists
+                grouped.TryGetValue(new { phase, result }, out var bucket);
+
+                if (bucket != null && bucket.Count > 0)
+                {
+                    // random sample: OrderBy(x => _rand.Next()) shuffles then Take()
+                    var sampled = bucket.OrderBy(x => rand.Next()).Take(countForBucket);
+                    foreach (FenInfo current in sampled)
+                    {
+                        string resultStr = "1/2-1/2";
+                        if (current.result == 0.0) { resultStr = "0-1"; }
+                        else if (current.result == 1.0) { resultStr = "1-0"; }
+                        filtered.Add(current.fen + "; " + resultStr);
+                    }
+                }
+                // if bucket missing or empty, nothing is added for this (phase,result)
+            }
+        }
+
+
+        File.AppendAllLines(outputPath, filtered);
+        stopwatch.Stop();
+        logger.AddToLog(stopwatch.Elapsed.ToString(), SearchLogger.LoggingLevel.Diagnostics);
+        Console.WriteLine("Completed in: " + stopwatch.Elapsed);
+    }
+
+    //Returns full game lines from a full match output, 1 game/line
+    public static List<GameInfo> RemovePGNFiller(string inputGames)
+    {
+        string[] lines = File.ReadAllLines(inputGames);
+
+        List<GameInfo> gameLines = new List<GameInfo>();
+
+        int numGameLines = 0;
+        GameInfo line = new GameInfo();
+        bool hasGameBeenFound = false;
+        for (int index = 0; index < lines.Count(); index++)
+        {
+            //Not random filler
+            if (lines[index] != "" && lines[index] != "\n")
+            {
+                if (lines[index][0] == '[')
+                {
+                    if (lines[index].Contains("Result"))
+                    {
+                        if (hasGameBeenFound)
+                        {
+                            if (line.startFen == null | line.startFen == "")
+                            {
+                                line.startFen = Board.startPos;
+                            }
+                            gameLines.Add(line);
+                            line = new GameInfo();
+                        }
+                        else
+                        {
+                            hasGameBeenFound = true;
+                        }
+                        numGameLines++;
+                        if (lines[index].Contains("1/2-1/2"))
+                        {
+                            line.result = 0.5;
+                        }
+                        else if (lines[index].Contains("1-0"))
+                        {
+                            line.result = 1.0;
+                        }
+                        else if (lines[index].Contains("0-1"))
+                        {
+                            line.result = 0.0;
+                        }
+
+                    }
+                    else if (lines[index].Contains("FEN"))
+                    {
+                        line.startFen = lines[index].Substring(6);
+                    }
+                    else if (lines[index].Contains("TimeControl"))
+                    {
+                        lines[index] = lines[index].Trim('"');
+                        lines[index] = lines[index].Trim('[');
+                        lines[index] = lines[index].Trim(']');
+                        string tc = lines[index].Split(" ")[1];
+                        line.timeControl = tc;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                else if (lines[index][0] != '[')
+                {
+                    line.moves += lines[index];
+                }
+            }
+        }
+
+        gameLines.Add(line);
+        return gameLines;
+    }
+
+    //Returns all the semiquiet fens from a game line
+    public List<FenInfo> ConvertGameToQuietFens(GameInfo game)
+    {
+        string[] turns = game.moves.Split(". ");
+        double resultNum = game.result;
+        string tc = game.timeControl;
+
+        (Move, string)[] moveInfoPairs = new (Move, string)[turns.Length * 2];
+
+        Board board = new Board();
+        board.setPosition(game.startFen, logger);
+
+        List<FenInfo> quietFens = new List<FenInfo>();
+        Evaluation evaluator = new Evaluation(logger);
+        Search search = new Search(board, new AISettings(40, 16, 64), new Move[1024, 3], new int[64, 64], logger);
+
+        int currentMoveNum = 0;
+        //Index = 1 because the first part is just the number
+        for (int index = 1; index < turns.Length; index++)
+        {
+            string[] movesInTurn = turns[index].Split("}");
+            string[] whiteMoveTotal = movesInTurn[0].Split("{");
+            Move whiteMove = Coord.convertUCIMove(board, whiteMoveTotal[0].Trim());
+            moveInfoPairs[currentMoveNum] = (whiteMove, whiteMoveTotal[1]);
+            board.Move(whiteMove, true);
+            //Not book move
+            if (!whiteMoveTotal[1].Contains("book") && !whiteMoveTotal[1].Contains("M"))
+            {
+                board.GenerateMoveGenInfo();
+                if (!board.isCurrentPlayerInCheck)
+                {
+                    Span<Move> legalMoves = stackalloc Move[256];
+                    MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
+                    //No captures
+                    if (legalMoves.Length == 0)
+                    {
+                        FenInfo current = new FenInfo();
+                        current.fen = board.ConvertToFEN();
+                        current.timeControl = tc;
+                        current.result = resultNum;
+                        current.phase = phasePerBoard(board);
+
+                        quietFens.Add(current);
+                    }
+                    else
+                    {
+                        int eval = evaluator.EvaluatePosition(board);
+
+                        int qEval = search.QuiescenceSearch(99999, -99999, 0);
+                        if (Math.Abs(qEval - eval) < 50)
+                        {
+                            FenInfo current = new FenInfo();
+                            current.fen = board.ConvertToFEN();
+                            current.timeControl = tc;
+                            current.result = resultNum;
+                            current.phase = phasePerBoard(board);
+                            
+                            quietFens.Add(current);
+                        }
+                    }
+                }
+            }
+
+            if (index != turns.Length - 1)
+            {
+                string[] blackMoveTotal = movesInTurn[1].Split("{");
+                Move blackMove = Coord.convertUCIMove(board, blackMoveTotal[0].Trim());
+                moveInfoPairs[currentMoveNum] = (blackMove, blackMoveTotal[1]);
+                board.Move(blackMove, true);
+                //Not book move
+                if (!blackMoveTotal[1].Contains("book") && !blackMoveTotal[1].Contains("M"))
+                {
+                    board.GenerateMoveGenInfo();
+                    if (!board.isCurrentPlayerInCheck)
+                    {
+                        Span<Move> legalMoves = stackalloc Move[256];
+                        MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
+                        //No captures
+                        if (legalMoves.Length == 0)
+                        {
+                            FenInfo current = new FenInfo();
+                            current.fen = board.ConvertToFEN();
+                            current.timeControl = tc;
+                            current.result = resultNum;
+                            current.phase = phasePerBoard(board);
+                            
+                            quietFens.Add(current);
+                        }
+                        else
+                        {
+                            int eval = evaluator.EvaluatePosition(board);
+
+                            int qEval = search.QuiescenceSearch(99999, -99999, 0);
+                            if (Math.Abs(qEval - eval) < 50)
+                            {
+                                FenInfo current = new FenInfo();
+                                current.fen = board.ConvertToFEN();
+                                current.timeControl = tc;
+                                current.result = resultNum;
+                                current.phase = phasePerBoard(board);
+                                
+                                quietFens.Add(current);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return quietFens;
+    }
+
+    public void RandomisePositions(string[] positions)
+    {
+        Random rand = new Random();
+        for (int index = 0; index < positions.Length; index++)
+        {
+            int newIndex = rand.Next(0, positions.Length);
+            string temp = positions[newIndex];
+            positions[newIndex] = positions[index];
+            positions[index] = temp;
+        }
+    }
+
+    //Creates a random batch
+    public (string, double)[] SampleBatch((string, double)[] allData, int batchSize, Random rng)
+    {
+        var batch = new (string, double)[batchSize];
+        for (int i = 0; i < batchSize; i++)
+        {
+            int idx = rng.Next(allData.Length);
+            batch[i] = allData[idx];
+        }
+        return batch;
+    }
 
     //Splits fens into fens and their results
     public (string, double)[] convertFensToResults(string[] fens)
@@ -166,16 +487,40 @@ public class TexelTuner
         return pairs;
     }
 
-    //Creates a random batch
-    public (string, double)[] SampleBatch((string, double)[] allData, int batchSize, Random rng)
+    void UpdateParamInEval(string name, int newEval, int index)
     {
-        var batch = new (string, double)[batchSize];
-        for (int i = 0; i < batchSize; i++)
+
+        switch (name)
         {
-            int idx = rng.Next(allData.Length);
-            batch[i] = allData[idx];
+            case "pawnVal": Evaluation.pawnValue = newEval; break;
+            case "knightVal": Evaluation.knightValue = newEval; break;
+            case "bishopVal": Evaluation.bishopValue = newEval; break;
+            case "rookVal": Evaluation.rookValue = newEval; break;
+            case "queenVal": Evaluation.queenValue = newEval; break;
+
+            case "mg_pawn_table": evaluation.mg_pawn_table[index] = newEval; break;
+            case "eg_pawn_table": evaluation.eg_pawn_table[index] = newEval; break;
+
+            case "mg_knight_table": evaluation.mg_knight_table[index] = newEval; break;
+            case "eg_knight_table": evaluation.eg_knight_table[index] = newEval; break;
+
+            case "mg_bishop_table": evaluation.mg_bishop_table[index] = newEval; break;
+            case "eg_bishop_table": evaluation.eg_bishop_table[index] = newEval; break;
+
+            case "mg_rook_table": evaluation.mg_rook_table[index] = newEval; break;
+            case "eg_rook_table": evaluation.eg_rook_table[index] = newEval; break;
+
+            case "mg_queen_table": evaluation.mg_queen_table[index] = newEval; break;
+            case "eg_queen_table": evaluation.eg_queen_table[index] = newEval; break;
+
+            case "mg_king_table": evaluation.mg_king_table[index] = newEval; break;
+            case "eg_king_table": evaluation.eg_king_table[index] = newEval; break;
+
+            case "isolatedPawnPenalty": evaluation.isolatedPawnPenalty[index] = newEval; break;
+            case "passedPawnBonuses": evaluation.passedPawnBonuses[index] = newEval; break;
+            default: logger.AddToLog("No parameter found: " + name, SearchLogger.LoggingLevel.Deadly); break;
         }
-        return batch;
+
     }
 
     //Sets all the params in eval to the loaded params
@@ -186,6 +531,7 @@ public class TexelTuner
             UpdateParamInEval(parameter.name, parameter.value, parameter.index);
         }
     }
+
     public void CreateCodeFromParams(string inputFile, string outputFile)
     {
         LoadParams(inputFile);
@@ -276,106 +622,6 @@ public class TexelTuner
 
         File.WriteAllLines(outputFile, codeSnippets);
 
-
-    }
-
-    //Initially tuning K by brute force
-    public float TuneKVal(string positionsFile)
-    {
-        bool hasImproved = true;
-        string[] fens = File.ReadAllLines(positionsFile);
-        (string, double)[] fensAndResult = convertFensToResults(fens);
-        double meanSquareError = CalculateMeanSquareError(fens.Length, fensAndResult);
-        int dir = 1;
-
-        int iteration = 0;
-        Console.WriteLine("Starting first iteration");
-        while (hasImproved && iteration < 100000)
-        {
-            iteration++;
-            hasImproved = false;
-            K += 0.01f * dir;
-            double newMeanSquareError = CalculateMeanSquareError(fens.Length, fensAndResult);
-            if (newMeanSquareError < meanSquareError) { hasImproved = true; meanSquareError = newMeanSquareError; }
-            else
-            {
-                dir *= -1;
-                K += 0.02f * dir;
-                newMeanSquareError = CalculateMeanSquareError(fens.Length, fensAndResult);
-                if (newMeanSquareError < meanSquareError) { hasImproved = true; meanSquareError = newMeanSquareError; }
-            }
-            Console.WriteLine(iteration + " " + K + " " + meanSquareError);
-        }
-        return K;
-    }
-
-    public void RandomisePositions(string[] positions)
-    {
-        Random rand = new Random();
-        for (int index = 0; index < positions.Length; index++)
-        {
-            int newIndex = rand.Next(0, positions.Length);
-            string temp = positions[newIndex];
-            positions[newIndex] = positions[index];
-            positions[index] = temp;
-        }
-    }
-
-    public double CalculateMeanSquareError(int numPosToUse, (string, double)[] fenStrings)
-    {
-        Board board = new Board();
-        double sum = 0;
-        for (int index = 0; index < numPosToUse; index++)
-        {
-            board.setPosition(fenStrings[index].Item1, logger);
-
-            int whiteRelativeEval = (board.colorTurn == Piece.White) ? evaluation.EvaluatePosition(board) : -1 * evaluation.EvaluatePosition(board);
-            double sigmoidEval = Sigmoid(whiteRelativeEval);
-
-            double diff = fenStrings[index].Item2 - sigmoidEval;
-            sum += diff * diff;
-        }
-        return sum / numPosToUse;
-    }
-
-    public double Sigmoid(double s)
-    {
-        return 1.0 / (1.0 + Math.Pow(10, -K * s / 400.0));
-    }
-
-    void UpdateParamInEval(string name, int newEval, int index)
-    {
-
-        switch (name)
-        {
-            case "pawnVal": Evaluation.pawnValue = newEval; break;
-            case "knightVal": Evaluation.knightValue = newEval; break;
-            case "bishopVal": Evaluation.bishopValue = newEval; break;
-            case "rookVal": Evaluation.rookValue = newEval; break;
-            case "queenVal": Evaluation.queenValue = newEval; break;
-
-            case "mg_pawn_table": evaluation.mg_pawn_table[index] = newEval; break;
-            case "eg_pawn_table": evaluation.eg_pawn_table[index] = newEval; break;
-
-            case "mg_knight_table": evaluation.mg_knight_table[index] = newEval; break;
-            case "eg_knight_table": evaluation.eg_knight_table[index] = newEval; break;
-
-            case "mg_bishop_table": evaluation.mg_bishop_table[index] = newEval; break;
-            case "eg_bishop_table": evaluation.eg_bishop_table[index] = newEval; break;
-
-            case "mg_rook_table": evaluation.mg_rook_table[index] = newEval; break;
-            case "eg_rook_table": evaluation.eg_rook_table[index] = newEval; break;
-
-            case "mg_queen_table": evaluation.mg_queen_table[index] = newEval; break;
-            case "eg_queen_table": evaluation.eg_queen_table[index] = newEval; break;
-
-            case "mg_king_table": evaluation.mg_king_table[index] = newEval; break;
-            case "eg_king_table": evaluation.eg_king_table[index] = newEval; break;
-
-            case "isolatedPawnPenalty": evaluation.isolatedPawnPenalty[index] = newEval; break;
-            case "passedPawnBonuses": evaluation.passedPawnBonuses[index] = newEval; break;
-            default: logger.AddToLog("No parameter found: " + name, SearchLogger.LoggingLevel.Deadly); break;
-        }
 
     }
 
@@ -470,99 +716,24 @@ public class TexelTuner
         File.WriteAllLines(outputFile, paramStrings);
     }
 
-    //Primary function, takes a full match output and converts to a .epd file of quiet fens
-    public void ConvertPGNFileToQuietFens(string inputPath, string outputPath, int numGames, SearchLogger logger)
+    //Converts the external labeled fens file to our format
+    public void ConvertToLabeledFile(string inputFile, string outputFile)
     {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
-        Console.WriteLine("Removing PGN filler");
-        string[] games = RemovePGNFiller(inputPath);
-        Console.WriteLine("PGN filler removed");
-
-
-
-        numGames = (numGames > games.Length) ? games.Length : numGames;
-        Console.WriteLine($"{numGames} games found");
-        List<string> fens = new List<string>();
-
-        //Extract all the quiet fens, disregard distribution of positions
-        Console.WriteLine("Converting games");
-        for (int gameIndex = 1; gameIndex < numGames; gameIndex++)
+        string[] starting = File.ReadAllLines(inputFile);
+        string[,] split = new string[starting.Length, 2];
+        for (int index = 0; index < starting.Length; index++)
         {
-            if (games != null)
-            {
-                fens.AddRange(ConvertGameToQuietFens(games[gameIndex]));
-            }
+            split[index, 0] = starting[index].Split('"')[0];
+            split[index, 1] = starting[index].Split('"')[1];
         }
-        Console.WriteLine("Extracted " + fens.Count() + " positions");
-
-        //Equal distribution
-        Console.WriteLine("Counting phase numbers");
-        int[] phaseNums = numPerPhase(convertFensToResults(fens.ToArray()));
-        Console.WriteLine(string.Join(", ", phaseNums));
-        int total = 0;
-        foreach (int phaseNum in phaseNums){ total += phaseNum; }
-        int expectedPerPhase = total / phaseNums.Length;
-        int[] boundPerThousand = new int[phaseNums.Length];
-        Console.WriteLine($"TOTAL: {total}  PER PHASE: {expectedPerPhase}");
-        for (int index = 0; index < phaseNums.Length; index++)
+        string[] final = new string[starting.Length];
+        for (int index = 0; index < starting.Length; index++)
         {
-            if (phaseNums[index] < expectedPerPhase) { boundPerThousand[index] = 0; }
-            else
-            {
-                float expectedToPass = ((float)expectedPerPhase / (float)phaseNums[index]) * 1000f;
-                boundPerThousand[index] = (int)(1000 - expectedToPass);
-            }
+            final[index] = split[index, 0] + " ; " + split[index, 1] + "60+0.6";
         }
-        Console.WriteLine(string.Join(", ", boundPerThousand));
-        List<string> chosenFens = new List<string>();
-        Random rand = new Random();
-        Board board = new Board();
-        for (int index = 0; index < fens.Count; index++)
-        {
-            board.setPosition(fens[index], logger);
-            int phase = phasePerBoard(board);
-            if (boundPerThousand[phase] != 0)
-            {
-                int random = rand.Next(0, 1000);
-                if(random > boundPerThousand[phase]){ chosenFens.Add(fens[index]); }
-            } else{ chosenFens.Add(fens[index]); }
-        }
+        File.WriteAllLines(outputFile, final);
 
-        File.AppendAllLines(outputPath, chosenFens);
-        stopwatch.Stop();
-        logger.AddToLog(stopwatch.Elapsed.ToString(), SearchLogger.LoggingLevel.Diagnostics);
-        Console.WriteLine("Completed in: " + stopwatch.Elapsed);
     }
-
-    //Returns full game lines from a full match output, 1 game/line
-    public static string[] RemovePGNFiller(string inputGames)
-    {
-        string[] lines = File.ReadAllLines(inputGames);
-
-        string[] gameLines = new string[lines.Count()];
-
-        int numGameLines = 0;
-        for (int index = 0; index < lines.Count(); index++)
-        {
-            //Not random filler
-            if (lines[index] != "" && lines[index][0] != '[' && lines[index] != "\n")
-            {
-                if (lines[index].Substring(0, 2) == "1.")
-                {
-                    numGameLines++;
-                    gameLines[numGameLines] += lines[index];
-                }
-                else
-                {
-                    gameLines[numGameLines] += lines[index];
-                }
-            }
-        }
-        string[] actualGameLines = gameLines[0..numGameLines];
-        return actualGameLines;
-    }
-
     public int[] numPerPhase((string, double)[] fensAndResults)
     {
         Board board = new Board();
@@ -570,7 +741,7 @@ public class TexelTuner
 
         foreach ((string, double) info in fensAndResults)
         {
-            
+
             board.setPosition(info.Item1, logger);
             int phase = phasePerBoard(board);
             phaseNums[phase]++;
@@ -624,101 +795,6 @@ public class TexelTuner
         return phase;
     }
 
-
-    //Returns all the semiquiet fens from a game line
-    public List<string> ConvertGameToQuietFens(string game)
-    {
-        string[] turns = game.Split(". ");
-
-        (Move, string)[] moveInfoPairs = new (Move, string)[turns.Length * 2];
-        Board board = new Board();
-        board.setPosition(Board.startPos, logger);
-
-        List<string> quietFens = new List<string>();
-        Evaluation evaluator = new Evaluation(logger);
-        Search search = new Search(board, new AISettings(40, 16, 64), new Move[1024, 3], new int[64, 64], logger);
-
-        int currentMoveNum = 0;
-        string result = "";
-        //Index = 1 because the first part is just the number
-        for (int index = 1; index < turns.Length; index++)
-        {
-            string[] movesInTurn = turns[index].Split("}");
-            string[] whiteMoveTotal = movesInTurn[0].Split("{");
-            Move whiteMove = Coord.convertUCIMove(board, whiteMoveTotal[0].Trim());
-            moveInfoPairs[currentMoveNum] = (whiteMove, whiteMoveTotal[1]);
-            board.Move(whiteMove, true);
-            //Not book move
-            if (!whiteMoveTotal[1].Contains("book") && !whiteMoveTotal[1].Contains("M"))
-            {
-                board.GenerateMoveGenInfo();
-                if (!board.isCurrentPlayerInCheck)
-                {
-                    Span<Move> legalMoves = stackalloc Move[256];
-                    MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
-                    //No captures
-                    if (legalMoves.Length == 0)
-                    {
-                        quietFens.Add(board.ConvertToFEN());
-                    }
-                    else
-                    {
-                        int eval = evaluator.EvaluatePosition(board);
-
-                        int qEval = search.QuiescenceSearch(99999, -99999, 0);
-                        if (Math.Abs(qEval - eval) < 50)
-                        {
-                            quietFens.Add(board.ConvertToFEN());
-                        }
-                    }
-                }
-            }
-
-            if (index != turns.Length - 1)
-            {
-                string[] blackMoveTotal = movesInTurn[1].Split("{");
-                Move blackMove = Coord.convertUCIMove(board, blackMoveTotal[0].Trim());
-                moveInfoPairs[currentMoveNum] = (blackMove, blackMoveTotal[1]);
-                board.Move(blackMove, true);
-                //Not book move
-                if (!blackMoveTotal[1].Contains("book") && !blackMoveTotal[1].Contains("M"))
-                {
-                    board.GenerateMoveGenInfo();
-                    if (!board.isCurrentPlayerInCheck)
-                    {
-                        Span<Move> legalMoves = stackalloc Move[256];
-                        MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
-                        //No captures
-                        if (legalMoves.Length == 0)
-                        {
-                            quietFens.Add(board.ConvertToFEN());
-                        }
-                        else
-                        {
-                            int eval = evaluator.EvaluatePosition(board);
-
-                            int qEval = search.QuiescenceSearch(99999, -99999, 0);
-                            if (Math.Abs(qEval - eval) < 50)
-                            {
-                                quietFens.Add(board.ConvertToFEN());
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                result = movesInTurn.Length == 2 ? movesInTurn[1] : movesInTurn[2];
-            }
-        }
-
-        for (int x = 0; x < quietFens.Count; x++)
-        {
-            quietFens[x] += ";" + result;
-        }
-
-        return quietFens;
-    }
 }
 
 public struct TuneParam
@@ -746,4 +822,20 @@ public struct TuneParam
     {
         return name + " " + value.ToString() + " " + counter.ToString() + " " + delta.ToString() + " " + index.ToString();
     }
+}
+
+public struct FenInfo()
+{
+    public string fen { get; set; }
+    public double result { get; set; }
+    public string timeControl { get; set; }
+    public int phase { get; set; }
+}
+
+public struct GameInfo()
+{
+    public string startFen { get; set; }
+    public double result { get; set; }
+    public string timeControl { get; set; }
+    public string moves { get; set; }
 }

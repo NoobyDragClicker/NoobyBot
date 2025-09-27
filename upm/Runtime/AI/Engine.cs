@@ -34,12 +34,10 @@ public class Engine
         try
         {
             TexelTuner tuner = new TexelTuner(testingLogger);
-
-
             //tuner.ConvertPGNFileToQuietFens(chessRoot + "/datagen.pgn", tuningRoot + "positions10sDistributed.epd", 10000000, 50000, testingLogger, [(0.5, 0.3), (0.0, 0.35), (1.0, 0.35)]);
 
 
-            
+
             /*
             List<GameInfo> games = TexelTuner.RemovePGNFiller(chessRoot + "/datagen.pgn");
             List<string> lines = new List<string>(); ;
@@ -94,6 +92,10 @@ public class Engine
                 bookLoader.loadBook();
                 player.NewGame(board, aiSettings, bookLoader);
                 hasStartedGame = true;
+                break;
+            case "bench":
+                SearchTester tester = new SearchTester(testingLogger);
+                tester.RunBench();
                 break;
             case "position":
                 if (!hasStartedGame)

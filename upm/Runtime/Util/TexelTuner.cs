@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Text;
 
 public class TexelTuner
@@ -162,18 +163,20 @@ public class TexelTuner
 
     public double CalculateMeanSquareError(int numPosToUse, (string, double)[] fenStrings)
     {
-        Board board = new Board();
         double sum = 0;
-        for (int index = 0; index < numPosToUse; index++)
+        object lockObj = new object();
+        Parallel.For(0, numPosToUse, i =>
         {
-            board.setPosition(fenStrings[index].Item1, logger);
+            Evaluation evaluator = new Evaluation(logger);
+            Board board = new Board();
+            board.setPosition(fenStrings[i].Item1, logger);
 
-            int whiteRelativeEval = (board.colorTurn == Piece.White) ? evaluation.EvaluatePosition(board) : -1 * evaluation.EvaluatePosition(board);
-            double sigmoidEval = Sigmoid(whiteRelativeEval);
+            int eval = (board.colorTurn == Piece.White) ? evaluator.EvaluatePosition(board) : -evaluator.EvaluatePosition(board);
+            double sigmoidEval = Sigmoid(eval);
+            double diff = fenStrings[i].Item2 - sigmoidEval;
 
-            double diff = fenStrings[index].Item2 - sigmoidEval;
-            sum += diff * diff;
-        }
+            lock (lockObj) sum += diff * diff;
+        });
         return sum / numPosToUse;
     }
 
@@ -498,26 +501,26 @@ public class TexelTuner
             case "rookVal": Evaluation.rookValue = newEval; break;
             case "queenVal": Evaluation.queenValue = newEval; break;
 
-            case "mg_pawn_table": evaluation.mg_pawn_table[index] = newEval; break;
-            case "eg_pawn_table": evaluation.eg_pawn_table[index] = newEval; break;
+            case "mg_pawn_table": Evaluation.mg_pawn_table[index] = newEval; break;
+            case "eg_pawn_table": Evaluation.eg_pawn_table[index] = newEval; break;
 
-            case "mg_knight_table": evaluation.mg_knight_table[index] = newEval; break;
-            case "eg_knight_table": evaluation.eg_knight_table[index] = newEval; break;
+            case "mg_knight_table": Evaluation.mg_knight_table[index] = newEval; break;
+            case "eg_knight_table": Evaluation.eg_knight_table[index] = newEval; break;
 
-            case "mg_bishop_table": evaluation.mg_bishop_table[index] = newEval; break;
-            case "eg_bishop_table": evaluation.eg_bishop_table[index] = newEval; break;
+            case "mg_bishop_table": Evaluation.mg_bishop_table[index] = newEval; break;
+            case "eg_bishop_table": Evaluation.eg_bishop_table[index] = newEval; break;
 
-            case "mg_rook_table": evaluation.mg_rook_table[index] = newEval; break;
-            case "eg_rook_table": evaluation.eg_rook_table[index] = newEval; break;
+            case "mg_rook_table": Evaluation.mg_rook_table[index] = newEval; break;
+            case "eg_rook_table": Evaluation.eg_rook_table[index] = newEval; break;
 
-            case "mg_queen_table": evaluation.mg_queen_table[index] = newEval; break;
-            case "eg_queen_table": evaluation.eg_queen_table[index] = newEval; break;
+            case "mg_queen_table": Evaluation.mg_queen_table[index] = newEval; break;
+            case "eg_queen_table": Evaluation.eg_queen_table[index] = newEval; break;
 
-            case "mg_king_table": evaluation.mg_king_table[index] = newEval; break;
-            case "eg_king_table": evaluation.eg_king_table[index] = newEval; break;
+            case "mg_king_table": Evaluation.mg_king_table[index] = newEval; break;
+            case "eg_king_table": Evaluation.eg_king_table[index] = newEval; break;
 
-            case "isolatedPawnPenalty": evaluation.isolatedPawnPenalty[index] = newEval; break;
-            case "passedPawnBonuses": evaluation.passedPawnBonuses[index] = newEval; break;
+            case "isolatedPawnPenalty": Evaluation.isolatedPawnPenalty[index] = newEval; break;
+            case "passedPawnBonuses": Evaluation.passedPawnBonuses[index] = newEval; break;
             default: logger.AddToLog("No parameter found: " + name, SearchLogger.LoggingLevel.Deadly); break;
         }
 
@@ -599,26 +602,26 @@ public class TexelTuner
             $"public static int bishopValue = {bishopValue};",
             $"public static int rookValue = {rookValue};",
             $"public static int queenValue = {queenValue};",
-            $"public int[] mg_pawn_table =  {{{string.Join(", ", mg_pawn_table)}}};",
-            $"public int[] eg_pawn_table = {{{string.Join(", ", eg_pawn_table)}}};",
+            $"public static int[] mg_pawn_table =  {{{string.Join(", ", mg_pawn_table)}}};",
+            $"public static int[] eg_pawn_table = {{{string.Join(", ", eg_pawn_table)}}};",
 
-            $"public int[] mg_knight_table = {{{string.Join(", ", mg_knight_table)}}};",
-            $"public int[] eg_knight_table = {{{string.Join(", ", eg_knight_table)}}};",
+            $"public static int[] mg_knight_table = {{{string.Join(", ", mg_knight_table)}}};",
+            $"public static int[] eg_knight_table = {{{string.Join(", ", eg_knight_table)}}};",
 
-            $"public int[] mg_bishop_table = {{{string.Join(", ", mg_bishop_table)}}};",
-            $"public int[] eg_bishop_table = {{{string.Join(", ", eg_bishop_table)}}};",
+            $"public static int[] mg_bishop_table = {{{string.Join(", ", mg_bishop_table)}}};",
+            $"public static int[] eg_bishop_table = {{{string.Join(", ", eg_bishop_table)}}};",
 
-            $"public int[] mg_rook_table = {{{string.Join(", ", mg_rook_table)}}};",
-            $"public int[] eg_rook_table = {{{string.Join(", ", eg_rook_table)}}};",
+            $"public static int[] mg_rook_table = {{{string.Join(", ", mg_rook_table)}}};",
+            $"public static int[] eg_rook_table = {{{string.Join(", ", eg_rook_table)}}};",
 
-            $"public int[] mg_queen_table = {{{string.Join(", ", mg_queen_table)}}};",
-            $"public int[] eg_queen_table = {{{string.Join(", ", eg_queen_table)}}};",
+            $"public static int[] mg_queen_table = {{{string.Join(", ", mg_queen_table)}}};",
+            $"public static int[] eg_queen_table = {{{string.Join(", ", eg_queen_table)}}};",
 
-            $"public int[] mg_king_table = {{{string.Join(", ", mg_king_table)}}};",
-            $"public int[] eg_king_table = {{{string.Join(", ", eg_king_table)}}};",
+            $"public static int[] mg_king_table = {{{string.Join(", ", mg_king_table)}}};",
+            $"public static int[] eg_king_table = {{{string.Join(", ", eg_king_table)}}};",
 
-            $"public int[] passedPawnBonuses = {{{string.Join(", ", passedPawnBonuses)}}};",
-            $"public int[] isolatedPawnPenalty = {{{string.Join(", ", isolatedPawnPenalty)}}};" };
+            $"public static int[] passedPawnBonuses = {{{string.Join(", ", passedPawnBonuses)}}};",
+            $"public static int[] isolatedPawnPenalty = {{{string.Join(", ", isolatedPawnPenalty)}}};" };
 
         File.WriteAllLines(outputFile, codeSnippets);
 
@@ -674,26 +677,26 @@ public class TexelTuner
         loadedParams.Add(ConvertParam("rookVal", Evaluation.rookValue));
         loadedParams.Add(ConvertParam("queenVal", Evaluation.queenValue));
         
-        loadedParams.AddRange(ConvertArrayToParams("mg_pawn_table", evaluation.mg_pawn_table));
-        loadedParams.AddRange(ConvertArrayToParams("eg_pawn_table", evaluation.eg_pawn_table));
+        loadedParams.AddRange(ConvertArrayToParams("mg_pawn_table", Evaluation.mg_pawn_table));
+        loadedParams.AddRange(ConvertArrayToParams("eg_pawn_table", Evaluation.eg_pawn_table));
 
-        loadedParams.AddRange(ConvertArrayToParams("mg_knight_table", evaluation.mg_knight_table));
-        loadedParams.AddRange(ConvertArrayToParams("eg_knight_table", evaluation.eg_knight_table));
+        loadedParams.AddRange(ConvertArrayToParams("mg_knight_table", Evaluation.mg_knight_table));
+        loadedParams.AddRange(ConvertArrayToParams("eg_knight_table", Evaluation.eg_knight_table));
 
-        loadedParams.AddRange(ConvertArrayToParams("mg_bishop_table", evaluation.mg_bishop_table));
-        loadedParams.AddRange(ConvertArrayToParams("eg_bishop_table", evaluation.eg_bishop_table));
+        loadedParams.AddRange(ConvertArrayToParams("mg_bishop_table", Evaluation.mg_bishop_table));
+        loadedParams.AddRange(ConvertArrayToParams("eg_bishop_table", Evaluation.eg_bishop_table));
 
-        loadedParams.AddRange(ConvertArrayToParams("mg_rook_table", evaluation.mg_rook_table));
-        loadedParams.AddRange(ConvertArrayToParams("eg_rook_table", evaluation.eg_rook_table));
+        loadedParams.AddRange(ConvertArrayToParams("mg_rook_table", Evaluation.mg_rook_table));
+        loadedParams.AddRange(ConvertArrayToParams("eg_rook_table", Evaluation.eg_rook_table));
 
-        loadedParams.AddRange(ConvertArrayToParams("mg_queen_table", evaluation.mg_queen_table));
-        loadedParams.AddRange(ConvertArrayToParams("eg_queen_table", evaluation.eg_queen_table));
+        loadedParams.AddRange(ConvertArrayToParams("mg_queen_table", Evaluation.mg_queen_table));
+        loadedParams.AddRange(ConvertArrayToParams("eg_queen_table", Evaluation.eg_queen_table));
 
-        loadedParams.AddRange(ConvertArrayToParams("mg_king_table", evaluation.mg_king_table));
-        loadedParams.AddRange(ConvertArrayToParams("eg_king_table", evaluation.eg_king_table));
+        loadedParams.AddRange(ConvertArrayToParams("mg_king_table", Evaluation.mg_king_table));
+        loadedParams.AddRange(ConvertArrayToParams("eg_king_table", Evaluation.eg_king_table));
 
-        loadedParams.AddRange(ConvertArrayToParams("passedPawnBonuses", evaluation.passedPawnBonuses));
-        loadedParams.AddRange(ConvertArrayToParams("isolatedPawnPenalty", evaluation.isolatedPawnPenalty));
+        loadedParams.AddRange(ConvertArrayToParams("passedPawnBonuses", Evaluation.passedPawnBonuses));
+        loadedParams.AddRange(ConvertArrayToParams("isolatedPawnPenalty", Evaluation.isolatedPawnPenalty));
         
         
         numParameters = loadedParams.Count();

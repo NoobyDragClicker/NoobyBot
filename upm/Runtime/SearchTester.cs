@@ -3,11 +3,11 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
+using System.Diagnostics;
 
 public class SearchTester
 {
     List<string> fenPositions = new List<string>();
-    const string positionsFile = Engine.chessRoot+"/depth6only.txt";
     SearchLogger logger;
     int numTests;
     int currentTestNumber;
@@ -48,26 +48,40 @@ public class SearchTester
             currentTestNumber++;
             search = new Search(board, aiSettings, new Move[1024, 3], new int[64, 64], logger);
             search.onSearchComplete += RunNextSearch;
-            Task.Run(() => search.StartSearch());
+            Task.Run(() => search.StartSearch(true));
         }
         else
         {
             isTestRunning = false;
             Console.WriteLine("Suite finished");
-            try
-            {
-                logger.logAllSearches();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
+            logger.logAllSearches();
         }
     }
 
+    public void RunBench()
+    {
+        loadPositions(20);
+        aiSettings.maxDepth = 10;
+        ulong nodes = 0;
+        Stopwatch watch = new Stopwatch();
+        watch.Start();
+        foreach (string pos in fenPositions)
+        {
+            Board board = new Board();
+            board.setPosition(pos, logger);
+            search = new Search(board, aiSettings, new Move[1024, 3], new int[64, 64], logger);
+            search.StartSearch(false);
+            nodes += logger.currentDiagnostics.nodesSearched;
+            logger.startNewSearch();
+        }
+        watch.Stop();
+        Console.WriteLine($"nodes {nodes} nps {(nodes / (ulong)watch.ElapsedMilliseconds) * 1000}");
+    }
+
+
     void loadPositions(int numPositions)
     {
-        string[] lines = File.ReadAllLines(positionsFile);
+        string[] lines = Perft.testPositions;
         numPositions = numPositions > lines.Count() ? lines.Count() : numPositions;
         numTests = numPositions;
 

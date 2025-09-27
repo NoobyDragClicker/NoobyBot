@@ -54,14 +54,14 @@ public class Search
         moveOrder = new MoveOrder();
     }
 
-    public void StartSearch()
+    public void StartSearch(bool writeInfoLine)
     {
         bestMove = nullMove;
         bestMoveThisIteration = nullMove;
         abortSearch = false;
         try
         {
-            bestEval = StartIterativeDeepening(aiSettings.maxDepth);
+            bestEval = StartIterativeDeepening(aiSettings.maxDepth, writeInfoLine);
         }
         catch (Exception e)
         {
@@ -77,10 +77,9 @@ public class Search
         }
 
         onSearchComplete?.Invoke(bestMove);
-
     }
 
-    int StartIterativeDeepening(int maxDepth)
+    int StartIterativeDeepening(int maxDepth, bool writeInfoLine)
     {
         logger.currentDiagnostics.numBestMovesPerIndex = new int[256];
         logger.currentDiagnostics.msPerIteration = new int[maxDepth];
@@ -127,7 +126,10 @@ public class Search
             {
                 infoLine = $"info depth {depth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000}";
             }
-            Console.WriteLine(infoLine);
+            if (writeInfoLine)
+            {
+                Console.WriteLine(infoLine);
+            }
             logger.AddToLog($"info depth {depth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000}", SearchLogger.LoggingLevel.Info);
 
             if (abortSearch)

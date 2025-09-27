@@ -261,6 +261,7 @@ public class Board
                 if (Piece.PieceType(capturedPiece) == Piece.King)
                 {
                     logger.AddToLog("King captured", SearchLogger.LoggingLevel.Deadly);
+                    logger.AddToLog(ConvertToFEN(), SearchLogger.LoggingLevel.Deadly);
                 }
 
                 //Capture resets counter

@@ -46,6 +46,7 @@ public class AIPlayer : Player
         openingBook = new OpeningBook(bookLoader);
         isInBook = true;
     }
+    
     //Called when it is our turn to move
     public override void NotifyToMove(TimeSpan timeRemaining, TimeSpan increment, ClockType clockType)
     {
@@ -92,9 +93,9 @@ public class AIPlayer : Player
                 Task.Run(() => MonitorMoveTime(moveTimeoutTokenSource.Token));
             }
             logger.startNewSearch();
-            Task.Run(() => search.StartSearch());
+            Task.Run(() => search.StartSearch(true));
         }
-        
+
     }
 
     private async Task MonitorMoveTime(CancellationToken token)

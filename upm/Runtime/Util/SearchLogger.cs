@@ -130,9 +130,6 @@ public class SearchLogger
                     totaldiagnostics.numBestMovesPerIndex[moveNumber] += diagnostics[index].numBestMovesPerIndex[moveNumber];
                 }
             }
-            
-
-            
         }
 
         currentDiagnostics = totaldiagnostics;

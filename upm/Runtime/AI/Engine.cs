@@ -11,7 +11,7 @@ public class Engine
     SearchLogger logger;
     SearchLogger testingLogger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.2.2";
+    const string name = "Nooby Bot v1.2.3";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
     public const string tuningRoot = chessRoot + "/Tuning/";
 

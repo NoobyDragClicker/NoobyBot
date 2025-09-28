@@ -655,7 +655,6 @@ public class Board
         if (fiftyMoveCounter >= 100) { return true; }
         if (IsRepetitionDraw()) { return true; }
 
-        //Can be improved with dedicated function
         int numWhiteBishop = 0;
         ulong whiteBishops = pieceBitboards[WhiteIndex, Piece.Bishop];
         while (whiteBishops != 0)

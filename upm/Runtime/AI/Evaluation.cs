@@ -61,101 +61,110 @@ public class Evaluation
 
         int pawnEval = 0;
 
-        for (int x = 0; x < 64; x++)
+        ulong whitePawns = board.pieceBitboards[Board.WhiteIndex, Piece.Pawn];
+        ulong blackPawns = board.pieceBitboards[Board.BlackIndex, Piece.Pawn];
+
+        ulong whiteKnights = board.pieceBitboards[Board.WhiteIndex, Piece.Knight];
+        ulong blackKnights = board.pieceBitboards[Board.BlackIndex, Piece.Knight];
+
+        ulong whiteBishops = board.pieceBitboards[Board.WhiteIndex, Piece.Bishop];
+        ulong blackBishops = board.pieceBitboards[Board.BlackIndex, Piece.Bishop];
+
+        ulong whiteRooks = board.pieceBitboards[Board.WhiteIndex, Piece.Rook];
+        ulong blackRooks = board.pieceBitboards[Board.BlackIndex, Piece.Rook];
+
+        ulong whiteQueens = board.pieceBitboards[Board.WhiteIndex, Piece.Queen];
+        ulong blackQueens = board.pieceBitboards[Board.BlackIndex, Piece.Queen];
+
+        ulong whiteKing = board.pieceBitboards[Board.WhiteIndex, Piece.King];
+        ulong blackKing = board.pieceBitboards[Board.BlackIndex, Piece.King];
+
+        while (whitePawns != 0)
         {
-            if (board.board[x] != 0)
-            {
-                int pieceType = Piece.PieceType(board.board[x]);
-                int pieceColor = Piece.Color(board.board[x]);
-                switch (pieceType)
-                {
-                    case Piece.Pawn:
-                        totalMaterial += pawnValue;
-                        if (pieceColor == Piece.White)
-                        {
+            int index = BitboardHelper.PopLSB(ref whitePawns);
+            mgMaterialCount += pawnValue + mg_pawn_table[index];
+            egMaterialCount += pawnValue + eg_pawn_table[index];
+            pawnEval += EvaluatePawnStrength(board, index, Piece.White);
+        }
+        while (blackPawns != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref blackPawns);
+            mgMaterialCount -= pawnValue + mg_pawn_table[63 - index];
+            egMaterialCount -= pawnValue + eg_pawn_table[63 - index];
+            pawnEval -= EvaluatePawnStrength(board, index, Piece.Black);
+        }
 
-                            mgMaterialCount += pawnValue + mg_pawn_table[x];
-                            egMaterialCount += pawnValue + eg_pawn_table[x];
-                            pawnEval += EvaluatePawnStrength(board, x, pieceColor);
-                        }
-                        else
-                        {
-                            mgMaterialCount -= pawnValue + mg_pawn_table[63 - x];
-                            egMaterialCount -= pawnValue + eg_pawn_table[63 - x];
-                            pawnEval -= EvaluatePawnStrength(board, x, pieceColor);
-                        }
-                        break;
-                    case Piece.Knight:
-                        totalMaterial += knightValue;
-                        phase += 1;
+        while (whiteKnights != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref whiteKnights);
+            mgMaterialCount += knightValue + mg_knight_table[index];
+            egMaterialCount += knightValue + eg_knight_table[index];
+            phase += 1;
+        }
+        while (blackKnights != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref blackKnights);
+            mgMaterialCount -= knightValue + mg_knight_table[63 - index];
+            egMaterialCount -= knightValue + eg_knight_table[63 - index];
+            phase += 1;
+        }
 
-                        if (pieceColor == Piece.White)
-                        {
-                            mgMaterialCount += knightValue + mg_knight_table[x];
-                            egMaterialCount += knightValue + eg_knight_table[x];
-                        }
-                        else
-                        {
-                            mgMaterialCount -= knightValue + mg_knight_table[63 - x];
-                            egMaterialCount -= knightValue + eg_knight_table[63 - x];
-                        }
-                        break;
-                    case Piece.Bishop:
-                        totalMaterial += bishopValue;
-                        phase += 1;
-                        if (pieceColor == Piece.White)
-                        {
-                            mgMaterialCount += bishopValue + mg_bishop_table[x];
-                            egMaterialCount += bishopValue + eg_bishop_table[x];
-                        }
-                        else
-                        {
-                            mgMaterialCount -= bishopValue + mg_bishop_table[63 - x];
-                            egMaterialCount -= bishopValue + eg_bishop_table[63 - x];
-                        }
-                        break;
-                    case Piece.Rook:
-                        totalMaterial += rookValue;
-                        phase += 2;
-                        if (pieceColor == Piece.White)
-                        {
-                            mgMaterialCount += rookValue + mg_rook_table[x];
-                            egMaterialCount += rookValue + eg_rook_table[x];
-                        }
-                        else
-                        {
-                            mgMaterialCount -= rookValue + mg_rook_table[63 - x];
-                            egMaterialCount -= rookValue + eg_rook_table[63 - x];
-                        }
-                        break;
-                    case Piece.Queen:
-                        totalMaterial += queenValue;
-                        phase += 4;
-                        if (pieceColor == Piece.White)
-                        {
-                            mgMaterialCount += queenValue + mg_queen_table[x];
-                            egMaterialCount += queenValue + eg_queen_table[x];
-                        }
-                        else
-                        {
-                            mgMaterialCount -= queenValue + mg_queen_table[63 - x];
-                            egMaterialCount -= queenValue + eg_queen_table[63 - x];
-                        }
-                        break;
-                    case Piece.King:
-                        if (pieceColor == Piece.White)
-                        {
-                            mgMaterialCount += mg_king_table[x];
-                            egMaterialCount += eg_king_table[x];
-                        }
-                        else
-                        {
-                            mgMaterialCount -= mg_king_table[63 - x];
-                            egMaterialCount -= eg_king_table[63 - x];
-                        }
-                        break;
-                }
-            }
+        while (whiteBishops != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref whiteBishops);
+            mgMaterialCount += bishopValue + mg_bishop_table[index];
+            egMaterialCount += bishopValue + eg_bishop_table[index];
+            phase += 1;
+        }
+        while (blackBishops != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref blackBishops);
+            mgMaterialCount -= bishopValue + mg_bishop_table[63 - index];
+            egMaterialCount -= bishopValue + eg_bishop_table[63 - index];
+            phase += 1;
+        }
+
+        while (whiteRooks != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref whiteRooks);
+            mgMaterialCount += rookValue + mg_rook_table[index];
+            egMaterialCount += rookValue + eg_rook_table[index];
+            phase += 2;
+        }
+        while (blackRooks != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref blackRooks);
+            mgMaterialCount -= rookValue + mg_rook_table[63 - index];
+            egMaterialCount -= rookValue + eg_rook_table[63 - index];
+            phase += 2;
+        }
+
+        while (whiteQueens != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref whiteQueens);
+            mgMaterialCount += queenValue + mg_queen_table[index];
+            egMaterialCount += queenValue + eg_queen_table[index];
+            phase += 4;
+        }
+        while (blackQueens != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref blackQueens);
+            mgMaterialCount -= queenValue + mg_queen_table[63 - index];
+            egMaterialCount -= queenValue + eg_queen_table[63 - index];
+            phase += 4;
+        }
+
+        while (whiteKing != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref whiteKing);
+            mgMaterialCount += mg_king_table[index];
+            egMaterialCount += eg_king_table[index];
+        }
+        while (blackKing != 0)
+        {
+            int index = BitboardHelper.PopLSB(ref blackKing);
+            mgMaterialCount -= mg_king_table[63 - index];
+            egMaterialCount -= eg_king_table[63 - index];
         }
 
         pawnEval += isolatedPawnPenalty[numWhiteIsolatedPawns];

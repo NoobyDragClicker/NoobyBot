@@ -102,6 +102,22 @@ LOS: 99.93 %, DrawRatio: 60.05 %, PairsRatio: 1.42
 Games: 1562, Wins: 232, Losses: 171, Draws: 1159, Points: 811.5 (51.95 %)
 SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
+v1.2.2 Changed eval to use bitboards, not piece lists
+--------------------------------------------------
+Results of nooby_Tuned vs nooby_BASE (60+0.6, NULL, NULL, 8moves_v3.pgn):
+Elo: 10.73 +/- 7.2, nElo: 28.10 +/- 17.23
+LOS: 99.93 %, DrawRatio: 60.05 %, PairsRatio: 1.42
+Games: 3041, Wins: 521, Losses: 351, Draws: 2260, Points: 811.5 (51.95 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
+v1.2.3 Tuned on external FENs
+--------------------------------------------------
+Results of nooby_dev vs nooby_BASE (10+0.1, NULL, NULL, UHO_Lichess_4852_v1.epd):
+Elo: 13.58 +/- 8.95, nElo: 23.16 +/- 15.24
+LOS: 99.86 %, DrawRatio: 49.00 %, PairsRatio: 1.30
+Games: 1996, Wins: 419, Losses: 341, Draws: 1236, Points: 1037.0 (51.95 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
 
 
 

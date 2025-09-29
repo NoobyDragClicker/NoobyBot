@@ -118,7 +118,7 @@ LOS: 99.86 %, DrawRatio: 49.00 %, PairsRatio: 1.30
 Games: 1996, Wins: 419, Losses: 341, Draws: 1236, Points: 1037.0 (51.95 %)
 SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
-
+v1.2.4 Added piece counts 
 
 
 

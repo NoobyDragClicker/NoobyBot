@@ -211,6 +211,7 @@ public class Search
             }
         }
 
+        //Move ordering
         moveOrderTimer.Start();  //                          first search move                   
         int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove(), killerMoves, history, aiSettings);
         moveOrderTimer.Stop();
@@ -233,6 +234,7 @@ public class Search
 
             board.GenerateMoveGenInfo();
 
+            //Check extension
             int extension = (numLegalMoves == 1) ? 1 : 0;
             if (board.isCurrentPlayerInCheck && numCheckExtensions < 15 && extension == 0)
             {
@@ -242,6 +244,8 @@ public class Search
 
             int eval;
             int reductions = 0;
+
+            //LMR
             if (i >= 3 && depth > 3)
             {
                 reductions++;
@@ -251,6 +255,7 @@ public class Search
             //First search including reductions
             eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
 
+            //Re-search in full
             if (eval > alpha && reductions > 0)
             {
                 logger.currentDiagnostics.timesReSearched_Main++;
@@ -272,6 +277,7 @@ public class Search
                 //Exiting search early, so it is a lower bound
                 logger.currentDiagnostics.ttStores++;
                 tt.StoreEvaluation(depth - reductions, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);
+                //Saving quiet move to killers
                 if (!legalMoves[i].isCapture())
                 {
                     for (int moveNum = 0; moveNum < 3; moveNum++)
@@ -282,7 +288,7 @@ public class Search
                             break;
                         }
                     }
-
+                    //Updating history
                     int historyVal = history[legalMoves[i].oldIndex, legalMoves[i].newIndex] + depth * depth;
                     history[legalMoves[i].oldIndex, legalMoves[i].newIndex] = (historyVal < HISTORY_MAX) ? historyVal : HISTORY_MAX;
                 }

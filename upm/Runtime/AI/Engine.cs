@@ -11,7 +11,7 @@ public class Engine
     SearchLogger logger;
     SearchLogger testingLogger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.2.3";
+    const string name = "Nooby Bot v1.2.4";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
     public const string tuningRoot = chessRoot + "/Tuning/";
 
@@ -30,26 +30,17 @@ public class Engine
         testingLogger = new SearchLogger(name + "test", SearchLogger.LoggingLevel.Diagnostics);
         player = new AIPlayer(name, logger);
         player.onMoveChosen += MakeMove;
-
+        /*
         try
         {
             TexelTuner tuner = new TexelTuner(testingLogger);
-            //tuner.ConvertPGNFileToQuietFens(chessRoot + "/datagen.pgn", tuningRoot + "positions10sDistributed.epd", 10000000, 50000, testingLogger, [(0.5, 0.3), (0.0, 0.35), (1.0, 0.35)]);
+            tuner.ConvertPGNFileToQuietFens(chessRoot + "/datagen.pgn", tuningRoot + "positions.epd", 10000000, 40000, testingLogger, [(0.5, 0.3), (0.0, 0.35), (1.0, 0.35)]);
 
 
 
-            /*
-            List<GameInfo> games = TexelTuner.RemovePGNFiller(chessRoot + "/datagen.pgn");
-            List<string> lines = new List<string>(); ;
-
-            foreach (GameInfo game in games)
-            {
-                lines.Add($"Start FEN: {game.startFen}  |  Result: {game.result}  |  Time Control: {game.timeControl}  |  Moves: {game.moves}");
-            }
-
-            File.WriteAllLines(tuningRoot + "testOutput.pgn", lines);
-            */
-            /*
+            
+            
+            
             Console.WriteLine("10+0.1:");
             tuner.positionDiagnostic(tuningRoot + "positions10s.epd");
             Console.WriteLine("");
@@ -61,13 +52,13 @@ public class Engine
             Console.WriteLine("");
             Console.WriteLine("External:");
             tuner.positionDiagnostic(tuningRoot + "positionsExternal.epd");
-            */
+            
 
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-        }
+        }*/
     }
 
     public void ReceiveCommand(string command)

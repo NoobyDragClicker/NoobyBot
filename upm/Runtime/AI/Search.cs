@@ -165,9 +165,7 @@ public class Search
     int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numCheckExtensions)
     {
         if (abortSearch) { return 0; }
-        if (board.fiftyMoveCounter >= 100) { return 0; }
-        if (board.IsRepetitionDraw()) { return 0; }
-
+        if (board.IsSearchDraw()) { return 0; }
         //Check the TT for a valid entry
         int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
         if (ttEval != TranspositionTable.LookupFailed)
@@ -201,16 +199,11 @@ public class Search
         //Check for mate or stalemate
         if (numLegalMoves == 0)
         {
-            if (board.isCurrentPlayerInCheck)
-            {
-                return checkmate + plyFromRoot;
-            }
-            else
-            {
-                return 0;
-            }
+            if (board.isCurrentPlayerInCheck){ return checkmate + plyFromRoot;}
+            else {return 0;}
         }
 
+        //Move ordering
         moveOrderTimer.Start();  //                          first search move                   
         int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove(), killerMoves, history, aiSettings);
         moveOrderTimer.Stop();
@@ -233,6 +226,7 @@ public class Search
 
             board.GenerateMoveGenInfo();
 
+            //Check extension
             int extension = (numLegalMoves == 1) ? 1 : 0;
             if (board.isCurrentPlayerInCheck && numCheckExtensions < 15 && extension == 0)
             {
@@ -240,25 +234,23 @@ public class Search
                 numCheckExtensions++;
             }
 
-            int eval;
+            int eval = negativeInfinity;
             int reductions = 0;
+
+            //LMR
             if (i >= 3 && depth > 3)
             {
                 reductions++;
                 if (i > 15) { reductions++; }
             }
 
-            //First search including reductions
             eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
 
             if (eval > alpha && reductions > 0)
             {
-                logger.currentDiagnostics.timesReSearched_Main++;
-                reSearchTimer.Start();
                 eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
-                reSearchTimer.Stop();
             }
-            else if (reductions > 0) { logger.currentDiagnostics.timesNotReSearched_Main++; }
+        
 
             makeUnmakeTimer.Start();
             board.UndoMove(legalMoves[i]);
@@ -272,6 +264,7 @@ public class Search
                 //Exiting search early, so it is a lower bound
                 logger.currentDiagnostics.ttStores++;
                 tt.StoreEvaluation(depth - reductions, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);
+                //Saving quiet move to killers
                 if (!legalMoves[i].isCapture())
                 {
                     for (int moveNum = 0; moveNum < 3; moveNum++)
@@ -282,7 +275,7 @@ public class Search
                             break;
                         }
                     }
-
+                    //Updating history
                     int historyVal = history[legalMoves[i].oldIndex, legalMoves[i].newIndex] + depth * depth;
                     history[legalMoves[i].oldIndex, legalMoves[i].newIndex] = (historyVal < HISTORY_MAX) ? historyVal : HISTORY_MAX;
                 }

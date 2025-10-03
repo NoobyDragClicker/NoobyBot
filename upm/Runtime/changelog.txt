@@ -119,6 +119,14 @@ Games: 1996, Wins: 419, Losses: 341, Draws: 1236, Points: 1037.0 (51.95 %)
 SPRT ([0.00, 10.00]) completed - H1 was accepted
 --------------------------------------------------
 v1.2.4 Added piece counts 
+v1.2.5 Separated updating of checking pieces
+--------------------------------------------------
+Results of nooby_dev vs nooby_BASE (10+0.1, NULL, NULL, UHO_Lichess_4852_v1.epd):
+Elo: 6.81 +/- 5.28, nElo: 13.53 +/- 10.47
+LOS: 99.43 %, DrawRatio: 59.03 %, PairsRatio: 1.20
+Games: 4232, Wins: 626, Losses: 543, Draws: 3063, Points: 2157.5 (50.98 %)
+SPRT ([0.00, 10.00]) completed - H1 was accepted
+--------------------------------------------------
 
 
 

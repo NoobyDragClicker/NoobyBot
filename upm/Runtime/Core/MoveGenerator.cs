@@ -490,6 +490,40 @@ public static class MoveGenerator
         }
 
     }
+
+    public static bool DetermineCheckStatus(Board board)
+    {
+        int colorTurn = board.colorTurn;
+        int colorIndex = (colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+        int oppositeColorIndex = (colorTurn == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
+        int kingIndex = GetKingIndex(colorTurn, board);
+
+
+
+        ulong straightAttackers = board.pieceBitboards[oppositeColorIndex, Piece.Rook] | board.pieceBitboards[oppositeColorIndex, Piece.Queen];
+        ulong diagAttackers = board.pieceBitboards[oppositeColorIndex, Piece.Bishop] | board.pieceBitboards[oppositeColorIndex, Piece.Queen];
+
+        //Any piece that can block that check, excludes the sliding pieces that would be checking
+        ulong straightBlockers = (board.sideBitboard[oppositeColorIndex] | board.sideBitboard[colorIndex]) & ~straightAttackers;
+        ulong diagBlockers = (board.sideBitboard[oppositeColorIndex] | board.sideBitboard[colorIndex]) & ~diagAttackers;
+
+        ulong straightCheckers = straightAttackers & BitboardHelper.GetRookAttacks(kingIndex, straightBlockers);
+        if (straightCheckers != 0) { return true; }
+
+        ulong diagonalCheckers = diagAttackers & BitboardHelper.GetBishopAttacks(kingIndex, diagBlockers);
+
+        if (diagonalCheckers != 0) { return true; }
+
+
+        //Knight checks
+        ulong knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[oppositeColorIndex, Piece.Knight];
+        if (knightCheck != 0) { return true; }
+
+        //Pawn checks
+        ulong pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[oppositeColorIndex, Piece.Pawn];
+        if (pawnCheck != 0) { return true; }
+        return false;
+    }
     //Returns king's position
     public static int GetKingIndex(int kingColor, Board board)
     {

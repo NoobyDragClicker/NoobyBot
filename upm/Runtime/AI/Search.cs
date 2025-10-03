@@ -224,7 +224,7 @@ public class Search
             board.Move(legalMoves[i], true);
             makeUnmakeTimer.Stop();
 
-            board.GenerateMoveGenInfo();
+            board.UpdateSimpleCheckStatus();
 
             //Check extension
             int extension = (numLegalMoves == 1) ? 1 : 0;

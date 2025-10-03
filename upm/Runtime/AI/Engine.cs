@@ -11,7 +11,7 @@ public class Engine
     SearchLogger logger;
     SearchLogger testingLogger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.2.4";
+    const string name = "Nooby Bot v1.2.5";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
     public const string tuningRoot = chessRoot + "/Tuning/";
 
@@ -22,6 +22,7 @@ public class Engine
     static readonly string[] searchLabels = { "search", "depth", "positions" };
     static readonly string[] tuneLabels = { "positions", "kval", "continue" };
 
+
     public Engine()
     {
         board = new Board();
@@ -30,35 +31,6 @@ public class Engine
         testingLogger = new SearchLogger(name + "test", SearchLogger.LoggingLevel.Diagnostics);
         player = new AIPlayer(name, logger);
         player.onMoveChosen += MakeMove;
-        /*
-        try
-        {
-            TexelTuner tuner = new TexelTuner(testingLogger);
-            tuner.ConvertPGNFileToQuietFens(chessRoot + "/datagen.pgn", tuningRoot + "positions.epd", 10000000, 40000, testingLogger, [(0.5, 0.3), (0.0, 0.35), (1.0, 0.35)]);
-
-
-
-            
-            
-            
-            Console.WriteLine("10+0.1:");
-            tuner.positionDiagnostic(tuningRoot + "positions10s.epd");
-            Console.WriteLine("");
-            Console.WriteLine("Combined:");
-            tuner.positionDiagnostic(tuningRoot + "positionsAll.epd");
-            Console.WriteLine("");
-            Console.WriteLine("10+0.1 distributed:");
-            tuner.positionDiagnostic(tuningRoot + "positions10sDistributed.epd");
-            Console.WriteLine("");
-            Console.WriteLine("External:");
-            tuner.positionDiagnostic(tuningRoot + "positionsExternal.epd");
-            
-
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }*/
     }
 
     public void ReceiveCommand(string command)

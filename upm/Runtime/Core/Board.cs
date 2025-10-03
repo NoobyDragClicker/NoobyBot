@@ -15,8 +15,11 @@ public class Board
     public ulong[] sideBitboard = new ulong[2];
     public ulong[] attackedSquares = new ulong[2];
     public ulong allPiecesBitboard;
+
+    //Ray of squares in the pin, including the attacking piece
     public ulong diagPins = 0;
     public ulong straightPins = 0;
+     //Ray of squares in the check, including the attacking piece
     public ulong checkIndexes = 0;
     public int[,] pieceCounts = new int[2, 7];
 
@@ -41,7 +44,9 @@ public class Board
     public ulong zobristKey;
     public int plyFromStart;
     SearchLogger logger;
-
+    bool isMoveGenUpdated = false;
+    bool isSimpleCheckStatusUpdated = false;
+    bool areAttacksUpdated = false;
 
     public void setPosition(string fenPosition, SearchLogger logger)
     {
@@ -53,6 +58,9 @@ public class Board
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory.Push(zobristKey);
+        isMoveGenUpdated = false;
+        isSimpleCheckStatusUpdated = false;
+        areAttacksUpdated = false;
         GenerateMoveGenInfo();
     }
 
@@ -60,6 +68,9 @@ public class Board
     //Moves the pieces
     public void Move(Move move, bool isSearch)
     {
+        isMoveGenUpdated = false;
+        isSimpleCheckStatusUpdated = false;
+        areAttacksUpdated = false;
         gameMoveHistory.Push(move);
         int oldCastlingRights = currentGameState.castlingRights;
         int castlingRights = oldCastlingRights;
@@ -323,6 +334,10 @@ public class Board
     }
     public void UndoMove(Move move)
     {
+        isMoveGenUpdated = false;
+        isSimpleCheckStatusUpdated = false;
+        areAttacksUpdated = false;
+
         gameMoveHistory.Pop();
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
@@ -685,13 +700,31 @@ public class Board
 
     public void GenerateMoveGenInfo()
     {
-        attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
-        attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
-        MoveGenerator.UpdateChecksAndPins(this);
-        isCurrentPlayerInCheck = (numCheckingPieces > 0) ? true : false;
-        isCurrentPlayerInDoubleCheck = (numCheckingPieces > 1) ? true : false;
+        if (!areAttacksUpdated)
+        {
+            attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
+            attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
+            areAttacksUpdated = true;
+        }
+        if (!isMoveGenUpdated)
+        {
+            MoveGenerator.UpdateChecksAndPins(this);
+            isCurrentPlayerInCheck = (numCheckingPieces > 0) ? true : false;
+            isCurrentPlayerInDoubleCheck = (numCheckingPieces > 1) ? true : false;
+            isMoveGenUpdated = true;
+            isSimpleCheckStatusUpdated = true;
+        }
     }
 
+    public void UpdateSimpleCheckStatus()
+    {
+        if (!isSimpleCheckStatusUpdated)
+        {
+            isCurrentPlayerInCheck = MoveGenerator.DetermineCheckStatus(this);
+            isSimpleCheckStatusUpdated = true;
+        }
+        
+    }
     public bool IsRepetitionDraw()
     {
         int repCount = zobristHistory.Count(x => x == zobristKey);
@@ -723,9 +756,10 @@ public class Board
     public bool IsCheckmate(int color)
     {
         int kingIndex = MoveGenerator.GetKingIndex(color, this);
+        if(!isSimpleCheckStatusUpdated){ UpdateSimpleCheckStatus(); }
         if (isCurrentPlayerInCheck)
         {
-            Span<Move> legalKingMoves = new Move[256];
+            Span<Move> legalKingMoves = stackalloc Move[218];
             int currMoveIndex = MoveGenerator.GenerateKingMoves(legalKingMoves, 0, color, this);
             //If there are any valid king moves
             if (currMoveIndex != 0)

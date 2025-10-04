@@ -459,13 +459,16 @@ public class Search
             
             counter++;
             TranspositionTable.Entry entry = tt.GetEntryForPos();
-            if (entry.key == board.zobristKey && !board.IsSearchDraw() && entry.nodeType == TranspositionTable.Exact)
+            if (entry.key == board.zobristKey && entry.nodeType == TranspositionTable.Exact)
             {
                 if (!entry.move.isNull())
                 {
-                    moveList.Push(entry.move);
-                    pv += Coord.GetUCIMoveNotation(entry.move) + " ";
                     board.Move(entry.move, true);
+                    moveList.Push(entry.move);
+                    if (!board.IsSearchDraw())
+                    {
+                        pv += Coord.GetUCIMoveNotation(entry.move) + " ";
+                    } else{ breakInPv = true; }
                 }
                 else { breakInPv = true; }
 

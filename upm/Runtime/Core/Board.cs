@@ -671,6 +671,7 @@ public class Board
 
         }
 
+        if(emptyCounter != 0) {fen += emptyCounter.ToString();}
         fen += (colorTurn == Piece.White) ? " w " : " b ";
         string castleStr = "";
         castleStr += HasKingsideRight(Piece.White) ? "K" : "";

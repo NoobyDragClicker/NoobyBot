@@ -5,7 +5,7 @@ using System.IO;
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(40, 16, 16);
+    AISettings aiSettings = new AISettings(40, 16, 256);
     Board board;
     BookLoader bookLoader;
     SearchLogger logger;

@@ -81,7 +81,7 @@ public class SearchTester
 
     void loadPositions(int numPositions)
     {
-        string[] lines = Perft.testPositions;
+        string[] lines = Perft.gamePositions;
         numPositions = numPositions > lines.Count() ? lines.Count() : numPositions;
         numTests = numPositions;
 

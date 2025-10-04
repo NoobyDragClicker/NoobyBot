@@ -22,6 +22,7 @@ public class Search
     int bestEval;
     Move[,] killerMoves;
     int[,] history;
+    int selDepth;
 
     bool abortSearch = false;
     const int positiveInfinity = 99999;
@@ -81,8 +82,10 @@ public class Search
 
     int StartIterativeDeepening(int maxDepth, bool writeInfoLine)
     {
-        logger.currentDiagnostics.numBestMovesPerIndex = new int[256];
+        logger.currentDiagnostics.numRaisedAlphaPerIndex = new int[256];
+        logger.currentDiagnostics.numBetaCutoffsPerIndex = new int[256];
         logger.currentDiagnostics.msPerIteration = new int[maxDepth];
+        selDepth = 0;
 
         searchTimer.Restart();
         reSearchTimer.Reset();
@@ -113,24 +116,34 @@ public class Search
             }
             else
             {
-                logger.AddToLog("best move was null", SearchLogger.LoggingLevel.Warning);
+                logger.AddToLog($"best move was null, {board.ConvertToFEN()}", SearchLogger.LoggingLevel.Warning);
             }
 
 
             string infoLine;
+            string pv = "";
+            try
+            {
+                pv = ExtractPV();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            
             if (IsMateScore(bestEval))
             {
-                infoLine = $"info depth {depth} score mate {(bestEval < 0 ? "-" : "")}{positiveInfinity - 1 - Math.Abs(bestEval)} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000}";
+                infoLine = $"info depth {depth} seldepth {selDepth} score mate {(bestEval < 0 ? "-" : "")}{positiveInfinity - 1 - Math.Abs(bestEval)} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000} pv {pv}";
             }
             else
             {
-                infoLine = $"info depth {depth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000}";
+                infoLine = $"info depth {depth} seldepth {selDepth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000} pv {pv}";
             }
             if (writeInfoLine)
             {
                 Console.WriteLine(infoLine);
             }
-            logger.AddToLog($"info depth {depth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000}", SearchLogger.LoggingLevel.Info);
+            logger.AddToLog($"info depth {depth} seldepth {selDepth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000} pv {pv}", SearchLogger.LoggingLevel.Info);
 
             if (abortSearch)
             {
@@ -189,6 +202,23 @@ public class Search
             quiescenceTimer.Stop();
             return eval;
         }
+        
+        /*
+        board.UpdateSimpleCheckStatus();
+        int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+        int nonPawnCount = board.pieceCounts[currentColorIndex, Piece.Knight] + board.pieceCounts[currentColorIndex, Piece.Bishop] + board.pieceCounts[currentColorIndex, Piece.Rook] + board.pieceCounts[currentColorIndex, Piece.Queen];
+
+        //NMP
+        if (!isPV && canNullMove && plyFromRoot > 0 && depth > 2 && !board.isCurrentPlayerInCheck && nonPawnCount > 0 && evaluation.EvaluatePosition(board) > beta)
+        {
+            int r = (depth > 6) ? 3 : 2;
+            board.MakeNullMove();
+            int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions, false, isPV);
+            board.UnmakeNullMove();
+            if(abortSearch){ return 0; }
+            if (eval > beta) { logger.currentDiagnostics.timesNotReSearched_NMR++; return beta; }
+            else { logger.currentDiagnostics.timesReSearched_NMR++; }
+        }*/
 
 
         moveGenTimer.Start();
@@ -242,13 +272,24 @@ public class Search
             {
                 reductions++;
                 if (i > 15) { reductions++; }
+                
             }
 
             eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
 
             if (eval > alpha && reductions > 0)
             {
+                bool isBaseResearch = true;
+                if (reSearchTimer.IsRunning) { isBaseResearch = false; }
+                else{ reSearchTimer.Start(); }
                 eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
+                if(isBaseResearch) { reSearchTimer.Stop(); }
+
+                logger.currentDiagnostics.timesReSearched_LMR++;
+            }
+            else
+            {
+                logger.currentDiagnostics.timesNotReSearched_LMR++;
             }
         
 
@@ -261,6 +302,7 @@ public class Search
             //Move is too good, would be prevented by a previous move
             if (eval >= beta)
             {
+                logger.currentDiagnostics.numBetaCutoffsPerIndex[i]++;
                 //Exiting search early, so it is a lower bound
                 logger.currentDiagnostics.ttStores++;
                 tt.StoreEvaluation(depth - reductions, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);
@@ -288,7 +330,7 @@ public class Search
                 evaluationBound = TranspositionTable.Exact;
                 bestMoveInThisPosition = legalMoves[i];
                 alpha = eval;
-                logger.currentDiagnostics.numBestMovesPerIndex[i]++;
+                logger.currentDiagnostics.numRaisedAlphaPerIndex[i]++;
 
                 //If this is a root move, set it to the best move
                 if (plyFromRoot == 0)
@@ -311,6 +353,7 @@ public class Search
 
     public int QuiescenceSearch(int alpha, int beta, int plyFromRoot)
     {
+        if(plyFromRoot > selDepth) { selDepth = plyFromRoot; }
         if (board.IsCheckmate(board.colorTurn))
         {
             return checkmate + plyFromRoot;
@@ -324,7 +367,7 @@ public class Search
         }
         catch (Exception e)
         {
-            logger.AddToLog("Evaluation error: " + e.Message, SearchLogger.LoggingLevel.Deadly);
+            logger.AddToLog("Evaluation error: " + e.Message + board.ConvertToFEN() + board.gameMoveHistory.Peek().newIndex.ToString(), SearchLogger.LoggingLevel.Deadly);
         }
         
         int standPat = eval;
@@ -405,6 +448,37 @@ public class Search
         return Math.Abs(score) > (positiveInfinity - maxMatePly);
     }
     public void EndSearch() { abortSearch = true; }
+    string ExtractPV()
+    {
+        Stack<Move> moveList = new Stack<Move>();
+        string pv = "";
+        bool breakInPv = false;
+        int counter = 0;
+        while (!breakInPv && counter < 20)
+        {
+            
+            counter++;
+            TranspositionTable.Entry entry = tt.GetEntryForPos();
+            if (entry.key == board.zobristKey && !board.IsSearchDraw() && entry.nodeType == TranspositionTable.Exact)
+            {
+                if (!entry.move.isNull())
+                {
+                    moveList.Push(entry.move);
+                    pv += Coord.GetUCIMoveNotation(entry.move) + " ";
+                    board.Move(entry.move, true);
+                }
+                else { breakInPv = true; }
+
+            }
+            else { breakInPv = true; }
+        }
+        if(counter == 20){ Console.WriteLine("Big ass pv"); }
+        while (moveList.Count > 0)
+        {
+            board.UndoMove(moveList.Pop());
+        }
+        return pv;
+    }
 
     void DecayHistory()
     {

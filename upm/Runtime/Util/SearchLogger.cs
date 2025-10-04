@@ -42,9 +42,9 @@ public class SearchLogger
             message += "TT hits: " + currentDiagnostics.ttHits.ToString() + "\n";
             message += "TT stores: " + currentDiagnostics.ttStores.ToString() + "\n";
 
-            message += "PVS/LMR total uses: " + (currentDiagnostics.timesReSearched_Main + currentDiagnostics.timesNotReSearched_Main).ToString() + "\n";
-            message += "PVS/LMR successes: " + currentDiagnostics.timesNotReSearched_Main.ToString() + "\n";
-            message += "PVS/LMR re-searches: " + currentDiagnostics.timesReSearched_Main.ToString() + "\n";
+            message += "PVS/LMR total uses: " + (currentDiagnostics.timesReSearched_LMR + currentDiagnostics.timesNotReSearched_LMR).ToString() + "\n";
+            message += "PVS/LMR successes: " + currentDiagnostics.timesNotReSearched_LMR.ToString() + "\n";
+            message += "PVS/LMR re-searches: " + currentDiagnostics.timesReSearched_LMR.ToString() + "\n";
 
             message += "NMR total uses: " + (currentDiagnostics.timesReSearched_NMR + currentDiagnostics.timesNotReSearched_NMR).ToString() + "\n";
             message += "NMR successes: " + currentDiagnostics.timesNotReSearched_NMR.ToString() + "\n";
@@ -58,13 +58,24 @@ public class SearchLogger
             message += "Re-search time: " + currentDiagnostics.reSearchTime + "\n";
             message += "Evaluation time: " + currentDiagnostics.evaluationTime + "\n";
 
-            message += "New best move found on: \n";
+            message += "Alpha raised on: \n";
 
-            for (int moveNum = 0; moveNum < currentDiagnostics.numBestMovesPerIndex.Count(); moveNum++)
+            for (int moveNum = 0; moveNum < currentDiagnostics.numRaisedAlphaPerIndex.Count(); moveNum++)
             {
-                if (currentDiagnostics.numBestMovesPerIndex[moveNum] != 0)
+                if (currentDiagnostics.numRaisedAlphaPerIndex[moveNum] != 0)
                 {
-                    message += $"{moveNum + 1}. {currentDiagnostics.numBestMovesPerIndex[moveNum]} | ";
+                    message += $"{moveNum + 1}. {currentDiagnostics.numRaisedAlphaPerIndex[moveNum]} | ";
+                }
+            }
+            message += "\n";
+
+            message += "Beta cutoff on: \n";
+
+            for (int moveNum = 0; moveNum < currentDiagnostics.numBetaCutoffsPerIndex.Count(); moveNum++)
+            {
+                if (currentDiagnostics.numBetaCutoffsPerIndex[moveNum] != 0)
+                {
+                    message += $"{moveNum + 1}. {currentDiagnostics.numBetaCutoffsPerIndex[moveNum]} | ";
                 }
             }
             message += "\n";
@@ -91,7 +102,8 @@ public class SearchLogger
         totaldiagnostics.ttEntries = 0;
         totaldiagnostics.nodesSearched = 0;
         totaldiagnostics.msPerIteration = new int[100];
-        totaldiagnostics.numBestMovesPerIndex = new int[300];
+        totaldiagnostics.numRaisedAlphaPerIndex = new int[300];
+        totaldiagnostics.numBetaCutoffsPerIndex = new int[300];
         for (int index = 0; index < diagnostics.Count; index++)
         {
             totaldiagnostics.ttHits += diagnostics[index].ttHits;
@@ -101,8 +113,8 @@ public class SearchLogger
 
             totaldiagnostics.nodesSearched += diagnostics[index].nodesSearched;
 
-            totaldiagnostics.timesReSearched_Main += diagnostics[index].timesReSearched_Main;
-            totaldiagnostics.timesNotReSearched_Main += diagnostics[index].timesNotReSearched_Main;
+            totaldiagnostics.timesReSearched_LMR += diagnostics[index].timesReSearched_LMR;
+            totaldiagnostics.timesNotReSearched_LMR += diagnostics[index].timesNotReSearched_LMR;
 
             totaldiagnostics.timesReSearched_NMR += diagnostics[index].timesReSearched_NMR;
             totaldiagnostics.timesNotReSearched_NMR += diagnostics[index].timesNotReSearched_NMR;
@@ -123,11 +135,18 @@ public class SearchLogger
                     totaldiagnostics.msPerIteration[iteration] += diagnostics[index].msPerIteration[iteration];
                 }
             }
-            if (diagnostics[index].numBestMovesPerIndex != null)
+            if (diagnostics[index].numRaisedAlphaPerIndex != null)
             {
-                for (int moveNumber = 0; moveNumber < diagnostics[index].numBestMovesPerIndex.Length; moveNumber++)
+                for (int moveNumber = 0; moveNumber < diagnostics[index].numRaisedAlphaPerIndex.Length; moveNumber++)
                 {
-                    totaldiagnostics.numBestMovesPerIndex[moveNumber] += diagnostics[index].numBestMovesPerIndex[moveNumber];
+                    totaldiagnostics.numRaisedAlphaPerIndex[moveNumber] += diagnostics[index].numRaisedAlphaPerIndex[moveNumber];
+                }
+            }
+            if (diagnostics[index].numBetaCutoffsPerIndex != null)
+            {
+                for (int moveNumber = 0; moveNumber < diagnostics[index].numBetaCutoffsPerIndex.Length; moveNumber++)
+                {
+                    totaldiagnostics.numBetaCutoffsPerIndex[moveNumber] += diagnostics[index].numBetaCutoffsPerIndex[moveNumber];
                 }
             }
         }
@@ -168,8 +187,8 @@ public struct SearchDiagnostics
     public ulong nodesSearched;
 
     //Any time a re-search was required - doesn't include how many times were generated
-    public ulong timesReSearched_Main;
-    public ulong timesNotReSearched_Main;
+    public ulong timesReSearched_LMR;
+    public ulong timesNotReSearched_LMR;
 
     public ulong timesReSearched_NMR;
     public ulong timesNotReSearched_NMR;
@@ -183,5 +202,6 @@ public struct SearchDiagnostics
     public TimeSpan makeUnmakeTime;
     public TimeSpan evaluationTime;
     public int[] msPerIteration;
-    public int[] numBestMovesPerIndex;
+    public int[] numRaisedAlphaPerIndex;
+    public int[] numBetaCutoffsPerIndex;
 }

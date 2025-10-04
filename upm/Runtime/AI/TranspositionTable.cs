@@ -1,3 +1,5 @@
+using System.Transactions;
+
 public class TranspositionTable
 {
     //For when we don't have a usable transposition in the table
@@ -49,11 +51,18 @@ public class TranspositionTable
         return LookupFailed;
     }
 
-    public void StoreEvaluation(int depth, int numPlySearched, int eval, int evalType, Move move){
+    public Entry GetEntryForPos()
+    {
+        ulong index = Index;
+        return entries[index];
+    }
+    
+    public void StoreEvaluation(int depth, int numPlySearched, int eval, int evalType, Move move)
+    {
         numStored++;
         ulong index = Index;
-		Entry entry = new Entry(board.zobristKey, CorrectMateEvalForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
-		entries[index] = entry;
+        Entry entry = new Entry(board.zobristKey, CorrectMateEvalForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
+        entries[index] = entry;
     }
 
     //Returning it to its new mate value, based on how far away this mate is

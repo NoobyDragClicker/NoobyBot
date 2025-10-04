@@ -31,11 +31,6 @@ public class Evaluation
     public static int[] passedPawnBonuses = {0, 15, 23, 39, 63, 98, 53, 0};
     public static int[] isolatedPawnPenalty = {5, -19, -27, -52, -75, -75, -75, -75, -75};
 
-
-
-
-
-
     int playerTurnMultiplier;
     public Evaluation(SearchLogger logger)
     {
@@ -56,7 +51,6 @@ public class Evaluation
         const int totalPhase = 24;
         int phase = 0;
 
-        int totalMaterial = 0;
         int mgMaterialCount = 0;
         int egMaterialCount = 0;
 

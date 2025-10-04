@@ -489,10 +489,14 @@ public class Board
     //TODO: fix 
     public void MakeNullMove()
     {
+        isMoveGenUpdated = false;
+        isSimpleCheckStatusUpdated = false;
+        areAttacksUpdated = false;
         fiftyMoveCounter += 1;
         plyFromStart += 1;
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
         int oldEPFile = currentGameState.enPassantFile;
+        currentGameState = new GameState();
         currentGameState.fiftyMoveCounter = fiftyMoveCounter;
         currentGameState.enPassantFile = 0;
         currentGameState.capturedPiece = 0;
@@ -507,14 +511,25 @@ public class Board
     }
     public void UnmakeNullMove()
     {
+        isMoveGenUpdated = false;
+        isSimpleCheckStatusUpdated = false;
+        areAttacksUpdated = false;
         fiftyMoveCounter -= 1;
         plyFromStart -= 1;
-        colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
+
         zobristHistory.Pop();
         zobristKey = zobristHistory.Peek();
         gameStateHistory.Pop();
         currentGameState = gameStateHistory.Peek();
-        enPassantIndex = EnPassantFileToIndex(colorTurn, currentGameState.enPassantFile);
+        if (currentGameState.enPassantFile != 0)
+        {
+            enPassantIndex = EnPassantFileToIndex(colorTurn, currentGameState.enPassantFile);
+        }
+        else
+        {
+            enPassantIndex = -1;
+        }
+        colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
     }
 
     public int[] ConvertFromFEN(string fenPosition)
@@ -656,6 +671,7 @@ public class Board
 
         }
 
+        if(emptyCounter != 0) {fen += emptyCounter.ToString();}
         fen += (colorTurn == Piece.White) ? " w " : " b ";
         string castleStr = "";
         castleStr += HasKingsideRight(Piece.White) ? "K" : "";

@@ -11,7 +11,7 @@ public class Engine
     SearchLogger logger;
     SearchLogger testingLogger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot v1.2.5";
+    const string name = "Nooby Bot Dev";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
     public const string tuningRoot = chessRoot + "/Tuning/";
 
@@ -239,7 +239,6 @@ public class Engine
         tuner.TuneFromFile(tuningRoot + paramFile, tuningRoot + paramFile, tuningRoot +  posFile, 50000);
         tuner.CreateCodeFromParams(tuningRoot + paramFile, tuningRoot + "code.txt");
     }
-
 
     //Synchronises the clock and tells the player to move
     void ProcessGoCommand(string message)

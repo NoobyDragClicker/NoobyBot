@@ -202,23 +202,26 @@ public class Search
             quiescenceTimer.Stop();
             return eval;
         }
-        
-        /*
-        board.UpdateSimpleCheckStatus();
-        int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
-        int nonPawnCount = board.pieceCounts[currentColorIndex, Piece.Knight] + board.pieceCounts[currentColorIndex, Piece.Bishop] + board.pieceCounts[currentColorIndex, Piece.Rook] + board.pieceCounts[currentColorIndex, Piece.Queen];
+    
 
         //NMP
-        if (!isPV && canNullMove && plyFromRoot > 0 && depth > 2 && !board.isCurrentPlayerInCheck && nonPawnCount > 0 && evaluation.EvaluatePosition(board) > beta)
+        if (plyFromRoot > 0 && depth > 2)
         {
-            int r = (depth > 6) ? 3 : 2;
-            board.MakeNullMove();
-            int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions, false, isPV);
-            board.UnmakeNullMove();
-            if(abortSearch){ return 0; }
-            if (eval > beta) { logger.currentDiagnostics.timesNotReSearched_NMR++; return beta; }
-            else { logger.currentDiagnostics.timesReSearched_NMR++; }
-        }*/
+            board.UpdateSimpleCheckStatus();
+            int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+            int nonPawnCount = board.pieceCounts[currentColorIndex, Piece.Knight] + board.pieceCounts[currentColorIndex, Piece.Bishop] + board.pieceCounts[currentColorIndex, Piece.Rook] + board.pieceCounts[currentColorIndex, Piece.Queen];
+            if (!board.isCurrentPlayerInCheck && nonPawnCount > 0 && evaluation.EvaluatePosition(board) > beta)
+            {
+                int r = 2;
+                board.MakeNullMove();
+                int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions);
+                board.UnmakeNullMove();
+
+                if (abortSearch) { return 0; }
+                if (eval >= beta) { logger.currentDiagnostics.timesNotReSearched_NMR++; return beta; }
+                else { logger.currentDiagnostics.timesReSearched_NMR++; }
+            }
+        }
 
 
         moveGenTimer.Start();

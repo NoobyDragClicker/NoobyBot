@@ -765,8 +765,13 @@ public class Board
                 pieceCounts[WhiteIndex, Piece.Rook] + pieceCounts[BlackIndex, Piece.Rook] +
                 pieceCounts[WhiteIndex, Piece.Queen] + pieceCounts[BlackIndex, Piece.Queen]
                 != 0) { return false; }
-            else if (pieceCounts[WhiteIndex, Piece.Knight] + pieceCounts[WhiteIndex, Piece.Bishop] <= 1 && pieceCounts[BlackIndex, Piece.Knight] + pieceCounts[BlackIndex, Piece.Bishop] <= 1){ return true; }
-            else{ return false; }
+            else
+            {
+                int whiteMinorPieces = pieceCounts[WhiteIndex, Piece.Knight] + pieceCounts[WhiteIndex, Piece.Bishop];
+                int blackMinorPieces = pieceCounts[BlackIndex, Piece.Knight] + pieceCounts[BlackIndex, Piece.Bishop];
+                if ((whiteMinorPieces == 1 && blackMinorPieces == 0) || (whiteMinorPieces == 0 && blackMinorPieces == 1) || (whiteMinorPieces == 0 && blackMinorPieces == 0)) { return true; }
+                else { return false; }
+            }
         }
     }
     public bool IsCheckmate(int color)

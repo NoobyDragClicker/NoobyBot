@@ -58,7 +58,6 @@ public class Search
     public void StartSearch(bool writeInfoLine)
     {
         bestMove = nullMove;
-        bestMoveThisIteration = nullMove;
         abortSearch = false;
         try
         {
@@ -95,28 +94,32 @@ public class Search
         quiescenceGenTimer.Reset();
         quiescenceTimer.Reset();
         evaluationTimer.Reset();
+        
         for (int depth = 1; depth <= maxDepth; depth++)
         {
+            bestMoveThisIteration = nullMove;
             DecayHistory();
             iterationTimer.Restart();
             try
             {
-                SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
+                bestEval = SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
             }
             catch (Exception e)
             {
                 logger.AddToLog("SearchMoves error: " + e.Message, SearchLogger.LoggingLevel.Deadly);
             }
-            
 
-            if (!bestMoveThisIteration.isNull())
+            if (bestMoveThisIteration.isNull())
             {
-                bestMove = bestMoveThisIteration;
-                bestEval = bestEvalThisIteration;
+                if (!abortSearch)
+                {
+                    string isSearchDraw = board.IsSearchDraw() ? "true" : "false";
+                    logger.AddToLog($"best move was null, {board.ConvertToFEN()}, {isSearchDraw}, {bestEval}", SearchLogger.LoggingLevel.Warning);
+                }
             }
             else
             {
-                logger.AddToLog($"best move was null, {board.ConvertToFEN()}", SearchLogger.LoggingLevel.Warning);
+                bestMove = bestMoveThisIteration;
             }
 
 
@@ -130,20 +133,16 @@ public class Search
             {
                 Console.WriteLine(e);
             }
-            
-            if (IsMateScore(bestEval))
-            {
-                infoLine = $"info depth {depth} seldepth {selDepth} score mate {(bestEval < 0 ? "-" : "")}{positiveInfinity - 1 - Math.Abs(bestEval)} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000} pv {pv}";
-            }
-            else
-            {
-                infoLine = $"info depth {depth} seldepth {selDepth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000} pv {pv}";
-            }
+
+            string scoreString = IsMateScore(bestEval) ? $"mate {(bestEval < 0 ? "-" : "")}{positiveInfinity - 1 - Math.Abs(bestEval)}" : $"cp {bestEval}";
+
+            infoLine = $"info depth {depth} seldepth {selDepth} score {scoreString} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000} pv {pv}";
+
             if (writeInfoLine)
             {
                 Console.WriteLine(infoLine);
             }
-            logger.AddToLog($"info depth {depth} seldepth {selDepth} score cp {bestEval} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000} pv {pv}", SearchLogger.LoggingLevel.Info);
+            logger.AddToLog(infoLine, SearchLogger.LoggingLevel.Info);
 
             if (abortSearch)
             {
@@ -179,6 +178,7 @@ public class Search
     {
         if (abortSearch) { return 0; }
         if (board.IsSearchDraw()) { return 0; }
+
         //Check the TT for a valid entry
         int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
         if (ttEval != TranspositionTable.LookupFailed)
@@ -188,7 +188,6 @@ public class Search
             if (plyFromRoot == 0)
             {
                 bestMoveThisIteration = tt.GetStoredMove();
-                bestEvalThisIteration = ttEval;
             }
             return ttEval;
         }
@@ -218,7 +217,7 @@ public class Search
                 board.UnmakeNullMove();
 
                 if (abortSearch) { return 0; }
-                if (eval >= beta) { logger.currentDiagnostics.timesNotReSearched_NMR++; return beta; }
+                if (eval >= beta) { logger.currentDiagnostics.timesNotReSearched_NMR++; return eval; }
                 else { logger.currentDiagnostics.timesReSearched_NMR++; }
             }
         }
@@ -233,7 +232,7 @@ public class Search
         if (numLegalMoves == 0)
         {
             if (board.isCurrentPlayerInCheck){ return checkmate + plyFromRoot;}
-            else {return 0;}
+            else { return 0; }
         }
 
         //Move ordering
@@ -245,6 +244,7 @@ public class Search
         Move bestMoveInThisPosition = nullMove;
         string bestMovesTracker = "pv progression: ";
 
+        int bestScore = negativeInfinity;
 
         for (int i = 0; i < numLegalMoves; i++)
         {
@@ -267,26 +267,25 @@ public class Search
                 numCheckExtensions++;
             }
 
-            int eval = negativeInfinity;
+            
             int reductions = 0;
-
             //LMR
             if (i >= 3 && depth > 3)
             {
                 reductions++;
                 if (i > 15) { reductions++; }
-                
+
             }
 
-            eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
+            int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
 
             if (eval > alpha && reductions > 0)
             {
                 bool isBaseResearch = true;
                 if (reSearchTimer.IsRunning) { isBaseResearch = false; }
-                else{ reSearchTimer.Start(); }
+                else { reSearchTimer.Start(); }
                 eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
-                if(isBaseResearch) { reSearchTimer.Stop(); }
+                if (isBaseResearch) { reSearchTimer.Stop(); }
 
                 logger.currentDiagnostics.timesReSearched_LMR++;
             }
@@ -294,7 +293,7 @@ public class Search
             {
                 logger.currentDiagnostics.timesNotReSearched_LMR++;
             }
-        
+
 
             makeUnmakeTimer.Start();
             board.UndoMove(legalMoves[i]);
@@ -302,13 +301,33 @@ public class Search
 
             if (abortSearch) { return 0; }
 
+            if (eval > bestScore)
+            {
+                bestScore = eval;
+                bestMoveInThisPosition = legalMoves[i];
+                //If this is a root move, set it to the best move
+                if (plyFromRoot == 0)
+                {
+                    bestMovesTracker += Coord.GetUCIMoveNotation(legalMoves[i]) + $" ({i}), ";
+                    bestMoveThisIteration = legalMoves[i];
+                }
+
+                //This move is better than the current move
+                if (eval > alpha)
+                {
+                    evaluationBound = TranspositionTable.Exact;
+                    alpha = eval;
+                    logger.currentDiagnostics.numRaisedAlphaPerIndex[i]++;
+                }
+            }
+
             //Move is too good, would be prevented by a previous move
             if (eval >= beta)
             {
                 logger.currentDiagnostics.numBetaCutoffsPerIndex[i]++;
                 //Exiting search early, so it is a lower bound
                 logger.currentDiagnostics.ttStores++;
-                tt.StoreEvaluation(depth - reductions, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);
+                tt.StoreEvaluation(depth - reductions, plyFromRoot, bestScore, TranspositionTable.LowerBound, legalMoves[i]);
                 //Saving quiet move to killers
                 if (!legalMoves[i].isCapture())
                 {
@@ -324,34 +343,19 @@ public class Search
                     int historyVal = history[legalMoves[i].oldIndex, legalMoves[i].newIndex] + depth * depth;
                     history[legalMoves[i].oldIndex, legalMoves[i].newIndex] = (historyVal < HISTORY_MAX) ? historyVal : HISTORY_MAX;
                 }
-                return beta;
+                return bestScore;
             }
 
-            //This move is better than the current move
-            if (eval > alpha)
-            {
-                evaluationBound = TranspositionTable.Exact;
-                bestMoveInThisPosition = legalMoves[i];
-                alpha = eval;
-                logger.currentDiagnostics.numRaisedAlphaPerIndex[i]++;
-
-                //If this is a root move, set it to the best move
-                if (plyFromRoot == 0)
-                {
-                    bestMovesTracker += Coord.GetUCIMoveNotation(legalMoves[i]) + $" ({i}), ";
-                    bestMoveThisIteration = legalMoves[i];
-                    bestEvalThisIteration = eval;
-                }
-            }
+            
         }
         if (plyFromRoot == 0)
         {
             logger.AddToLog(bestMovesTracker, SearchLogger.LoggingLevel.Diagnostics);
         }
 
-        tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);
+        tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
 
-        return alpha;
+        return bestScore;
     }
 
     public int QuiescenceSearch(int alpha, int beta, int plyFromRoot)
@@ -363,28 +367,28 @@ public class Search
         }
 
         evaluationTimer.Start();
-        int eval = 0;
+        int bestEval = 0;
         try
         {
-            eval = evaluation.EvaluatePosition(board);
+            bestEval = evaluation.EvaluatePosition(board);
         }
         catch (Exception e)
         {
             logger.AddToLog("Evaluation error: " + e.Message + board.ConvertToFEN() + board.gameMoveHistory.Peek().newIndex.ToString(), SearchLogger.LoggingLevel.Deadly);
         }
         
-        int standPat = eval;
+        int standPat = bestEval;
         evaluationTimer.Stop();
 
         //Cutoffs
-        if (eval >= beta)
+        if (bestEval >= beta)
         {
-            return beta;
+            return bestEval;
         }
 
-        if (eval > alpha)
+        if (bestEval > alpha)
         {
-            alpha = eval;
+            alpha = bestEval;
         }
         //If even after winning a queen it is still worse, don't bother searching
         //if (eval + Evaluation.queenValue < alpha) { return alpha; }
@@ -409,21 +413,26 @@ public class Search
             board.Move(legalMoves[i], true);
             makeUnmakeTimer.Stop();
 
-            eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
+            int eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
 
             makeUnmakeTimer.Start();
             board.UndoMove(legalMoves[i]);
             makeUnmakeTimer.Stop();
+            if (eval > bestEval)
+            {
+                bestEval = eval;
+                if (eval > alpha)
+                {
+                    alpha = eval;
+                }
+            }
             if (eval >= beta)
             {
-                return beta;
+                return bestEval;
             }
-            if (eval > alpha)
-            {
-                alpha = eval;
-            }
+            
         }
-        return alpha;
+        return bestEval;
     }
 
     int getCapturedPieceVal(Move move) {

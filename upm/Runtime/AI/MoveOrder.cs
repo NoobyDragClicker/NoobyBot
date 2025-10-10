@@ -4,6 +4,15 @@ using System.Collections.Generic;
 public class MoveOrder
 {
     const int million = 1000000;
+    static int[] MVV_LVA = {
+        0, 0, 0, 0, 0, 0, 0, //None
+        0, 6, 12, 18, 24, 30, 100 , //Pawn
+        0, 5, 11, 17, 23, 29, 100, //Knight
+        0, 4, 10, 16, 22, 28, 100 , //Bishop
+        0, 3, 9, 15, 21, 27, 100, //Rook
+        0, 2, 8, 14, 20, 26, 100 , //Queen
+        0, 1, 7, 13, 19, 25, 100   //King
+     };
     public int[] ScoreMoves(Board board, Span<Move> moves, Move firstMove, Move[,] killerMoves, int[,] history, AISettings aiSettings)
     {
         int[] moveScores = new int[moves.Length];
@@ -30,28 +39,21 @@ public class MoveOrder
             }
             else if (move.isCapture())
             {
-                int movedPieceValue;
-                int capturedPieceValue;
+                int movedPieceType;
+                int capturedPieceType;
                 //en passant
                 if (move.flag == 7)
                 {
-                    if (Piece.IsColour(board.board[moves[x].oldIndex], Piece.White))
-                    {
-                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[moves[x].newIndex + 8]));
-                    }
-                    else
-                    {
-                        capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[moves[x].newIndex - 8]));
-                    }
+                    capturedPieceType = Piece.Pawn;
                 }
                 else
                 {
-                    capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[moves[x].newIndex]));
+                    capturedPieceType = Piece.PieceType(board.board[moves[x].newIndex]);
                 }
-                movedPieceValue = GetPieceValue(Piece.PieceType(board.board[moves[x].oldIndex]));
+                movedPieceType = Piece.PieceType(board.board[moves[x].oldIndex]);
 
                 //Basically MVV LVA, * 10 to give more space for killers 
-                score = million + ((capturedPieceValue - movedPieceValue) * 10);
+                score = million + 10 + MVV_LVA[(movedPieceType * 7) + capturedPieceType];
             }
             else if (move.isPromotion())
             {
@@ -130,30 +132,22 @@ public class MoveOrder
         int[] moveScores = new int[captures.Length];
         for (int x = 0; x < captures.Length; x++)
         {
-            int capturedPieceValue;
-            int movedPieceValue;
+            int capturedPieceType;
+            int movedPieceType;
             int score;
             Move move = captures[x];
             //en passant
             if (move.flag == 7)
             {
-                if (Piece.IsColour(board.board[captures[x].oldIndex], Piece.White))
-                {
-                    capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[captures[x].newIndex + 8]));
-                }
-                else
-                {
-                    capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[captures[x].newIndex - 8]));
-                }
+                capturedPieceType = Piece.Pawn;
             }
             else
             {
-                capturedPieceValue = GetPieceValue(Piece.PieceType(board.board[captures[x].newIndex]));
+                capturedPieceType = Piece.PieceType(board.board[captures[x].newIndex]);
             }
-            movedPieceValue = GetPieceValue(Piece.PieceType(board.board[captures[x].oldIndex]));
+            movedPieceType = Piece.PieceType(board.board[captures[x].oldIndex]);
 
-            //Basically MVV LVA, *10 to give more space for killers 
-            score = million + ((capturedPieceValue - movedPieceValue) * 10);
+            score = MVV_LVA[(movedPieceType * 7) + capturedPieceType];
             moveScores[x] = score;
         }
 

@@ -25,15 +25,15 @@ public class MoveOrder
             {
                 score = 8 * million;
             }
-            else if (!killerMoves[board.plyFromStart, 0].isNull() && move.GetIntValue() == killerMoves[board.plyFromStart, 0].GetIntValue())
+            else if (!killerMoves[board.fullMoveClock, 0].isNull() && move.GetIntValue() == killerMoves[board.fullMoveClock, 0].GetIntValue())
             {
                 score = million + 3;
             }
-            else if (!killerMoves[board.plyFromStart, 1].isNull() && move.GetIntValue() == killerMoves[board.plyFromStart, 1].GetIntValue())
+            else if (!killerMoves[board.fullMoveClock, 1].isNull() && move.GetIntValue() == killerMoves[board.fullMoveClock, 1].GetIntValue())
             {
                 score = million + 2;
             }
-            else if (!killerMoves[board.plyFromStart, 2].isNull() && move.GetIntValue() == killerMoves[board.plyFromStart, 2].GetIntValue())
+            else if (!killerMoves[board.fullMoveClock, 2].isNull() && move.GetIntValue() == killerMoves[board.fullMoveClock, 2].GetIntValue())
             {
                 score = million + 1;
             }

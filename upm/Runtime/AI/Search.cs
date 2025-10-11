@@ -113,8 +113,16 @@ public class Search
             {
                 if (!abortSearch)
                 {
-                    string isSearchDraw = board.IsSearchDraw() ? "true" : "false";
-                    logger.AddToLog($"best move was null, {board.ConvertToFEN()}, {isSearchDraw}, {bestEval}", SearchLogger.LoggingLevel.Warning);
+                    logger.AddToLog($"Draw detected: {board.ConvertToFEN()}", SearchLogger.LoggingLevel.Warning);
+                    logger.AddToLog($"Start pos: {board.startFen}", SearchLogger.LoggingLevel.Warning);
+                    string message = "";
+                    Move[] moves = new Move[board.gameMoveHistory.Count];
+                    board.gameMoveHistory.CopyTo(moves, 0);
+                    for (int x = 0; x < moves.Length; x++)
+                    {
+                        message += Coord.GetUCIMoveNotation(moves[x]);
+                    }
+                    logger.AddToLog("Moves: " + message, SearchLogger.LoggingLevel.Warning);
                 }
             }
             else
@@ -333,9 +341,9 @@ public class Search
                 {
                     for (int moveNum = 0; moveNum < 3; moveNum++)
                     {
-                        if (!killerMoves[board.plyFromStart, moveNum].isNull())
+                        if (!killerMoves[board.fullMoveClock, moveNum].isNull())
                         {
-                            killerMoves[board.plyFromStart, moveNum] = legalMoves[i];
+                            killerMoves[board.fullMoveClock, moveNum] = legalMoves[i];
                             break;
                         }
                     }

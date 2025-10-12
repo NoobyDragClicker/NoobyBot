@@ -52,7 +52,7 @@ public class MoveOrder
                 }
                 movedPieceType = Piece.PieceType(board.board[moves[x].oldIndex]);
 
-                //Basically MVV LVA, * 10 to give more space for killers 
+                //MVV LVA 
                 score = million + 10 + MVV_LVA[(movedPieceType * 7) + capturedPieceType];
             }
             else if (move.isPromotion())

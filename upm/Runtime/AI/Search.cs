@@ -185,7 +185,7 @@ public class Search
     int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numCheckExtensions)
     {
         if (abortSearch) { return 0; }
-        if (board.IsSearchDraw()) { return 0; }
+        if (plyFromRoot > 0 && board.IsSearchDraw()) { return 0; }
 
         //Check the TT for a valid entry
         int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);

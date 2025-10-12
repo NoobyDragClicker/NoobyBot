@@ -619,11 +619,19 @@ public class Board
             }
             if (fenComponents.Length >= 5)
             {
-                halfMoveClock = int.Parse(fenComponents[4]);
+                try
+                {
+                    halfMoveClock = int.Parse(fenComponents[4]);
+                } catch(Exception e){}
+                
             }
             if (fenComponents.Length >= 6)
             {
-                fullMoveClock = int.Parse(fenComponents[5]);
+                try
+                {
+                    fullMoveClock = int.Parse(fenComponents[5]);
+                } catch(Exception e){}
+                
             }
         }
         
@@ -759,7 +767,7 @@ public class Board
     public bool IsRepetitionDraw()
     {
         int repCount = zobristHistory.Count(x => x == zobristKey);
-        if (repCount >= 3)
+        if (repCount >= 2)
         {
             return true;
         }

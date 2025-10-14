@@ -209,7 +209,8 @@ public class Search
             quiescenceTimer.Stop();
             return eval;
         }
-    
+
+
 
         //NMP
         if (plyFromRoot > 0 && depth > 2)
@@ -229,6 +230,8 @@ public class Search
                 else { logger.currentDiagnostics.timesReSearched_NMR++; }
             }
         }
+        
+        
 
 
         moveGenTimer.Start();
@@ -399,7 +402,7 @@ public class Search
             alpha = bestEval;
         }
         //If even after winning a queen it is still worse, don't bother searching
-        //if (eval + Evaluation.queenValue < alpha) { return alpha; }
+        //if (bestEval + Evaluation.queenValue < alpha) { return alpha; }
 
         quiescenceGenTimer.Start();
         Span<Move> legalMoves = stackalloc Move[218];

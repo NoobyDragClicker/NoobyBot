@@ -29,7 +29,7 @@ public class Search
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
     const int HISTORY_MAX = 32768;
-    const int window = 50;
+    const int window = 100;
     public event Action<Move> onSearchComplete;
 
 

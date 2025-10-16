@@ -29,6 +29,7 @@ public class Search
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
     const int HISTORY_MAX = 32768;
+    const int window = 100;
     public event Action<Move> onSearchComplete;
 
 
@@ -94,15 +95,26 @@ public class Search
         quiescenceGenTimer.Reset();
         quiescenceTimer.Reset();
         evaluationTimer.Reset();
+
+        bestEval = SearchMoves(1, 0, negativeInfinity, positiveInfinity, 0);
         
-        for (int depth = 1; depth <= maxDepth; depth++)
+        for (int depth = 2; depth <= maxDepth; depth++)
         {
+
             bestMoveThisIteration = nullMove;
             DecayHistory();
             iterationTimer.Restart();
+
+            //Aspiration windows
+            int alpha = bestEval - window;
+            int beta = bestEval + window;
             try
             {
-                bestEval = SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
+                bestEval = SearchMoves(depth, 0, alpha, beta, 0);
+                if(bestEval <= alpha || bestEval >= beta)
+                {
+                    bestEval = SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
+                }
             }
             catch (Exception e)
             {

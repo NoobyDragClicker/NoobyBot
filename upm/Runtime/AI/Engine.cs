@@ -11,7 +11,7 @@ public class Engine
     SearchLogger logger;
     SearchLogger testingLogger;
     bool hasStartedGame = false;
-    const string name = "Nooby Bot Dev Bugfix";
+    const string name = "Nooby Bot Dev";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
     public const string tuningRoot = chessRoot + "/Tuning/";
 
@@ -57,7 +57,7 @@ public class Engine
                 hasStartedGame = true;
                 break;
             case "bench":
-                SearchTester tester = new SearchTester(testingLogger);
+                SearchTester tester = new SearchTester(logger);
                 tester.RunBench();
                 break;
             case "position":

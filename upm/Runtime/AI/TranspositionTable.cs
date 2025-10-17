@@ -91,10 +91,21 @@ public class TranspositionTable
 	}
 
     public Move GetStoredMove()
-	{
-        return entries[Index].move;	
-	}
+    {
+        return entries[Index].move;
+    }
 
+    public Move GetSafeMove()
+    {
+        if(entries[Index].key == board.zobristKey)
+        {
+            return entries[Index].move;
+        }
+        else
+        {
+            return Search.nullMove;
+        }
+    }
     public struct Entry
     {
         public readonly ulong key;

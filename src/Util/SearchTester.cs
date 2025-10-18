@@ -75,7 +75,7 @@ public class SearchTester
             logger.startNewSearch();
         }
         watch.Stop();
-        Console.WriteLine($"nodes {nodes} nps {(nodes / (ulong)watch.ElapsedMilliseconds) * 1000}");
+        Console.WriteLine($"{nodes} nodes {(nodes / (ulong)watch.ElapsedMilliseconds) * 1000} nps");
     }
 
 

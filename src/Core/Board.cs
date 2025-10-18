@@ -490,7 +490,6 @@ public class Board
 
     }
 
-    //TODO: fix 
     public void MakeNullMove()
     {
         isMoveGenUpdated = false;

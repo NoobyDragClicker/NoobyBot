@@ -246,7 +246,7 @@ public class Search
                 }
             }
             //RFP
-            if (depth < 4 && !board.isCurrentPlayerInCheck && staticEval >= beta + RFPMargin * depth)
+            if (depth < 4 && !board.isCurrentPlayerInCheck && staticEval >= beta + RFPMargin * depth )
             {
                 return staticEval;
             }

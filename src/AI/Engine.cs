@@ -5,7 +5,7 @@ using System.IO;
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(40, 0, 256);
+    AISettings aiSettings = new AISettings(40, 0, 16);
     Board board;
     //BookLoader bookLoader;
     SearchLogger logger;
@@ -43,11 +43,24 @@ public class Engine
             case "uci":
                 Console.WriteLine("id name=NoobyBot");
                 Console.WriteLine("id author=Me");
+                Console.WriteLine("option name Hash type spin default 16 min 1 max 4096 ");
+                Console.WriteLine("option name Threads type spin default 1 min 1 max 1 ");
                 Console.WriteLine("uciok");
                 player.logger.AddToLog("uciok", SearchLogger.LoggingLevel.Info);
                 break;
             case "isready":
                 Console.WriteLine("readyok");
+                break;
+            case "setoption":
+                if (command.Contains("name Hash value "))
+                {
+                    int hashSize = TryGetLabelledValueInt(command, "value", new string[] { "test" });
+                    aiSettings = new AISettings(40, 0, hashSize);
+                }
+                if(command.Contains("name Threads value"))
+                {
+                    break;
+                }
                 break;
             case "ucinewgame":
                 board = new Board();

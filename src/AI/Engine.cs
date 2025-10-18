@@ -5,9 +5,9 @@ using System.IO;
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(40, 16, 256);
+    AISettings aiSettings = new AISettings(40, 0, 256);
     Board board;
-    BookLoader bookLoader;
+    //BookLoader bookLoader;
     SearchLogger logger;
     SearchLogger testingLogger;
     bool hasStartedGame = false;
@@ -26,7 +26,6 @@ public class Engine
     public Engine()
     {
         board = new Board();
-        bookLoader = new BookLoader();
         logger = new SearchLogger(name, SearchLogger.LoggingLevel.Warning);
         testingLogger = new SearchLogger(name + "test", SearchLogger.LoggingLevel.Diagnostics);
         player = new AIPlayer(name, logger);
@@ -52,8 +51,7 @@ public class Engine
                 break;
             case "ucinewgame":
                 board = new Board();
-                bookLoader.loadBook();
-                player.NewGame(board, aiSettings, bookLoader);
+                player.NewGame(board, aiSettings);
                 hasStartedGame = true;
                 break;
             case "bench":
@@ -64,8 +62,7 @@ public class Engine
                 if (!hasStartedGame)
                 {
                     board = new Board();
-                    bookLoader.loadBook();
-                    player.NewGame(board, aiSettings, bookLoader);
+                    player.NewGame(board, aiSettings);
                 }
                 ProcessPositionCommand(command);
                 break;
@@ -120,13 +117,11 @@ public class Engine
         if (message.ToLower().Contains("startpos"))
         {
             board.setPosition(Board.startPos, player.logger);
-            player.ResetOpeningBook(bookLoader);
         }
         else if (message.ToLower().Contains("fen"))
         {
             string customFen = TryGetLabelledValue(message, "fen", positionLabels);
             board.setPosition(customFen, player.logger);
-            player.isInBook = false;
         }
         else
         {
@@ -357,7 +352,6 @@ public class Engine
 
         return new Move(startSquare, targetSquare, isCapture, flag);
     }
-
 
     public static string convertMoveToUCI(Move move)
     {

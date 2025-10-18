@@ -30,6 +30,7 @@ public class Search
     const int checkmate = -99998;
     const int HISTORY_MAX = 32768;
     const int window = 100;
+    const int RFPMargin = 150;
     public event Action<Move> onSearchComplete;
 
 
@@ -222,29 +223,34 @@ public class Search
             return eval;
         }
 
-
-
-        //NMP
-        if (plyFromRoot > 0 && depth > 2)
+        if (plyFromRoot > 0 )
         {
-            board.UpdateSimpleCheckStatus();
-            int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
-            int nonPawnCount = board.pieceCounts[currentColorIndex, Piece.Knight] + board.pieceCounts[currentColorIndex, Piece.Bishop] + board.pieceCounts[currentColorIndex, Piece.Rook] + board.pieceCounts[currentColorIndex, Piece.Queen];
-            if (!board.isCurrentPlayerInCheck && nonPawnCount > 0 && evaluation.EvaluatePosition(board) > beta)
-            {
-                int r = 2;
-                board.MakeNullMove();
-                int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions);
-                board.UnmakeNullMove();
 
-                if (abortSearch) { return 0; }
-                if (eval >= beta) { logger.currentDiagnostics.timesNotReSearched_NMR++; return eval; }
-                else { logger.currentDiagnostics.timesReSearched_NMR++; }
+            board.UpdateSimpleCheckStatus();
+            int staticEval = evaluation.EvaluatePosition(board);
+            //NMP
+            if (depth > 2)
+            {
+                int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+                int nonPawnCount = board.pieceCounts[currentColorIndex, Piece.Knight] + board.pieceCounts[currentColorIndex, Piece.Bishop] + board.pieceCounts[currentColorIndex, Piece.Rook] + board.pieceCounts[currentColorIndex, Piece.Queen];
+                if (!board.isCurrentPlayerInCheck && nonPawnCount > 0 && staticEval > beta)
+                {
+                    int r = 2;
+                    board.MakeNullMove();
+                    int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions);
+                    board.UnmakeNullMove();
+
+                    if (abortSearch) { return 0; }
+                    if (eval >= beta) { logger.currentDiagnostics.timesNotReSearched_NMR++; return eval; }
+                    else { logger.currentDiagnostics.timesReSearched_NMR++; }
+                }
+            }
+            //RFP
+            if (depth < 4 && !board.isCurrentPlayerInCheck && staticEval >= beta + RFPMargin * depth )
+            {
+                return staticEval;
             }
         }
-        
-        
-
 
         moveGenTimer.Start();
         Span<Move> legalMoves = stackalloc Move[218];

@@ -56,23 +56,23 @@ public class Evaluation
 
         int pawnEval = 0;
 
-        ulong whitePawns = board.pieceBitboards[Board.WhiteIndex, Piece.Pawn];
-        ulong blackPawns = board.pieceBitboards[Board.BlackIndex, Piece.Pawn];
+        ulong whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
+        ulong blackPawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)];
 
-        ulong whiteKnights = board.pieceBitboards[Board.WhiteIndex, Piece.Knight];
-        ulong blackKnights = board.pieceBitboards[Board.BlackIndex, Piece.Knight];
+        ulong whiteKnights = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Knight)];
+        ulong blackKnights = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Knight)];
 
-        ulong whiteBishops = board.pieceBitboards[Board.WhiteIndex, Piece.Bishop];
-        ulong blackBishops = board.pieceBitboards[Board.BlackIndex, Piece.Bishop];
+        ulong whiteBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)];
+        ulong blackBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)];
 
-        ulong whiteRooks = board.pieceBitboards[Board.WhiteIndex, Piece.Rook];
-        ulong blackRooks = board.pieceBitboards[Board.BlackIndex, Piece.Rook];
+        ulong whiteRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)];
+        ulong blackRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)];
 
-        ulong whiteQueens = board.pieceBitboards[Board.WhiteIndex, Piece.Queen];
-        ulong blackQueens = board.pieceBitboards[Board.BlackIndex, Piece.Queen];
+        ulong whiteQueens = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)];
+        ulong blackQueens = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
 
-        ulong whiteKing = board.pieceBitboards[Board.WhiteIndex, Piece.King];
-        ulong blackKing = board.pieceBitboards[Board.BlackIndex, Piece.King];
+        ulong whiteKing = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)];
+        ulong blackKing = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)];
 
         while (whitePawns != 0)
         {
@@ -229,27 +229,27 @@ public class Evaluation
         {
             int ppBonusIndex = Coord.IndexToRank(pawnIndex) - 1;
             //Passed pawn
-            if ((board.pieceBitboards[Board.BlackIndex, Piece.Pawn] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
+            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
             if (Piece.PieceType(board.board[pawnIndex - 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 8]) == Piece.White) { bonus -= 20; }
             //Defended from left
             if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex + 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 7]) == Piece.White) { bonus += 5; }
             //Defended from right
             if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex + 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 9]) == Piece.White) { bonus += 5; }
-            if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.WhiteIndex, Piece.Pawn]) == 0) { numWhiteIsolatedPawns++; }
+            if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { numWhiteIsolatedPawns++; }
         }
         else
         {
             int ppBonusIndex = 8 - Coord.IndexToRank(pawnIndex);
             //Passed pawn
-            if ((board.pieceBitboards[Board.WhiteIndex, Piece.Pawn] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
+            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
             if (Piece.PieceType(board.board[pawnIndex + 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 8]) == Piece.Black) { bonus -= 20; }
             //Defended from left
             if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex - 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 9]) == Piece.Black) { bonus += 5; }
             //Defended from right
             if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex - 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 7]) == Piece.Black) { bonus += 5; }
-            if((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.BlackIndex, Piece.Pawn]) == 0){ numBlackIsolatedPawns++; }
+            if((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)]) == 0){ numBlackIsolatedPawns++; }
         }
 
         return bonus;

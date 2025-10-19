@@ -47,16 +47,16 @@ public static class MoveGenerator
         int colorIndex = (attackingPieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;
 
-        ulong attacks = BitboardHelper.GetAllPawnAttacks(board.pieceBitboards[colorIndex, Piece.Pawn], attackingPieceColor);
-        ulong king = board.pieceBitboards[colorIndex, Piece.King];
+        ulong attacks = BitboardHelper.GetAllPawnAttacks(board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Pawn)], attackingPieceColor);
+        ulong king = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)];
         attacks |= BitboardHelper.kingAttacks[BitboardHelper.PopLSB(ref king)];
         
 
-        ulong piecesExceptEnemyKing = board.allPiecesBitboard ^ board.pieceBitboards[oppositeColorIndex, Piece.King];
-        ulong queens = board.pieceBitboards[colorIndex, Piece.Queen];
-        ulong rooks = board.pieceBitboards[colorIndex, Piece.Rook];
-        ulong bishops = board.pieceBitboards[colorIndex, Piece.Bishop];
-        ulong knights = board.pieceBitboards[colorIndex, Piece.Knight];
+        ulong piecesExceptEnemyKing = board.allPiecesBitboard ^ board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.King)];
+        ulong queens = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
+        ulong rooks = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Rook)];
+        ulong bishops = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Bishop)];
+        ulong knights = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Knight)];
 
         while (queens != 0)
         {
@@ -90,7 +90,7 @@ public static class MoveGenerator
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
 
-        ulong pawns = board.pieceBitboards[colorIndex, Piece.Pawn];
+        ulong pawns = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Pawn)];
         ulong blockers = board.allPiecesBitboard;
 
 
@@ -235,7 +235,7 @@ public static class MoveGenerator
         {
             int kingIndex = GetKingIndex(pieceColor, board);
             ulong attackingPiecesMask = BitboardHelper.GetRookAttacks(kingIndex, boardMinusPawnsInvolved);
-            return (attackingPiecesMask & (board.pieceBitboards[oppositeColorIndex, Piece.Rook] | board.pieceBitboards[oppositeColorIndex, Piece.Queen])) == 0;
+            return (attackingPiecesMask & (board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Queen)])) == 0;
         }
     }
     public static int GenerateKnightMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor, Board board, bool isCapturesOnly = false)
@@ -243,7 +243,7 @@ public static class MoveGenerator
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
 
-        ulong knights = board.pieceBitboards[colorIndex, Piece.Knight];
+        ulong knights = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Knight)];
 
         ulong diagPins = board.diagPins;
         ulong straightPins = board.straightPins;
@@ -282,7 +282,7 @@ public static class MoveGenerator
     {
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
-        ulong bishops = board.pieceBitboards[colorIndex, Piece.Bishop] | board.pieceBitboards[colorIndex, Piece.Queen];
+        ulong bishops = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
         ulong diagPins = board.diagPins;
         ulong straightPins = board.straightPins;
         ulong checkIndexes = board.checkIndexes;
@@ -324,7 +324,7 @@ public static class MoveGenerator
     public static int GenerateRookMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor, Board board, bool isCapturesOnly=false){
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
-        ulong rooks = board.pieceBitboards[colorIndex, Piece.Rook] | board.pieceBitboards[colorIndex, Piece.Queen];
+        ulong rooks = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
         ulong diagPins = board.diagPins;
         ulong straightPins = board.straightPins;
         ulong checkIndexes = board.checkIndexes;
@@ -369,7 +369,7 @@ public static class MoveGenerator
         int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;
 
         //Getting king index
-        ulong kingIndexes = board.pieceBitboards[colorIndex, Piece.King];
+        ulong kingIndexes = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)];
 
         int index = BitboardHelper.PopLSB(ref kingIndexes);
 
@@ -422,8 +422,8 @@ public static class MoveGenerator
         ulong straightPins = 0;
         ulong diagPins = 0;
 
-        ulong straightAttackers = board.pieceBitboards[oppositeColorIndex, Piece.Rook] | board.pieceBitboards[oppositeColorIndex, Piece.Queen];
-        ulong diagAttackers = board.pieceBitboards[oppositeColorIndex, Piece.Bishop] | board.pieceBitboards[oppositeColorIndex, Piece.Queen];
+        ulong straightAttackers = board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Queen)];
+        ulong diagAttackers = board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Queen)];
 
         ulong friendlyPieces = board.sideBitboard[colorIndex];
         ulong straightBlockers = board.sideBitboard[oppositeColorIndex] & ~straightAttackers;
@@ -436,12 +436,12 @@ public static class MoveGenerator
         SlidersDetection(true, straightBlockers, friendlyPieces, straightAttackers, ref checkRays, ref straightPins);
         SlidersDetection(false, diagBlockers, friendlyPieces, diagAttackers, ref checkRays, ref diagPins);
 
-        ulong knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[oppositeColorIndex, Piece.Knight];
+        ulong knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Knight)];
         //Knight checks
         checkRays |= knightCheck;
         if(knightCheck != 0) { numCheckingPieces++; }
 
-        ulong pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[oppositeColorIndex, Piece.Pawn];
+        ulong pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)];
         //Pawn checks
         checkRays |= pawnCheck;
         if(pawnCheck != 0) { numCheckingPieces++; }
@@ -500,8 +500,8 @@ public static class MoveGenerator
 
 
 
-        ulong straightAttackers = board.pieceBitboards[oppositeColorIndex, Piece.Rook] | board.pieceBitboards[oppositeColorIndex, Piece.Queen];
-        ulong diagAttackers = board.pieceBitboards[oppositeColorIndex, Piece.Bishop] | board.pieceBitboards[oppositeColorIndex, Piece.Queen];
+        ulong straightAttackers = board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Queen)];
+        ulong diagAttackers = board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Queen)];
 
         //Any piece that can block that check, excludes the sliding pieces that would be checking
         ulong straightBlockers = (board.sideBitboard[oppositeColorIndex] | board.sideBitboard[colorIndex]) & ~straightAttackers;
@@ -516,11 +516,11 @@ public static class MoveGenerator
 
 
         //Knight checks
-        ulong knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[oppositeColorIndex, Piece.Knight];
+        ulong knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Knight)];
         if (knightCheck != 0) { return true; }
 
         //Pawn checks
-        ulong pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[oppositeColorIndex, Piece.Pawn];
+        ulong pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)];
         if (pawnCheck != 0) { return true; }
         return false;
     }
@@ -528,10 +528,7 @@ public static class MoveGenerator
     public static int GetKingIndex(int kingColor, Board board)
     {
         int colorIndex = (kingColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
-        ulong kingBitboard = board.pieceBitboards[colorIndex, Piece.King];
+        ulong kingBitboard = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)];
         return (kingBitboard != 0) ? BitboardHelper.PopLSB(ref kingBitboard) : 0;
     }
-
-    
-
 }

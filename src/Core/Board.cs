@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 
@@ -11,7 +13,7 @@ public class Board
     public const int WhiteIndex = 0;
     public const int BlackIndex = 1;
 
-    public ulong[,] pieceBitboards = new ulong[2, 7];
+    public ulong[] pieceBitboards = new ulong[14];
     public ulong[] sideBitboard = new ulong[2];
     public ulong[] attackedSquares = new ulong[2];
     public ulong allPiecesBitboard;
@@ -136,8 +138,8 @@ public class Board
                     newRookIndex = 61;
                     int rook = board[oldRookIndex];
 
-                    BitboardHelper.ClearSquare(ref pieceBitboards[WhiteIndex, Piece.Rook], oldRookIndex);
-                    BitboardHelper.SetSquare(ref pieceBitboards[WhiteIndex, Piece.Rook], newRookIndex);
+                    BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)], oldRookIndex);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)], newRookIndex);
                     board[newRookIndex] = rook;
                     board[oldRookIndex] = 0;
                 }
@@ -148,14 +150,14 @@ public class Board
                     newRookIndex = 59;
                     int rook = board[oldRookIndex];
 
-                    BitboardHelper.ClearSquare(ref pieceBitboards[WhiteIndex, Piece.Rook], oldRookIndex);
-                    BitboardHelper.SetSquare(ref pieceBitboards[WhiteIndex, Piece.Rook], newRookIndex);
+                    BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)], oldRookIndex);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)], newRookIndex);
                     board[newRookIndex] = rook;
                     board[oldRookIndex] = 0;
                 }
 
-                BitboardHelper.ClearSquare(ref pieceBitboards[WhiteIndex, movedPieceType], startPos);
-                BitboardHelper.SetSquare(ref pieceBitboards[WhiteIndex, movedPieceType], newPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, movedPieceType)], startPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, movedPieceType)], newPos);
                 board[newPos] = movedPiece;
                 board[startPos] = 0;
             }
@@ -170,8 +172,8 @@ public class Board
                     newRookIndex = 5;
                     int rook = board[oldRookIndex];
 
-                    BitboardHelper.ClearSquare(ref pieceBitboards[BlackIndex, Piece.Rook], oldRookIndex);
-                    BitboardHelper.SetSquare(ref pieceBitboards[BlackIndex, Piece.Rook], newRookIndex);
+                    BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)], oldRookIndex);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)], newRookIndex);
                     board[newRookIndex] = rook;
                     board[oldRookIndex] = 0;
                 }
@@ -182,14 +184,14 @@ public class Board
                     newRookIndex = 3;
                     int rook = board[oldRookIndex];
 
-                    BitboardHelper.ClearSquare(ref pieceBitboards[BlackIndex, Piece.Rook], oldRookIndex);
-                    BitboardHelper.SetSquare(ref pieceBitboards[BlackIndex, Piece.Rook], newRookIndex);
+                    BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)], oldRookIndex);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)], newRookIndex);
                     board[newRookIndex] = rook;
                     board[oldRookIndex] = 0;
                 }
 
-                BitboardHelper.ClearSquare(ref pieceBitboards[BlackIndex, movedPieceType], startPos);
-                BitboardHelper.SetSquare(ref pieceBitboards[BlackIndex, movedPieceType], newPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, movedPieceType)], startPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, movedPieceType)], newPos);
                 board[newPos] = movedPiece;
                 board[startPos] = 0;
             }
@@ -200,15 +202,15 @@ public class Board
         else if (move.flag == 7)
         {
 
-            BitboardHelper.ClearSquare(ref pieceBitboards[currentColorIndex, Piece.Pawn], startPos);
-            BitboardHelper.SetSquare(ref pieceBitboards[currentColorIndex, Piece.Pawn], newPos);
+            BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)], startPos);
+            BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)], newPos);
             //capture
             board[newPos] = movedPiece;
             board[startPos] = 0;
             int attackedPawnIndex = (colorTurn == Piece.White) ? newPos + 8 : newPos - 8;
             capturedPiece = board[attackedPawnIndex];
 
-            BitboardHelper.ClearSquare(ref pieceBitboards[oppositeColorIndex, Piece.Pawn], attackedPawnIndex);
+            BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)], attackedPawnIndex);
             board[attackedPawnIndex] = 0;
             zobristKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
             halfMoveClock = 0;
@@ -257,7 +259,7 @@ public class Board
                 //capture
                 capturedPiece = board[newPos];
                 int capturedPieceType = Piece.PieceType(capturedPiece);
-                BitboardHelper.ClearSquare(ref pieceBitboards[oppositeColorIndex, Piece.PieceType(capturedPiece)], newPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(oppositeColorIndex, Piece.PieceType(capturedPiece))], newPos);
                 //Removing castling rights 
                 if (capturedPieceType == Piece.Rook)
                 {
@@ -275,8 +277,8 @@ public class Board
 
                 zobristKey ^= Zobrist.piecesArray[capturedPieceType, oppositeColorIndex, newPos];
 
-                BitboardHelper.ClearSquare(ref pieceBitboards[currentColorIndex, movedPieceType], startPos);
-                BitboardHelper.SetSquare(ref pieceBitboards[currentColorIndex, newPieceType], newPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)], startPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, newPieceType)], newPos);
                 board[newPos] = newPiece;
                 board[startPos] = 0;
 
@@ -293,8 +295,8 @@ public class Board
             }
             else
             {
-                BitboardHelper.ClearSquare(ref pieceBitboards[currentColorIndex, movedPieceType], startPos);
-                BitboardHelper.SetSquare(ref pieceBitboards[currentColorIndex, newPieceType], newPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)], startPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, newPieceType)], newPos);
                 board[newPos] = newPiece;
                 board[startPos] = 0;
 
@@ -312,8 +314,8 @@ public class Board
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
 
-        sideBitboard[WhiteIndex] = pieceBitboards[WhiteIndex, Piece.Pawn] | pieceBitboards[WhiteIndex, Piece.Knight] | pieceBitboards[WhiteIndex, Piece.Bishop] | pieceBitboards[WhiteIndex, Piece.Rook] | pieceBitboards[WhiteIndex, Piece.Queen] | pieceBitboards[WhiteIndex, Piece.King];
-        sideBitboard[BlackIndex] = pieceBitboards[BlackIndex, Piece.Pawn] | pieceBitboards[BlackIndex, Piece.Knight] | pieceBitboards[BlackIndex, Piece.Bishop] | pieceBitboards[BlackIndex, Piece.Rook] | pieceBitboards[BlackIndex, Piece.Queen] | pieceBitboards[BlackIndex, Piece.King];
+        sideBitboard[WhiteIndex] = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)];
+        sideBitboard[BlackIndex] = pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)];
         allPiecesBitboard = sideBitboard[WhiteIndex] | sideBitboard[BlackIndex];
 
         //Update gamestate
@@ -396,8 +398,8 @@ public class Board
                     int rook = board[61];
                     board[63] = rook;
                     board[61] = 0;
-                    BitboardHelper.ClearSquare(ref pieceBitboards[WhiteIndex, Piece.Rook], 61);
-                    BitboardHelper.SetSquare(ref pieceBitboards[WhiteIndex, Piece.Rook], 63);
+                    BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)], 61);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)], 63);
                 }
                 //Long castles
                 else if (newPos == 58)
@@ -405,14 +407,14 @@ public class Board
                     int rook = board[59];
                     board[56] = rook;
                     board[59] = 0;
-                    BitboardHelper.ClearSquare(ref pieceBitboards[WhiteIndex, Piece.Rook], 59);
-                    BitboardHelper.SetSquare(ref pieceBitboards[WhiteIndex, Piece.Rook], 56);
+                    BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)], 59);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)], 56);
                 }
                 board[startPos] = movedPiece;
                 board[newPos] = 0;
 
-                BitboardHelper.ClearSquare(ref pieceBitboards[WhiteIndex, Piece.King], newPos);
-                BitboardHelper.SetSquare(ref pieceBitboards[WhiteIndex, Piece.King], startPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)], newPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)], startPos);
 
             }
             else if (colorTurn == Piece.Black)
@@ -423,8 +425,8 @@ public class Board
                     int rook = board[5];
                     board[7] = rook;
                     board[5] = 0;
-                    BitboardHelper.ClearSquare(ref pieceBitboards[BlackIndex, Piece.Rook], 5);
-                    BitboardHelper.SetSquare(ref pieceBitboards[BlackIndex, Piece.Rook], 7);
+                    BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)], 5);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)], 7);
                 }
                 //Long castles
                 else if (newPos == 2)
@@ -432,13 +434,13 @@ public class Board
                     int rook = board[3];
                     board[0] = rook;
                     board[3] = 0;
-                    BitboardHelper.ClearSquare(ref pieceBitboards[BlackIndex, Piece.Rook], 3);
-                    BitboardHelper.SetSquare(ref pieceBitboards[BlackIndex, Piece.Rook], 0);
+                    BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)], 3);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)], 0);
                 }
                 board[startPos] = movedPiece;
                 board[newPos] = 0;
-                BitboardHelper.ClearSquare(ref pieceBitboards[BlackIndex, Piece.King], newPos);
-                BitboardHelper.SetSquare(ref pieceBitboards[BlackIndex, Piece.King], startPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)], newPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)], startPos);
             }
 
         }
@@ -449,14 +451,14 @@ public class Board
             board[startPos] = movedPiece;
             board[newPos] = 0;
 
-            BitboardHelper.ClearSquare(ref pieceBitboards[currentColorIndex, Piece.Pawn], newPos);
-            BitboardHelper.SetSquare(ref pieceBitboards[currentColorIndex, Piece.Pawn], startPos);
+            BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)], newPos);
+            BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)], startPos);
 
 
             //Replacing the captured pawn
             int attackedPawnIndex = (colorTurn == Piece.White) ? newPos + 8 : newPos - 8;
             board[attackedPawnIndex] = capturedPiece;
-            BitboardHelper.SetSquare(ref pieceBitboards[oppositeColorIndex, Piece.Pawn], attackedPawnIndex);
+            BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)], attackedPawnIndex);
             pieceCounts[oppositeColorIndex, Piece.Pawn] += 1;
         }
         else
@@ -467,25 +469,25 @@ public class Board
                 int capturedPieceType = Piece.PieceType(capturedPiece);
                 //capture
                 board[startPos] = movedPiece;
-                BitboardHelper.ClearSquare(ref pieceBitboards[currentColorIndex, movedPieceType], newPos);
-                BitboardHelper.SetSquare(ref pieceBitboards[currentColorIndex, pieceTypeBeforeMove], startPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)], newPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, pieceTypeBeforeMove)], startPos);
 
 
                 board[newPos] = capturedPiece;
-                BitboardHelper.SetSquare(ref pieceBitboards[oppositeColorIndex, capturedPieceType], newPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(oppositeColorIndex, capturedPieceType)], newPos);
                 pieceCounts[oppositeColorIndex, capturedPieceType] += 1;
             }
             else
             {
                 board[startPos] = movedPiece;
                 board[newPos] = 0;
-                BitboardHelper.ClearSquare(ref pieceBitboards[currentColorIndex, movedPieceType], newPos);
-                BitboardHelper.SetSquare(ref pieceBitboards[currentColorIndex, pieceTypeBeforeMove], startPos);
+                BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)], newPos);
+                BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, pieceTypeBeforeMove)], startPos);
             }
         }
         fullMoveClock--;
-        sideBitboard[WhiteIndex] = pieceBitboards[WhiteIndex, Piece.Pawn] | pieceBitboards[WhiteIndex, Piece.Knight] | pieceBitboards[WhiteIndex, Piece.Bishop] | pieceBitboards[WhiteIndex, Piece.Rook] | pieceBitboards[WhiteIndex, Piece.Queen] | pieceBitboards[WhiteIndex, Piece.King];
-        sideBitboard[BlackIndex] = pieceBitboards[BlackIndex, Piece.Pawn] | pieceBitboards[BlackIndex, Piece.Knight] | pieceBitboards[BlackIndex, Piece.Bishop] | pieceBitboards[BlackIndex, Piece.Rook] | pieceBitboards[BlackIndex, Piece.Queen] | pieceBitboards[BlackIndex, Piece.King];
+        sideBitboard[WhiteIndex] = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)];
+        sideBitboard[BlackIndex] = pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)];
         allPiecesBitboard = sideBitboard[WhiteIndex] | sideBitboard[BlackIndex];
 
     }
@@ -575,7 +577,7 @@ public class Board
                     int pieceType = pieceTypeFromSymbol[char.ToLower(c)];
                     position[index] = pieceType | pieceColour;
 
-                    BitboardHelper.SetSquare(ref pieceBitboards[colorIndex, pieceType], index);
+                    BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(colorIndex, pieceType)], index);
                     pieceCounts[colorIndex, pieceType] += 1;
                     index++;
                 }
@@ -591,8 +593,8 @@ public class Board
 
         }
 
-        sideBitboard[WhiteIndex] = pieceBitboards[WhiteIndex, Piece.Pawn] | pieceBitboards[WhiteIndex, Piece.Knight] | pieceBitboards[WhiteIndex, Piece.Bishop] | pieceBitboards[WhiteIndex, Piece.Rook] | pieceBitboards[WhiteIndex, Piece.Queen] | pieceBitboards[WhiteIndex, Piece.King];
-        sideBitboard[BlackIndex] = pieceBitboards[BlackIndex, Piece.Pawn] | pieceBitboards[BlackIndex, Piece.Knight] | pieceBitboards[BlackIndex, Piece.Bishop] | pieceBitboards[BlackIndex, Piece.Rook] | pieceBitboards[BlackIndex, Piece.Queen] | pieceBitboards[BlackIndex, Piece.King];
+        sideBitboard[WhiteIndex] = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)];
+        sideBitboard[BlackIndex] = pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)];
         allPiecesBitboard = sideBitboard[WhiteIndex] | sideBitboard[BlackIndex];
 
         //Loads who's move it is
@@ -843,7 +845,11 @@ public class Board
         return index;
     }
 
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int PieceBitboardIndex(int colorIndex, int pieceType)
+    {
+        return (colorIndex * 7) + pieceType;
+    }
     //Gets them from the current gamestate
     public bool HasKingsideRight(int color)
     {

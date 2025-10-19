@@ -75,7 +75,7 @@ public class Perft
             ulong result = 0;
             try
             {
-                result = Search(maxDepth, board, testQuiescence);
+                result = Search(maxDepth, board, testQuiescence, false);
             }
             catch (Exception e)
             {
@@ -130,7 +130,7 @@ public class Perft
 
     }
 
-    ulong Search(int depth, Board board, bool testQuiescence)
+    ulong Search(int depth, Board board, bool testQuiescence, bool batch)
     {
         Span<Move> moves = stackalloc Move[218];
         MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
@@ -142,14 +142,20 @@ public class Perft
             numCaptures = MoveGenerator.GenerateLegalMoves(board, ref captures, board.colorTurn, true);
         }
 
+
+        if (depth == 0 && !batch)
+        {
+            endNodesSearched += 1;
+            return 1;
+        } 
         //Regular perft
-        if (depth == 1 && !testQuiescence)
+        else if (depth == 1 && !testQuiescence && batch)
         {
             endNodesSearched += (ulong)moves.Length;
             return (ulong)moves.Length;
         }
         //For testing quiescence
-        else if (depth == 1)
+        else if (depth == 1 && batch)
         {
             for (int i = 0; i < moves.Length; i++)
             {
@@ -177,7 +183,7 @@ public class Perft
             }
 
             board.Move(moves[i], true);
-            ulong numNodesFromThisPosition = Search(depth - 1, board, testQuiescence);
+            ulong numNodesFromThisPosition = Search(depth - 1, board, testQuiescence, batch);
             numLocalNodes += numNodesFromThisPosition;
             board.UndoMove(moves[i]);
         }

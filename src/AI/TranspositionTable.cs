@@ -109,9 +109,9 @@ public class TranspositionTable
     public struct Entry
     {
         public readonly ulong key;
-        public readonly int depth;
+        public readonly byte depth;
         public readonly int eval;
-        public readonly int nodeType;
+        public readonly byte nodeType;
         public readonly Move move;
 
         public Entry(ulong key, int evaluation, byte depth, byte nodeType, Move move)

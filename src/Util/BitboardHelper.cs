@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 
 public static class BitboardHelper
 {
@@ -56,7 +57,7 @@ public static class BitboardHelper
     }
     public static int PopLSB(ref ulong b)
     {
-        int i = TrailingZeroCount(b);
+        int i = BitOperations.TrailingZeroCount(b);
         b &= b - 1;
         return i;
     }

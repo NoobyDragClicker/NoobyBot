@@ -7,7 +7,7 @@ public class HumanPlayer : Player
         this.name = name;
     }
 
-    public override void NewGame(Board board, AISettings aiSettings, BookLoader bookLoader){}
+    public override void NewGame(Board board, AISettings aiSettings){}
 
     public override void NotifyToMove(TimeSpan timeRemaining, TimeSpan increment, ClockType clockType){}
 

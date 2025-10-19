@@ -5,9 +5,9 @@ using System.IO;
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(40, 16, 256);
+    AISettings aiSettings = new AISettings(40, 0, 16);
     Board board;
-    BookLoader bookLoader;
+    //BookLoader bookLoader;
     SearchLogger logger;
     SearchLogger testingLogger;
     bool hasStartedGame = false;
@@ -26,7 +26,6 @@ public class Engine
     public Engine()
     {
         board = new Board();
-        bookLoader = new BookLoader();
         logger = new SearchLogger(name, SearchLogger.LoggingLevel.Warning);
         testingLogger = new SearchLogger(name + "test", SearchLogger.LoggingLevel.Diagnostics);
         player = new AIPlayer(name, logger);
@@ -44,16 +43,28 @@ public class Engine
             case "uci":
                 Console.WriteLine("id name=NoobyBot");
                 Console.WriteLine("id author=Me");
+                Console.WriteLine("option name Hash type spin default 16 min 1 max 4096 ");
+                Console.WriteLine("option name Threads type spin default 1 min 1 max 1 ");
                 Console.WriteLine("uciok");
                 player.logger.AddToLog("uciok", SearchLogger.LoggingLevel.Info);
                 break;
             case "isready":
                 Console.WriteLine("readyok");
                 break;
+            case "setoption":
+                if (command.Contains("name Hash value "))
+                {
+                    int hashSize = TryGetLabelledValueInt(command, "value", new string[] { "test" });
+                    aiSettings = new AISettings(40, 0, hashSize);
+                }
+                if(command.Contains("name Threads value"))
+                {
+                    break;
+                }
+                break;
             case "ucinewgame":
                 board = new Board();
-                bookLoader.loadBook();
-                player.NewGame(board, aiSettings, bookLoader);
+                player.NewGame(board, aiSettings);
                 hasStartedGame = true;
                 break;
             case "bench":
@@ -64,8 +75,7 @@ public class Engine
                 if (!hasStartedGame)
                 {
                     board = new Board();
-                    bookLoader.loadBook();
-                    player.NewGame(board, aiSettings, bookLoader);
+                    player.NewGame(board, aiSettings);
                 }
                 ProcessPositionCommand(command);
                 break;
@@ -120,13 +130,11 @@ public class Engine
         if (message.ToLower().Contains("startpos"))
         {
             board.setPosition(Board.startPos, player.logger);
-            player.ResetOpeningBook(bookLoader);
         }
         else if (message.ToLower().Contains("fen"))
         {
             string customFen = TryGetLabelledValue(message, "fen", positionLabels);
             board.setPosition(customFen, player.logger);
-            player.isInBook = false;
         }
         else
         {
@@ -357,7 +365,6 @@ public class Engine
 
         return new Move(startSquare, targetSquare, isCapture, flag);
     }
-
 
     public static string convertMoveToUCI(Move move)
     {

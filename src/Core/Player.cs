@@ -6,7 +6,7 @@ public abstract class Player
   public event Action<Move, string> onMoveChosen;
   public abstract void NotifyToMove(TimeSpan timeRemaining, TimeSpan increment, ClockType clockType);
   public abstract void NotifyGameOver();
-  public abstract void NewGame(Board board, AISettings aiSettings, BookLoader bookLoader);
+  public abstract void NewGame(Board board, AISettings aiSettings);
 
   public enum ClockType{None, PerMove, Regular}
   public virtual void ChoseMove(Move move, string name)

@@ -621,7 +621,7 @@ public class Board
                 try
                 {
                     halfMoveClock = int.Parse(fenComponents[4]);
-                } catch(Exception e){}
+                } catch(Exception){}
                 
             }
             if (fenComponents.Length >= 6)
@@ -629,7 +629,7 @@ public class Board
                 try
                 {
                     fullMoveClock = int.Parse(fenComponents[5]);
-                } catch(Exception e){}
+                } catch(Exception){}
                 
             }
         }

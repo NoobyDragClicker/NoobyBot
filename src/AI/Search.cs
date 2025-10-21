@@ -5,7 +5,6 @@ using System.Diagnostics.Tracing;
 using System.Linq;
 
 
-//todo tonight: use spans, add TT stats
 public class Search
 {
     Board board;
@@ -157,7 +156,7 @@ public class Search
 
             string scoreString = IsMateScore(bestEval) ? $"mate {(bestEval < 0 ? "-" : "")}{positiveInfinity - 1 - Math.Abs(bestEval)}" : $"cp {bestEval}";
 
-            infoLine = $"info depth {depth} seldepth {selDepth} score {scoreString} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000} pv {pv}";
+            infoLine = $"info depth {depth} seldepth {selDepth} score {scoreString} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000f} pv {pv}";
 
             if (writeInfoLine)
             {
@@ -217,9 +216,7 @@ public class Search
         if (depth <= 0)
         {
             logger.currentDiagnostics.nodesSearched++;
-            quiescenceTimer.Start();
             int eval = QuiescenceSearch(alpha, beta, plyFromRoot + 1);
-            quiescenceTimer.Stop();
             return eval;
         }
 
@@ -252,10 +249,8 @@ public class Search
             }
         }
 
-        moveGenTimer.Start();
         Span<Move> legalMoves = stackalloc Move[218];
         int numLegalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
-        moveGenTimer.Stop();
 
         //Check for mate or stalemate
         if (numLegalMoves == 0)
@@ -265,9 +260,7 @@ public class Search
         }
 
         //Move ordering
-        moveOrderTimer.Start();  //                          first search move                   
         int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove(), killerMoves, history, aiSettings);
-        moveOrderTimer.Stop();
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
@@ -277,15 +270,9 @@ public class Search
 
         for (int i = 0; i < numLegalMoves; i++)
         {
-            moveOrderTimer.Start();
             moveOrder.GetNextBestMove(moveScores, legalMoves, i);
-            moveOrderTimer.Stop();
 
-
-            makeUnmakeTimer.Start();
             board.Move(legalMoves[i], true);
-            makeUnmakeTimer.Stop();
-
             board.UpdateSimpleCheckStatus();
 
             //Check extension
@@ -310,12 +297,7 @@ public class Search
 
             if (eval > alpha && reductions > 0)
             {
-                bool isBaseResearch = true;
-                if (reSearchTimer.IsRunning) { isBaseResearch = false; }
-                else { reSearchTimer.Start(); }
                 eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
-                if (isBaseResearch) { reSearchTimer.Stop(); }
-
                 logger.currentDiagnostics.timesReSearched_LMR++;
             }
             else
@@ -324,9 +306,7 @@ public class Search
             }
 
 
-            makeUnmakeTimer.Start();
             board.UndoMove(legalMoves[i]);
-            makeUnmakeTimer.Stop();
 
             if (abortSearch) { return 0; }
 
@@ -395,7 +375,6 @@ public class Search
             return checkmate + plyFromRoot;
         }
 
-        evaluationTimer.Start();
         int bestEval = 0;
         try
         {
@@ -407,7 +386,6 @@ public class Search
         }
         
         int standPat = bestEval;
-        evaluationTimer.Stop();
 
         //Cutoffs
         if (bestEval >= beta)
@@ -422,14 +400,9 @@ public class Search
         //If even after winning a queen it is still worse, don't bother searching
         //if (bestEval + Evaluation.queenValue < alpha) { return alpha; }
 
-        quiescenceGenTimer.Start();
         Span<Move> legalMoves = stackalloc Move[218];
         int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
-        quiescenceGenTimer.Stop();
-
-        moveOrderTimer.Start();
         int[] moveScores = moveOrder.ScoreCaptures(board, legalMoves);
-        moveOrderTimer.Stop();
 
         for (int i = 0; i < numMoves; i++)
         {
@@ -438,15 +411,10 @@ public class Search
             //Delta pruning
             if ((standPat + getCapturedPieceVal(legalMoves[i]) + 200) < alpha){ continue; }
 
-            makeUnmakeTimer.Start();
             board.Move(legalMoves[i], true);
-            makeUnmakeTimer.Stop();
-
             int eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
-
-            makeUnmakeTimer.Start();
             board.UndoMove(legalMoves[i]);
-            makeUnmakeTimer.Stop();
+            
             if (eval > bestEval)
             {
                 bestEval = eval;

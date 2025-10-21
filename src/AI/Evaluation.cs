@@ -81,6 +81,8 @@ public class Evaluation
             egMaterialCount += pawnValue + eg_pawn_table[index];
             pawnEval += EvaluatePawnStrength(board, index, Piece.White);
         }
+        
+
         while (blackPawns != 0)
         {
             int index = BitboardHelper.PopLSB(ref blackPawns);
@@ -88,6 +90,7 @@ public class Evaluation
             egMaterialCount -= pawnValue + eg_pawn_table[63 - index];
             pawnEval -= EvaluatePawnStrength(board, index, Piece.Black);
         }
+
 
         while (whiteKnights != 0)
         {
@@ -126,6 +129,7 @@ public class Evaluation
             egMaterialCount += rookValue + eg_rook_table[index];
             phase += 2;
         }
+
         while (blackRooks != 0)
         {
             int index = BitboardHelper.PopLSB(ref blackRooks);
@@ -141,6 +145,7 @@ public class Evaluation
             egMaterialCount += queenValue + eg_queen_table[index];
             phase += 4;
         }
+        
         while (blackQueens != 0)
         {
             int index = BitboardHelper.PopLSB(ref blackQueens);
@@ -148,6 +153,7 @@ public class Evaluation
             egMaterialCount -= queenValue + eg_queen_table[63 - index];
             phase += 4;
         }
+
 
         while (whiteKing != 0)
         {

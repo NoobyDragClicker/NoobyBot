@@ -19,6 +19,8 @@ public class Perft
     ulong endNodesSearched;
     bool hasQuiescencePassed = true;
     SearchLogger logger;
+    Stopwatch genTimer = new Stopwatch();
+    Stopwatch makeUnmakeTimer = new Stopwatch();
 
     public Perft(SearchLogger logger)
     {
@@ -132,24 +134,26 @@ public class Perft
 
     ulong Search(int depth, Board board, bool testQuiescence, bool batch)
     {
+        if (depth == 0 && !batch)
+        {
+            endNodesSearched += 1;
+            return 1;
+        }
         Span<Move> moves = stackalloc Move[218];
+
         MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
+
         int numCaptures = 0;
         int expectedCaptures = 0;
         if (testQuiescence)
         {
             Span<Move> captures = stackalloc Move[218];
+
             numCaptures = MoveGenerator.GenerateLegalMoves(board, ref captures, board.colorTurn, true);
         }
 
-
-        if (depth == 0 && !batch)
-        {
-            endNodesSearched += 1;
-            return 1;
-        } 
         //Regular perft
-        else if (depth == 1 && !testQuiescence && batch)
+        if (depth == 1 && !testQuiescence && batch)
         {
             endNodesSearched += (ulong)moves.Length;
             return (ulong)moves.Length;
@@ -181,10 +185,11 @@ public class Perft
             {
                 expectedCaptures++;
             }
-
             board.Move(moves[i], true);
+
             ulong numNodesFromThisPosition = Search(depth - 1, board, testQuiescence, batch);
             numLocalNodes += numNodesFromThisPosition;
+
             board.UndoMove(moves[i]);
         }
 

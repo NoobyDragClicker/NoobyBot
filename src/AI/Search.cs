@@ -286,11 +286,9 @@ public class Search
             
             int reductions = 0;
             //LMR
-            if (i >= 3 && depth > 3)
+            if (i > 0 && depth > 3)
             {
-                reductions++;
-                if (i > 15) { reductions++; }
-
+                reductions = 1 + (int)  (Math.Log(i) * Math.Log(depth) / 3);
             }
 
             int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
@@ -354,8 +352,6 @@ public class Search
                 }
                 return bestScore;
             }
-
-            
         }
         if (plyFromRoot == 0)
         {

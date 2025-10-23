@@ -33,7 +33,6 @@ public class Search
     public event Action<Move> onSearchComplete;
 
 
-    Stopwatch iterationTimer = new Stopwatch();
     Stopwatch searchTimer = new Stopwatch();
     SearchLogger logger;
 
@@ -75,9 +74,6 @@ public class Search
 
     int StartIterativeDeepening(int maxDepth, bool writeInfoLine)
     {
-        logger.currentDiagnostics.numRaisedAlphaPerIndex = new int[256];
-        logger.currentDiagnostics.numBetaCutoffsPerIndex = new int[256];
-        logger.currentDiagnostics.msPerIteration = new int[maxDepth];
         selDepth = 0;
 
         searchTimer.Restart();
@@ -89,7 +85,6 @@ public class Search
 
             bestMoveThisIteration = nullMove;
             DecayHistory();
-            iterationTimer.Restart();
 
             //Aspiration windows
             int alpha = bestEval - window;
@@ -150,24 +145,10 @@ public class Search
             }
             logger.AddToLog(infoLine, SearchLogger.LoggingLevel.Info);
 
-            if (abortSearch)
-            {
-                iterationTimer.Stop();
-                break;
-            }
-            if (IsMateScore(bestEvalThisIteration))
-            {
-                iterationTimer.Stop();
-                break;
-            }
+            if (abortSearch){ break; }
+            if (IsMateScore(bestEvalThisIteration)){ break; }
 
-
-            //Only save times for the fully searched depths
-            iterationTimer.Stop();
-            logger.currentDiagnostics.msPerIteration[depth - 1] = (int)iterationTimer.ElapsedMilliseconds;
         }
-
-
         logger.currentDiagnostics.totalSearchTime = searchTimer.Elapsed;
 
         return bestEvalThisIteration;
@@ -182,7 +163,6 @@ public class Search
         int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
         if (ttEval != TranspositionTable.LookupFailed)
         {
-            logger.currentDiagnostics.ttHits++;
             //Set the best move
             if (plyFromRoot == 0)
             {
@@ -201,7 +181,6 @@ public class Search
 
         if (plyFromRoot > 0 )
         {
-
             board.UpdateSimpleCheckStatus();
             int staticEval = evaluation.EvaluatePosition(board);
             //NMP
@@ -212,13 +191,13 @@ public class Search
                 if (!board.isCurrentPlayerInCheck && nonPawnCount > 0 && staticEval > beta)
                 {
                     int r = 2;
+
                     board.MakeNullMove();
                     int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions);
                     board.UnmakeNullMove();
 
                     if (abortSearch) { return 0; }
-                    if (eval >= beta) { logger.currentDiagnostics.timesNotReSearched_NMR++; return eval; }
-                    else { logger.currentDiagnostics.timesReSearched_NMR++; }
+                    if (eval >= beta) {return eval; }
                 }
             }
             //RFP
@@ -243,7 +222,6 @@ public class Search
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
-        string bestMovesTracker = "pv progression: ";
 
         int bestScore = negativeInfinity;
 
@@ -262,12 +240,12 @@ public class Search
                 numCheckExtensions++;
             }
 
-            
+
             int reductions = 0;
             //LMR
             if (i > 0 && depth > 3)
             {
-                reductions = 1 + (int)  (Math.Log(i) * Math.Log(depth) / 3);
+                reductions = 1 + (int)(Math.Log(i) * Math.Log(depth) / 3);
             }
 
             int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
@@ -275,13 +253,7 @@ public class Search
             if (eval > alpha && reductions > 0)
             {
                 eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
-                logger.currentDiagnostics.timesReSearched_LMR++;
             }
-            else
-            {
-                logger.currentDiagnostics.timesNotReSearched_LMR++;
-            }
-
 
             board.UndoMove(legalMoves[i]);
 
@@ -294,7 +266,6 @@ public class Search
                 //If this is a root move, set it to the best move
                 if (plyFromRoot == 0)
                 {
-                    bestMovesTracker += Coord.GetUCIMoveNotation(legalMoves[i]) + $" ({i}), ";
                     bestMoveThisIteration = legalMoves[i];
                 }
 
@@ -303,16 +274,13 @@ public class Search
                 {
                     evaluationBound = TranspositionTable.Exact;
                     alpha = eval;
-                    logger.currentDiagnostics.numRaisedAlphaPerIndex[i]++;
                 }
             }
 
             //Move is too good, would be prevented by a previous move
             if (eval >= beta)
             {
-                logger.currentDiagnostics.numBetaCutoffsPerIndex[i]++;
                 //Exiting search early, so it is a lower bound
-                logger.currentDiagnostics.ttStores++;
                 tt.StoreEvaluation(depth - reductions, plyFromRoot, bestScore, TranspositionTable.LowerBound, legalMoves[i]);
                 //Saving quiet move to killers
                 if (!legalMoves[i].isCapture())
@@ -332,13 +300,8 @@ public class Search
                 return bestScore;
             }
         }
-        if (plyFromRoot == 0)
-        {
-            logger.AddToLog(bestMovesTracker, SearchLogger.LoggingLevel.Diagnostics);
-        }
-
+        
         tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
-
         return bestScore;
     }
 
@@ -351,14 +314,7 @@ public class Search
         }
 
         int bestEval = 0;
-        try
-        {
-            bestEval = evaluation.EvaluatePosition(board);
-        }
-        catch (Exception e)
-        {
-            logger.AddToLog("Evaluation error: " + e.Message + board.ConvertToFEN() + board.gameMoveHistory.Peek().newIndex.ToString(), SearchLogger.LoggingLevel.Deadly);
-        }
+        bestEval = evaluation.EvaluatePosition(board);
         
         int standPat = bestEval;
 

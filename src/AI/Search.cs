@@ -34,14 +34,7 @@ public class Search
 
 
     Stopwatch iterationTimer = new Stopwatch();
-    Stopwatch evaluationTimer = new Stopwatch();
-    Stopwatch moveGenTimer = new Stopwatch();
-    Stopwatch quiescenceGenTimer = new Stopwatch();
-    Stopwatch quiescenceTimer = new Stopwatch();
-    Stopwatch moveOrderTimer = new Stopwatch();
-    Stopwatch makeUnmakeTimer = new Stopwatch();
     Stopwatch searchTimer = new Stopwatch();
-    Stopwatch reSearchTimer = new Stopwatch();
     SearchLogger logger;
 
     public Search(Board board, AISettings aiSettings, Move[,] killerMoves, int[,] history, SearchLogger logger)
@@ -88,13 +81,6 @@ public class Search
         selDepth = 0;
 
         searchTimer.Restart();
-        reSearchTimer.Reset();
-        moveGenTimer.Reset();
-        moveOrderTimer.Reset();
-        makeUnmakeTimer.Reset();
-        quiescenceGenTimer.Reset();
-        quiescenceTimer.Reset();
-        evaluationTimer.Reset();
 
         bestEval = SearchMoves(1, 0, negativeInfinity, positiveInfinity, 0);
         
@@ -183,13 +169,6 @@ public class Search
 
 
         logger.currentDiagnostics.totalSearchTime = searchTimer.Elapsed;
-        logger.currentDiagnostics.reSearchTime = reSearchTimer.Elapsed;
-        logger.currentDiagnostics.moveGenTime = moveGenTimer.Elapsed;
-        logger.currentDiagnostics.moveOrderTime = moveOrderTimer.Elapsed;
-        logger.currentDiagnostics.makeUnmakeTime = makeUnmakeTimer.Elapsed;
-        logger.currentDiagnostics.quiescenceGenTime = quiescenceGenTimer.Elapsed;
-        logger.currentDiagnostics.quiescenceTime = quiescenceTimer.Elapsed;
-        logger.currentDiagnostics.evaluationTime = evaluationTimer.Elapsed;
 
         return bestEvalThisIteration;
     }
@@ -459,7 +438,7 @@ public class Search
         string pv = "";
         bool breakInPv = false;
         int counter = 0;
-        while (!breakInPv && counter < 20)
+        while (!breakInPv)
         {
             
             counter++;
@@ -480,7 +459,6 @@ public class Search
             }
             else { breakInPv = true; }
         }
-        if(counter == 20){ Console.WriteLine("Big ass pv"); }
         while (moveList.Count > 0)
         {
             board.UndoMove(moveList.Pop());

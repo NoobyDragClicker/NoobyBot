@@ -179,9 +179,9 @@ public class Search
             return eval;
         }
 
+        board.UpdateSimpleCheckStatus();
         if (plyFromRoot > 0 )
         {
-            board.UpdateSimpleCheckStatus();
             int staticEval = evaluation.EvaluatePosition(board);
             //NMP
             if (depth > 2)

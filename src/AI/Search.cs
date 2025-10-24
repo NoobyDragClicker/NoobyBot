@@ -179,7 +179,6 @@ public class Search
             return eval;
         }
 
-        board.UpdateSimpleCheckStatus();
         if (plyFromRoot > 0 )
         {
             int staticEval = evaluation.EvaluatePosition(board);
@@ -188,7 +187,7 @@ public class Search
             {
                 int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
                 int nonPawnCount = board.pieceCounts[currentColorIndex, Piece.Knight] + board.pieceCounts[currentColorIndex, Piece.Bishop] + board.pieceCounts[currentColorIndex, Piece.Rook] + board.pieceCounts[currentColorIndex, Piece.Queen];
-                if (!board.isCurrentPlayerInCheck && nonPawnCount > 0 && staticEval > beta)
+                if (!board.currentGameState.isInCheck && nonPawnCount > 0 && staticEval > beta)
                 {
                     int r = 2;
 
@@ -201,7 +200,7 @@ public class Search
                 }
             }
             //RFP
-            if (depth < 4 && !board.isCurrentPlayerInCheck && staticEval >= beta + RFPMargin * depth )
+            if (depth < 4 && !board.currentGameState.isInCheck && staticEval >= beta + RFPMargin * depth )
             {
                 return staticEval;
             }
@@ -213,7 +212,7 @@ public class Search
         //Check for mate or stalemate
         if (numLegalMoves == 0)
         {
-            if (board.isCurrentPlayerInCheck){ return checkmate + plyFromRoot;}
+            if (board.currentGameState.isInCheck){ return checkmate + plyFromRoot;}
             else { return 0; }
         }
 
@@ -230,11 +229,9 @@ public class Search
             moveOrder.GetNextBestMove(moveScores, legalMoves, i);
 
             board.Move(legalMoves[i], true);
-            board.UpdateSimpleCheckStatus();
-
             //Check extension
             int extension = (numLegalMoves == 1) ? 1 : 0;
-            if (board.isCurrentPlayerInCheck && numCheckExtensions < 15 && extension == 0)
+            if (board.currentGameState.isInCheck && numCheckExtensions < 15 && extension == 0)
             {
                 extension = 1;
                 numCheckExtensions++;

@@ -24,8 +24,6 @@ public class Board
      //Ray of squares in the check, including the attacking piece
     public ulong checkIndexes = 0;
     public int[,] pieceCounts = new int[2, 7];
-
-    public bool isCurrentPlayerInCheck;
     public bool isCurrentPlayerInDoubleCheck;
     
     public int colorTurn;
@@ -48,7 +46,6 @@ public class Board
     
     SearchLogger logger;
     bool isMoveGenUpdated = false;
-    bool isSimpleCheckStatusUpdated = false;
     bool areAttacksUpdated = false;
     public string startFen;
 
@@ -64,9 +61,7 @@ public class Board
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory.Push(zobristKey);
         isMoveGenUpdated = false;
-        isSimpleCheckStatusUpdated = false;
         areAttacksUpdated = false;
-        GenerateMoveGenInfo();
         startFen = fenPosition;
     }
 
@@ -75,7 +70,6 @@ public class Board
     public void Move(Move move, bool isSearch)
     {
         isMoveGenUpdated = false;
-        isSimpleCheckStatusUpdated = false;
         areAttacksUpdated = false;
         gameMoveHistory.Push(move);
         int oldCastlingRights = currentGameState.castlingRights;
@@ -324,6 +318,7 @@ public class Board
         currentGameState.enPassantFile = enPassantFile;
         currentGameState.halfMoveClock = halfMoveClock;
         currentGameState.castlingRights = castlingRights;
+        UpdateSimpleCheckStatus();
         gameStateHistory.Push(currentGameState);
 
         //Moving friendly piece
@@ -348,7 +343,6 @@ public class Board
     public void UndoMove(Move move)
     {
         isMoveGenUpdated = false;
-        isSimpleCheckStatusUpdated = false;
         areAttacksUpdated = false;
 
         gameMoveHistory.Pop();
@@ -535,7 +529,6 @@ public class Board
     public void MakeNullMove()
     {
         isMoveGenUpdated = false;
-        isSimpleCheckStatusUpdated = false;
         areAttacksUpdated = false;
         halfMoveClock += 1;
         fullMoveClock += 1;
@@ -545,6 +538,7 @@ public class Board
         currentGameState.halfMoveClock = halfMoveClock;
         currentGameState.enPassantFile = 0;
         currentGameState.capturedPiece = 0;
+        currentGameState.isInCheck = false;
         gameStateHistory.Push(currentGameState);
 
         enPassantIndex = -1;
@@ -557,7 +551,6 @@ public class Board
     public void UnmakeNullMove()
     {
         isMoveGenUpdated = false;
-        isSimpleCheckStatusUpdated = false;
         areAttacksUpdated = false;
         halfMoveClock -= 1;
         fullMoveClock -= 1;
@@ -675,8 +668,9 @@ public class Board
                 
             }
         }
-        
+
         currentGameState.halfMoveClock = halfMoveClock;
+        UpdateSimpleCheckStatus();
         gameStateHistory.Push(currentGameState);
         return position;
     }
@@ -759,7 +753,7 @@ public class Board
         //Stalemate
         Span<Move> moves = new Move[256];
         int numMoves = MoveGenerator.GenerateLegalMoves(this, ref moves, colorTurn);
-        if (numMoves == 0 && !isCurrentPlayerInCheck) { return true; }
+        if (numMoves == 0 && !currentGameState.isInCheck) { return true; }
         //50 move rule
         if (halfMoveClock >= 100) { return true; }
         if (IsRepetitionDraw()) { return true; }
@@ -789,21 +783,14 @@ public class Board
         if (!isMoveGenUpdated)
         {
             MoveGenerator.UpdateChecksAndPins(this);
-            isCurrentPlayerInCheck = (numCheckingPieces > 0) ? true : false;
             isCurrentPlayerInDoubleCheck = (numCheckingPieces > 1) ? true : false;
             isMoveGenUpdated = true;
-            isSimpleCheckStatusUpdated = true;
         }
     }
 
     public void UpdateSimpleCheckStatus()
     {
-        if (!isSimpleCheckStatusUpdated)
-        {
-            isCurrentPlayerInCheck = MoveGenerator.DetermineCheckStatus(this);
-            isSimpleCheckStatusUpdated = true;
-        }
-        
+        currentGameState.isInCheck = MoveGenerator.DetermineCheckStatus(this);
     }
     public bool IsRepetitionDraw()
     {
@@ -841,8 +828,7 @@ public class Board
     public bool IsCheckmate(int color)
     {
         int kingIndex = MoveGenerator.GetKingIndex(color, this);
-        if(!isSimpleCheckStatusUpdated){ UpdateSimpleCheckStatus(); }
-        if (isCurrentPlayerInCheck)
+        if (currentGameState.isInCheck)
         {
             Span<Move> legalKingMoves = stackalloc Move[218];
             int currMoveIndex = MoveGenerator.GenerateKingMoves(legalKingMoves, 0, color, this);
@@ -933,4 +919,5 @@ public struct GameState {
     public int enPassantFile;
     public int capturedPiece;
     public int halfMoveClock;
+    public bool isInCheck;
 }

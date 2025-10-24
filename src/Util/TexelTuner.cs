@@ -368,7 +368,7 @@ public class TexelTuner
             if (!whiteMoveTotal[1].Contains("book") && !whiteMoveTotal[1].Contains("M"))
             {
                 board.GenerateMoveGenInfo();
-                if (!board.isCurrentPlayerInCheck)
+                if (!board.currentGameState.isInCheck)
                 {
                     Span<Move> legalMoves = stackalloc Move[256];
                     MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
@@ -412,7 +412,7 @@ public class TexelTuner
                 if (!blackMoveTotal[1].Contains("book") && !blackMoveTotal[1].Contains("M"))
                 {
                     board.GenerateMoveGenInfo();
-                    if (!board.isCurrentPlayerInCheck)
+                    if (!board.currentGameState.isInCheck)
                     {
                         Span<Move> legalMoves = stackalloc Move[256];
                         MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);

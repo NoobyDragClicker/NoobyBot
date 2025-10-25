@@ -53,7 +53,6 @@ public static class BitboardHelper
             if (x % 8 == 7) { boardRepresentation += "\n"; }
         }
         return boardRepresentation;
-
     }
     public static int PopLSB(ref ulong b)
     {

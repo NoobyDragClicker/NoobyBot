@@ -4,6 +4,10 @@ using System.Collections.Generic;
 public class MoveOrder
 {
     const int million = 1000000;
+    const int HISTORY_MAX = 32768;
+
+    Move[] killers = new Move[Search.maxGamePly];
+    int[,] history = new int[64, 64];
     static int[] MVV_LVA = {
         0, 0, 0, 0, 0, 0, 0, //None
         0, 6, 12, 18, 24, 30, 100 , //Pawn
@@ -13,7 +17,7 @@ public class MoveOrder
         0, 2, 8, 14, 20, 26, 100 , //Queen
         0, 1, 7, 13, 19, 25, 100   //King
      };
-    public int[] ScoreMoves(Board board, Span<Move> moves, Move firstMove, Move[,] killerMoves, int[,] history, AISettings aiSettings)
+    public int[] ScoreMoves(Board board, Span<Move> moves, Move firstMove)
     {
         int[] moveScores = new int[moves.Length];
 
@@ -25,31 +29,17 @@ public class MoveOrder
             {
                 score = 8 * million;
             }
-            else if (!killerMoves[board.fullMoveClock, 0].isNull() && move.GetIntValue() == killerMoves[board.fullMoveClock, 0].GetIntValue())
+            else if (!killers[board.fullMoveClock].isNull() && move.GetIntValue() == killers[board.fullMoveClock].GetIntValue())
             {
-                score = million + 3;
-            }
-            else if (!killerMoves[board.fullMoveClock, 1].isNull() && move.GetIntValue() == killerMoves[board.fullMoveClock, 1].GetIntValue())
-            {
-                score = million + 2;
-            }
-            else if (!killerMoves[board.fullMoveClock, 2].isNull() && move.GetIntValue() == killerMoves[board.fullMoveClock, 2].GetIntValue())
-            {
-                score = million + 1;
+                score = million;
             }
             else if (move.isCapture())
             {
                 int movedPieceType;
                 int capturedPieceType;
                 //en passant
-                if (move.flag == 7)
-                {
-                    capturedPieceType = Piece.Pawn;
-                }
-                else
-                {
-                    capturedPieceType = Piece.PieceType(board.board[moves[x].newIndex]);
-                }
+                if (move.flag == 7) { capturedPieceType = Piece.Pawn; }
+                else { capturedPieceType = Piece.PieceType(board.board[moves[x].newIndex]); }
                 movedPieceType = Piece.PieceType(board.board[moves[x].oldIndex]);
 
                 //MVV LVA 
@@ -127,6 +117,27 @@ public class MoveOrder
         }
     }
 
+    public void UpdateMoveOrderTables(Move move, int depth, int fullMoveClock)
+    {
+        killers[fullMoveClock] = move;
+
+        //Updating history
+        int historyVal = history[move.oldIndex, move.newIndex] + depth * depth;
+        history[move.oldIndex, move.newIndex] = (historyVal < HISTORY_MAX) ? historyVal : HISTORY_MAX;
+    }
+
+    public void DecayHistory()
+    {
+        for (int f = 0; f < 64; f++)
+        {
+            for (int t = 0; t < 64; t++)
+            {
+                history[f, t] -= history[f, t] >> 2; // ~75% retain; cheap & fast}
+            }
+
+        }
+    }
+    
     public int[] ScoreCaptures(Board board, Span<Move> captures)
     {
         int[] moveScores = new int[captures.Length];

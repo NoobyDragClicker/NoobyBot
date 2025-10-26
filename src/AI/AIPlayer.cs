@@ -14,8 +14,6 @@ public class AIPlayer : Player
 
     public TimeSpan MoveTimeLimit;
     private CancellationTokenSource moveTimeoutTokenSource;
-    Move[,] killers;
-    int[,] history;
 
 
     public AIPlayer(string name, SearchLogger logger)
@@ -28,9 +26,7 @@ public class AIPlayer : Player
     {
         this.board = board;
         this.aiSettings = aiSettings;
-        killers = new Move[1024, 3];
-        history = new int[64, 64];
-        search = new Search(board, aiSettings, killers, history, logger);
+        search = new Search(board, aiSettings, logger);
         search.onSearchComplete += OnSearchComplete;
     }
     

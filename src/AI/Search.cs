@@ -27,22 +27,20 @@ public class Search
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
-    const int HISTORY_MAX = 32768;
     const int window = 100;
     const int RFPMargin = 150;
+    public const int maxGamePly = 1024;
     public event Action<Move> onSearchComplete;
 
 
     Stopwatch searchTimer = new Stopwatch();
     SearchLogger logger;
 
-    public Search(Board board, AISettings aiSettings, Move[,] killerMoves, int[,] history, SearchLogger logger)
+    public Search(Board board, AISettings aiSettings, SearchLogger logger)
     {
         this.logger = logger;
         this.board = board;
         this.aiSettings = aiSettings;
-        this.killerMoves = killerMoves;
-        this.history = history;
         evaluation = new Evaluation(logger);
         tt = new TranspositionTable(board, aiSettings.ttSize);
         moveOrder = new MoveOrder();
@@ -84,7 +82,7 @@ public class Search
         {
 
             bestMoveThisIteration = nullMove;
-            DecayHistory();
+            moveOrder.DecayHistory();
 
             //Aspiration windows
             int alpha = bestEval - window;
@@ -217,7 +215,7 @@ public class Search
         }
 
         //Move ordering
-        int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove(), killerMoves, history, aiSettings);
+        int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove());
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
@@ -282,17 +280,7 @@ public class Search
                 //Saving quiet move to killers
                 if (!legalMoves[i].isCapture())
                 {
-                    for (int moveNum = 0; moveNum < 3; moveNum++)
-                    {
-                        if (!killerMoves[board.fullMoveClock, moveNum].isNull())
-                        {
-                            killerMoves[board.fullMoveClock, moveNum] = legalMoves[i];
-                            break;
-                        }
-                    }
-                    //Updating history
-                    int historyVal = history[legalMoves[i].oldIndex, legalMoves[i].newIndex] + depth * depth;
-                    history[legalMoves[i].oldIndex, legalMoves[i].newIndex] = (historyVal < HISTORY_MAX) ? historyVal : HISTORY_MAX;
+                    moveOrder.UpdateMoveOrderTables(legalMoves[i], depth, board.fullMoveClock);
                 }
                 return bestScore;
             }
@@ -417,18 +405,6 @@ public class Search
             board.UndoMove(moveList.Pop());
         }
         return pv;
-    }
-
-    void DecayHistory()
-    {
-        for (int f = 0; f < 64; f++)
-        {
-            for (int t = 0; t < 64; t++)
-            {
-                history[f, t] -= history[f, t] >> 2; // ~75% retain; cheap & fast}
-            }
-
-        }
     }
 
 }

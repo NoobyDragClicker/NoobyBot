@@ -5,6 +5,11 @@ public static class Program
     {
         Engine engine = new();
 
+        if(args[0] == "bench")
+        {
+            engine.ReceiveCommand(args[0]);
+        }
+
         string command = string.Empty;
         while (command != "quit")
         {

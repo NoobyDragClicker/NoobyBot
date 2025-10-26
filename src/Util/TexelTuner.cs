@@ -353,7 +353,7 @@ public class TexelTuner
 
         List<FenInfo> quietFens = new List<FenInfo>();
         Evaluation evaluator = new Evaluation(logger);
-        Search search = new Search(board, new AISettings(40, 16, 64), new Move[1024, 3], new int[64, 64], logger);
+        Search search = new Search(board, new AISettings(40, 16, 64), logger);
 
         int currentMoveNum = 0;
         //Index = 1 because the first part is just the number

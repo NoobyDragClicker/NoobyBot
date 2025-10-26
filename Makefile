@@ -1,5 +1,8 @@
 # Makefile for building a self-contained C# engine for OpenBench
-# Usage: make EXE=Engine-ABCDEFGH
+# Usage:
+#   make                → auto-detects OS and builds
+#   make RID=linux-x64  → override manually
+#   make clean
 
 # Default output name
 EXE ?= NoobyBot
@@ -11,15 +14,17 @@ PROJECT = src/ChessEngine.csproj
 CONFIG = Release
 FRAMEWORK = net8.0
 
-# Runtime identifier (change if you're building for Linux)
-# Common values: win-x64, linux-x64, osx-x64
-RID = win-x64
-
-# Determine file extension (for Windows/Linux compatibility)
-ifeq ($(findstring win,$(RID)),win)
-    EXT = .exe
+# Detect platform automatically (unless overridden)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	RID ?= linux-x64
+	EXT =
+else ifeq ($(UNAME_S),Darwin)
+	RID ?= osx-x64
+	EXT =
 else
-    EXT =
+	RID ?= win-x64
+	EXT = .exe
 endif
 
 # Default build rule
@@ -32,8 +37,8 @@ all:
 		/p:PublishSingleFile=true \
 		/p:IncludeNativeLibrariesForSelfExtract=true \
 		-o build
-	cp build/$(basename $(notdir $(PROJECT))).$(RID)$(EXT) $(EXE)$(EXT) 2>/dev/null || \
-	cp build/$(basename $(notdir $(PROJECT)))$(EXT) $(EXE)$(EXT)
+	cp -f build/$(basename $(notdir $(PROJECT))).$(RID)$(EXT) $(EXE)$(EXT) 2>/dev/null || \
+	cp -f build/$(basename $(notdir $(PROJECT)))$(EXT) $(EXE)$(EXT)
 
 clean:
 	rm -rf build

@@ -5,16 +5,21 @@ public static class Program
     {
         Engine engine = new();
 
-        if(args[0] == "bench")
+        if(args.Length > 0 )
         {
-            engine.ReceiveCommand(args[0]);
+            if(args[0] == "bench")
+            {
+                engine.ReceiveCommand(args[0]);
+            }
         }
-
-        string command = string.Empty;
-        while (command != "quit")
+        else
         {
-            command = Console.ReadLine();
-            engine.ReceiveCommand(command);
+            string command = string.Empty;
+            while (command != "quit")
+            {
+                command = Console.ReadLine();
+                engine.ReceiveCommand(command);
+            }
         }
     }
 }

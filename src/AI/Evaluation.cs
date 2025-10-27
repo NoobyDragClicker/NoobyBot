@@ -103,7 +103,7 @@ public class Evaluation
         {
             int index = BitboardHelper.PopLSB(ref blackKnights);
             mgMaterialCount -= knightValue + mg_knight_table[63 - index];
-            egMaterialCount -= knightValue + eg_knight_table[63 - index];
+            //egMaterialCount -= knightValue + eg_knight_table[63 - index];
             phase += 1;
         }
 
@@ -112,6 +112,7 @@ public class Evaluation
             int index = BitboardHelper.PopLSB(ref whiteBishops);
             mgMaterialCount += bishopValue + mg_bishop_table[index];
             egMaterialCount += bishopValue + eg_bishop_table[index];
+            mgMaterialCount += EvaluateBishopMobility(board, index, Piece.Black);
             phase += 1;
         }
         while (blackBishops != 0)
@@ -119,6 +120,7 @@ public class Evaluation
             int index = BitboardHelper.PopLSB(ref blackBishops);
             mgMaterialCount -= bishopValue + mg_bishop_table[63 - index];
             egMaterialCount -= bishopValue + eg_bishop_table[63 - index];
+           // mgMaterialCount -= EvaluateBishopMobility(board, index, Piece.Black);
             phase += 1;
         }
 

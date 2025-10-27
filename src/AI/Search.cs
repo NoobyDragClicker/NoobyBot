@@ -19,8 +19,7 @@ public class Search
     Move bestMoveThisIteration;
     int bestEvalThisIteration;
     int bestEval;
-    Move[,] killerMoves;
-    int[,] history;
+    int[] staticEvals = new int[maxGamePly];
     int selDepth;
 
     bool abortSearch = false;
@@ -29,6 +28,7 @@ public class Search
     const int checkmate = -99998;
     const int window = 100;
     const int RFPMargin = 150;
+    const int RFPImprovingMargin = 100;
     public const int maxGamePly = 1024;
     public event Action<Move> onSearchComplete;
 
@@ -177,9 +177,12 @@ public class Search
             return eval;
         }
 
+        int staticEval = evaluation.EvaluatePosition(board);
+        staticEvals[board.fullMoveClock] = (board.currentGameState.isInCheck) ? negativeInfinity : staticEval;
+        bool isImproving = isPositionImproving(board.fullMoveClock, board.currentGameState.isInCheck);
+
         if (plyFromRoot > 0 )
         {
-            int staticEval = evaluation.EvaluatePosition(board);
             //NMP
             if (depth > 2)
             {
@@ -198,7 +201,7 @@ public class Search
                 }
             }
             //RFP
-            if (depth < 4 && !board.currentGameState.isInCheck && staticEval >= beta + RFPMargin * depth )
+            if (depth < 4 && !board.currentGameState.isInCheck && staticEval >= beta + (isImproving ? RFPImprovingMargin : RFPMargin) * depth )
             {
                 return staticEval;
             }
@@ -366,6 +369,14 @@ public class Search
         else { pieceVal = Evaluation.pawnValue; }
         return pieceVal;
     }
+
+    bool isPositionImproving(int fullMoveClock, bool isInCheck)
+    {
+        if (isInCheck) { return false; }
+        if (fullMoveClock > 1 && staticEvals[fullMoveClock - 2] != negativeInfinity) { return staticEvals[fullMoveClock] > staticEvals[fullMoveClock - 2]; }
+        return true;
+    }
+
 
     public static bool IsMateScore(int score)
     {

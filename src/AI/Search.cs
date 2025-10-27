@@ -231,7 +231,7 @@ public class Search
 
             if(!board.currentGameState.isInCheck && depth < 4 && !legalMoves[i].isCapture() && !legalMoves[i].isPromotion())
             {
-                if(staticEval + 150 * depth > alpha ){ continue; }
+                if((staticEval + (150 * depth)) < alpha ){ continue; }
             }
 
             board.Move(legalMoves[i], true);

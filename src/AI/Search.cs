@@ -235,6 +235,8 @@ public class Search
             }
 
             board.Move(legalMoves[i], true);
+            logger.currentDiagnostics.nodesSearched++;
+
             //Check extension
             int extension = (numLegalMoves == 1) ? 1 : 0;
             if (board.currentGameState.isInCheck && numCheckExtensions < 15 && extension == 0)
@@ -336,6 +338,7 @@ public class Search
             if ((standPat + getCapturedPieceVal(legalMoves[i]) + 200) < alpha){ continue; }
 
             board.Move(legalMoves[i], true);
+            logger.currentDiagnostics.nodesSearched++;
             int eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
             board.UndoMove(legalMoves[i]);
             

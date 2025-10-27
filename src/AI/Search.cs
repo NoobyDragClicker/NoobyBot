@@ -172,7 +172,6 @@ public class Search
         //Quiescence search
         if (depth <= 0)
         {
-            logger.currentDiagnostics.nodesSearched++;
             int eval = QuiescenceSearch(alpha, beta, plyFromRoot + 1);
             return eval;
         }

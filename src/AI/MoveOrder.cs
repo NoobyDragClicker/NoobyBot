@@ -9,7 +9,7 @@ public class MoveOrder
     const int HISTORY_MAX = 32768;
 
     Move[] killers = new Move[Search.maxGamePly];
-    int[,] history = new int[64, 64];
+    int[,,] history = new int[2, 64, 64];
     int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
 
     public (Move, int)[] movesAndPieceTypes = new (Move, int)[Search.maxGamePly];
@@ -56,9 +56,9 @@ public class MoveOrder
             {
                 score = million + GetPieceValue(move.PromotedPieceType()) * 10;
             }
-            else if (history[move.oldIndex, move.newIndex] != 0)
+            else if (history[currentColorIndex, move.oldIndex, move.newIndex] != 0)
             {
-                score = history[move.oldIndex, move.newIndex];
+                score = history[currentColorIndex, move.oldIndex, move.newIndex];
                 if(board.fullMoveClock > 0)
                 {
                     score += continuationHistory[FlattenConthistIndex(1 - currentColorIndex, movesAndPieceTypes[board.fullMoveClock - 1].Item2, movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, currentColorIndex, Piece.PieceType(board.board[move.oldIndex]), move.newIndex)];
@@ -135,17 +135,18 @@ public class MoveOrder
 
         killers[fullMoveClock] = move;
         int bonus = 300 * depth - 250;
-        ApplyHistoryBonus(move.oldIndex, move.newIndex, bonus);
+        ApplyHistoryBonus(move.oldIndex, move.newIndex, bonus, colorTurn);
         if(fullMoveClock > 0)
         {
             ApplyContHistBonus(movesAndPieceTypes[fullMoveClock - 1].Item1, movesAndPieceTypes[fullMoveClock - 1].Item2, move, movedPieceType, colorTurn, bonus);
         }
     }
 
-    void ApplyHistoryBonus(int oldIndex, int newIndex, int bonus)
+    void ApplyHistoryBonus(int oldIndex, int newIndex, int bonus, int colorTurn)
     {
+        int currentColorIndex = (colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int clampedBonus = Math.Clamp(bonus, -HISTORY_MAX, HISTORY_MAX);
-        history[oldIndex, newIndex] += clampedBonus - history[oldIndex, newIndex] * Math.Abs(clampedBonus) / HISTORY_MAX;
+        history[currentColorIndex, oldIndex, newIndex] += clampedBonus - history[currentColorIndex, oldIndex, newIndex] * Math.Abs(clampedBonus) / HISTORY_MAX;
     }
 
     void ApplyContHistBonus(Move previousMove, int previousPiece, Move currentMove, int currentPiece, int colorTurn, int bonus)
@@ -167,7 +168,7 @@ public class MoveOrder
         {
             if (!moves[i].isCapture())
             {
-                ApplyHistoryBonus(moves[i].oldIndex, moves[i].newIndex, -(300 * depth - 250));
+                ApplyHistoryBonus(moves[i].oldIndex, moves[i].newIndex, -(300 * depth - 250), board.colorTurn);
                 if(board.fullMoveClock > 0)
                 {
                     ApplyContHistBonus(movesAndPieceTypes[board.fullMoveClock - 1].Item1, movesAndPieceTypes[board.fullMoveClock - 1].Item2, moves[i], Piece.PieceType(board.board[moves[i].oldIndex]), board.colorTurn, -(300 * depth - 250));

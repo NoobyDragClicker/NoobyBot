@@ -120,21 +120,23 @@ public class MoveOrder
     public void UpdateMoveOrderTables(Move move, int depth, int fullMoveClock)
     {
         killers[fullMoveClock] = move;
-
-        //Updating history
-        int historyVal = history[move.oldIndex, move.newIndex] + depth * depth;
-        history[move.oldIndex, move.newIndex] = (historyVal < HISTORY_MAX) ? historyVal : HISTORY_MAX;
+        ApplyHistoryBonus(move.oldIndex, move.newIndex, 300 * depth - 250);
     }
 
-    public void DecayHistory()
+    void ApplyHistoryBonus(int oldIndex, int newIndex, int bonus)
     {
-        for (int f = 0; f < 64; f++)
-        {
-            for (int t = 0; t < 64; t++)
-            {
-                history[f, t] -= history[f, t] >> 2; // ~75% retain; cheap & fast}
-            }
+        int clampedBonus = Math.Clamp(bonus, -HISTORY_MAX, HISTORY_MAX);
+        history[oldIndex, newIndex] += clampedBonus - history[oldIndex, newIndex] * Math.Abs(clampedBonus) / HISTORY_MAX;
+    }
 
+    public void ApplyHistoryPenalties(ref Span<Move> moves, int startNum, int depth)
+    {
+        for (int i = startNum - 1; i >= 0; i--)
+        {
+            if (!moves[i].isCapture())
+            {
+                ApplyHistoryBonus(moves[i].oldIndex, moves[i].newIndex, -(300 * depth - 250));
+            }
         }
     }
     

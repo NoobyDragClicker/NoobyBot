@@ -82,7 +82,6 @@ public class Search
         {
 
             bestMoveThisIteration = nullMove;
-            moveOrder.DecayHistory();
 
             //Aspiration windows
             int alpha = bestEval - window;
@@ -290,6 +289,10 @@ public class Search
                 if (!legalMoves[i].isCapture())
                 {
                     moveOrder.UpdateMoveOrderTables(legalMoves[i], depth, board.fullMoveClock);
+                    if(i > 0)
+                    {
+                        moveOrder.ApplyHistoryPenalties(ref legalMoves, i, depth);
+                    }
                 }
                 return bestScore;
             }

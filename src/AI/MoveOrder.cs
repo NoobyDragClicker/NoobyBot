@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 
 public class MoveOrder
 {
@@ -8,6 +10,10 @@ public class MoveOrder
 
     Move[] killers = new Move[Search.maxGamePly];
     int[,] history = new int[64, 64];
+    int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
+
+    public (Move, int)[] movesAndPieceTypes = new (Move, int)[Search.maxGamePly];
+
     static int[] MVV_LVA = {
         0, 0, 0, 0, 0, 0, 0, //None
         0, 6, 12, 18, 24, 30, 100 , //Pawn
@@ -20,6 +26,7 @@ public class MoveOrder
     public int[] ScoreMoves(Board board, Span<Move> moves, Move firstMove)
     {
         int[] moveScores = new int[moves.Length];
+        int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
 
         for (int x = 0; x < moves.Length; x++)
         {
@@ -51,7 +58,11 @@ public class MoveOrder
             }
             else if (history[move.oldIndex, move.newIndex] != 0)
             {
-                score = history[move.oldIndex, move.newIndex] + 100000;
+                score = history[move.oldIndex, move.newIndex];
+                if(board.fullMoveClock > 0)
+                {
+                    score += continuationHistory[FlattenConthistIndex(1 - currentColorIndex, movesAndPieceTypes[board.fullMoveClock - 1].Item2, movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, currentColorIndex, Piece.PieceType(board.board[move.oldIndex]), move.newIndex)];
+                }
             }
             else
             {
@@ -117,10 +128,18 @@ public class MoveOrder
         }
     }
 
-    public void UpdateMoveOrderTables(Move move, int depth, int fullMoveClock)
+    public void UpdateMoveOrderTables(int depth, int fullMoveClock, int colorTurn)
     {
+        Move move = movesAndPieceTypes[fullMoveClock].Item1;
+        int movedPieceType = movesAndPieceTypes[fullMoveClock].Item2;
+
         killers[fullMoveClock] = move;
-        ApplyHistoryBonus(move.oldIndex, move.newIndex, 300 * depth - 250);
+        int bonus = 300 * depth - 250;
+        ApplyHistoryBonus(move.oldIndex, move.newIndex, bonus);
+        if(fullMoveClock > 0)
+        {
+            ApplyContHistBonus(movesAndPieceTypes[fullMoveClock - 1].Item1, movesAndPieceTypes[fullMoveClock - 1].Item2, move, movedPieceType, colorTurn, bonus);
+        }
     }
 
     void ApplyHistoryBonus(int oldIndex, int newIndex, int bonus)
@@ -129,13 +148,30 @@ public class MoveOrder
         history[oldIndex, newIndex] += clampedBonus - history[oldIndex, newIndex] * Math.Abs(clampedBonus) / HISTORY_MAX;
     }
 
-    public void ApplyHistoryPenalties(ref Span<Move> moves, int startNum, int depth)
+    void ApplyContHistBonus(Move previousMove, int previousPiece, Move currentMove, int currentPiece, int colorTurn, int bonus)
+    {
+        int currentColorIndex = (colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+        int clampedBonus = Math.Clamp(bonus, -HISTORY_MAX, HISTORY_MAX);
+        int contHistIndex = FlattenConthistIndex(1 - currentColorIndex, previousPiece, previousMove.newIndex, currentColorIndex, currentPiece, currentMove.newIndex);
+        continuationHistory[contHistIndex] += clampedBonus - continuationHistory[contHistIndex] * Math.Abs(clampedBonus) / HISTORY_MAX;
+    }
+    
+    int FlattenConthistIndex(int prevColor, int prevPiece, int prevTo, int currColor, int currPiece, int currTo)
+    {
+        return ((((prevColor * 7 + prevPiece) * 64 + prevTo) * 2 + currColor) * 7 + currPiece) * 64 + currTo;
+    }
+
+    public void ApplyHistoryPenalties(ref Span<Move> moves, int startNum, int depth, Board board)
     {
         for (int i = startNum - 1; i >= 0; i--)
         {
             if (!moves[i].isCapture())
             {
                 ApplyHistoryBonus(moves[i].oldIndex, moves[i].newIndex, -(300 * depth - 250));
+                if(board.fullMoveClock > 0)
+                {
+                    ApplyContHistBonus(movesAndPieceTypes[board.fullMoveClock - 1].Item1, movesAndPieceTypes[board.fullMoveClock - 1].Item2, moves[i], Piece.PieceType(board.board[moves[i].oldIndex]), board.colorTurn, -(300 * depth - 250));
+                }
             }
         }
     }

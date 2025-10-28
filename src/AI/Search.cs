@@ -191,6 +191,7 @@ public class Search
                     int r = 2;
 
                     board.MakeNullMove();
+                    moveOrder.movesAndPieceTypes[board.fullMoveClock] = (nullMove, 0);
                     int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions);
                     board.UnmakeNullMove();
 
@@ -227,10 +228,14 @@ public class Search
         {
             moveOrder.GetNextBestMove(moveScores, legalMoves, i);
 
+            //Store the move and piece type
+            moveOrder.movesAndPieceTypes[board.fullMoveClock] = (legalMoves[i], Piece.PieceType(board.board[legalMoves[i].oldIndex]));
+
             if(!board.currentGameState.isInCheck && depth < 4 && !legalMoves[i].isCapture() && !legalMoves[i].isPromotion())
             {
                 if((staticEval + (150 * depth)) < alpha ){ continue; }
             }
+
 
             board.Move(legalMoves[i], true);
             logger.currentDiagnostics.nodesSearched++;
@@ -288,10 +293,10 @@ public class Search
                 //Saving quiet move to killers
                 if (!legalMoves[i].isCapture())
                 {
-                    moveOrder.UpdateMoveOrderTables(legalMoves[i], depth, board.fullMoveClock);
+                    moveOrder.UpdateMoveOrderTables(depth, board.fullMoveClock, board.colorTurn);
                     if(i > 0)
                     {
-                        moveOrder.ApplyHistoryPenalties(ref legalMoves, i, depth);
+                        moveOrder.ApplyHistoryPenalties(ref legalMoves, i, depth, board);
                     }
                 }
                 return bestScore;

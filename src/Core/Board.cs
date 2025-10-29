@@ -36,9 +36,8 @@ public class Board
     public int[] board = new int[64];
 
     //Saves info about the game
-    Stack<GameState> gameStateHistory = new Stack<GameState>();
+    public GameState[] gameStateHistory = new GameState[Search.maxGamePly];
 
-    public GameState currentGameState = new GameState();
     public Stack<Move> gameMoveHistory = new Stack<Move>();
 
     public Stack<ulong> zobristHistory = new Stack<ulong>();
@@ -53,8 +52,6 @@ public class Board
         this.logger = logger;
         zobristHistory.Clear();
         gameMoveHistory.Clear();
-        gameStateHistory.Clear();
-        currentGameState = new GameState();
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory.Push(zobristKey);
@@ -65,8 +62,9 @@ public class Board
     //Moves the pieces
     public void Move(Move move, bool isSearch)
     {
+        fullMoveClock++;
         gameMoveHistory.Push(move);
-        int oldCastlingRights = currentGameState.castlingRights;
+        int oldCastlingRights = gameStateHistory[fullMoveClock - 1].castlingRights;
         int castlingRights = oldCastlingRights;
 
         int oldEPFile = (enPassantIndex != -1) ? Coord.IndexToFile(enPassantIndex) : 0;
@@ -308,12 +306,11 @@ public class Board
         allPiecesBitboard = sideBitboard[WhiteIndex] | sideBitboard[BlackIndex];
 
         //Update gamestate
-        currentGameState.capturedPiece = capturedPiece;
-        currentGameState.enPassantFile = enPassantFile;
-        currentGameState.halfMoveClock = halfMoveClock;
-        currentGameState.castlingRights = castlingRights;
+        gameStateHistory[fullMoveClock].capturedPiece = capturedPiece;
+        gameStateHistory[fullMoveClock].enPassantFile = enPassantFile;
+        gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
+        gameStateHistory[fullMoveClock].castlingRights = castlingRights;
         UpdateSimpleCheckStatus();
-        gameStateHistory.Push(currentGameState);
 
         //Moving friendly piece
         zobristKey ^= Zobrist.piecesArray[movedPieceType, currentColorIndex, startPos];
@@ -332,23 +329,23 @@ public class Board
         
         zobristKey ^= Zobrist.sideToMove;
         zobristHistory.Push(zobristKey);
-        fullMoveClock++;
+        
     }
     public void UndoMove(Move move)
     {
+        fullMoveClock--;
         gameMoveHistory.Pop();
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
         int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
         int oppositeColorIndex = 1 - currentColorIndex;
         //Removing the current one and getting the required info
-        GameState oldGameStateHistory = gameStateHistory.Pop();
+        GameState oldGameStateHistory = gameStateHistory[fullMoveClock + 1];
 
         //Getting the game state from the current move
-        currentGameState = gameStateHistory.Peek();
         int capturedPiece = oldGameStateHistory.capturedPiece;
-        int enPassantFile = currentGameState.enPassantFile;
-        halfMoveClock = currentGameState.halfMoveClock;
+        int enPassantFile = gameStateHistory[fullMoveClock].enPassantFile;
+        halfMoveClock = gameStateHistory[fullMoveClock].halfMoveClock;
 
         zobristHistory.Pop();
         zobristKey = zobristHistory.Peek();
@@ -514,7 +511,6 @@ public class Board
         //sideBitboard[WhiteIndex] = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)];
         //sideBitboard[BlackIndex] = pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)];
         allPiecesBitboard = sideBitboard[WhiteIndex] | sideBitboard[BlackIndex];
-        fullMoveClock--;
     }
 
     public void MakeNullMove()
@@ -522,19 +518,19 @@ public class Board
         halfMoveClock += 1;
         fullMoveClock += 1;
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
-        int oldEPFile = currentGameState.enPassantFile;
-        currentGameState = new GameState();
-        currentGameState.halfMoveClock = halfMoveClock;
-        currentGameState.enPassantFile = 0;
-        currentGameState.capturedPiece = 0;
-        currentGameState.isInCheck = false;
-        gameStateHistory.Push(currentGameState);
+        int oldEPFile = gameStateHistory[fullMoveClock - 1].enPassantFile;
+        
+        gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
+        gameStateHistory[fullMoveClock].enPassantFile = 0;
+        gameStateHistory[fullMoveClock].capturedPiece = 0;
+        gameStateHistory[fullMoveClock].isInCheck = false;
+        gameStateHistory[fullMoveClock].castlingRights = 0;//gameStateHistory[fullMoveClock - 1].castlingRights;
 
         enPassantIndex = -1;
 
         zobristKey ^= Zobrist.sideToMove;
         zobristKey ^= Zobrist.enPassantFile[oldEPFile];
-        zobristKey ^= Zobrist.enPassantFile[currentGameState.enPassantFile];
+        zobristKey ^= Zobrist.enPassantFile[0];
         zobristHistory.Push(zobristKey);
     }
     public void UnmakeNullMove()
@@ -544,11 +540,9 @@ public class Board
 
         zobristHistory.Pop();
         zobristKey = zobristHistory.Peek();
-        gameStateHistory.Pop();
-        currentGameState = gameStateHistory.Peek();
-        if (currentGameState.enPassantFile != 0)
+        if (gameStateHistory[fullMoveClock].enPassantFile != 0)
         {
-            enPassantIndex = EnPassantFileToIndex(colorTurn, currentGameState.enPassantFile);
+            enPassantIndex = EnPassantFileToIndex(colorTurn, gameStateHistory[fullMoveClock].enPassantFile);
         }
         else
         {
@@ -559,10 +553,6 @@ public class Board
 
     public int[] ConvertFromFEN(string fenPosition)
     {
-        currentGameState.capturedPiece = 0;
-        currentGameState.castlingRights = 0;
-        currentGameState.enPassantFile = 0;
-        
 
         Dictionary<char, int> pieceTypeFromSymbol = new Dictionary<char, int>()
         {
@@ -629,7 +619,6 @@ public class Board
         if (castling.Contains("Q")) { castlingRights += 2; }
         if (castling.Contains("k")) { castlingRights += 4; }
         if (castling.Contains("q")) { castlingRights += 8; }
-        currentGameState.castlingRights = castlingRights;
         
         enPassantIndex = -1;
         if (fenComponents.Length >= 4)
@@ -656,9 +645,13 @@ public class Board
             }
         }
 
-        currentGameState.halfMoveClock = halfMoveClock;
+        
         UpdateSimpleCheckStatus();
-        gameStateHistory.Push(currentGameState);
+        gameStateHistory[fullMoveClock].capturedPiece = 0;
+        gameStateHistory[fullMoveClock].castlingRights = castlingRights;
+        gameStateHistory[fullMoveClock].enPassantFile = 0;
+        gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
+
         return position;
     }
 
@@ -740,7 +733,7 @@ public class Board
         //Stalemate
         Span<Move> moves = new Move[256];
         int numMoves = MoveGenerator.GenerateLegalMoves(this, ref moves, colorTurn);
-        if (numMoves == 0 && !currentGameState.isInCheck) { return true; }
+        if (numMoves == 0 && !gameStateHistory[fullMoveClock].isInCheck) { return true; }
         //50 move rule
         if (halfMoveClock >= 100) { return true; }
         if (IsRepetitionDraw()) { return true; }
@@ -769,7 +762,7 @@ public class Board
 
     public void UpdateSimpleCheckStatus()
     {
-        currentGameState.isInCheck = MoveGenerator.DetermineCheckStatus(this);
+        gameStateHistory[fullMoveClock].isInCheck = MoveGenerator.DetermineCheckStatus(this);
     }
     public bool IsRepetitionDraw()
     {
@@ -807,7 +800,7 @@ public class Board
     public bool IsCheckmate(int color)
     {
         int kingIndex = MoveGenerator.GetKingIndex(color, this);
-        if (currentGameState.isInCheck)
+        if (gameStateHistory[fullMoveClock].isInCheck)
         {
             Span<Move> legalKingMoves = stackalloc Move[218];
             int currMoveIndex = MoveGenerator.GenerateKingMoves(legalKingMoves, 0, color, this);
@@ -858,11 +851,11 @@ public class Board
     //Gets them from the current gamestate
     public bool HasKingsideRight(int color)
     {
-        if (color == Piece.White && (currentGameState.castlingRights & 0b1) == 1)
+        if (color == Piece.White && (gameStateHistory[fullMoveClock].castlingRights & 0b1) == 1)
         {
             return true;
         }
-        else if (color == Piece.Black && (currentGameState.castlingRights & 0b100) == 4)
+        else if (color == Piece.Black && (gameStateHistory[fullMoveClock].castlingRights & 0b100) == 4)
         {
             return true;
         }
@@ -870,11 +863,11 @@ public class Board
     }
     public bool HasQueensideRight(int color)
     {
-        if (color == Piece.White && (currentGameState.castlingRights & 0b000010) == 2)
+        if (color == Piece.White && (gameStateHistory[fullMoveClock].castlingRights & 0b000010) == 2)
         {
             return true;
         }
-        else if (color == Piece.Black && (currentGameState.castlingRights & 0b001000) == 8)
+        else if (color == Piece.Black && (gameStateHistory[fullMoveClock].castlingRights & 0b001000) == 8)
         {
             return true;
         }

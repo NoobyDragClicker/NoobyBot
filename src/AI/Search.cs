@@ -176,8 +176,8 @@ public class Search
         }
 
         int staticEval = evaluation.EvaluatePosition(board);
-        staticEvals[board.fullMoveClock] = (board.currentGameState.isInCheck) ? negativeInfinity : staticEval;
-        bool isImproving = isPositionImproving(board.fullMoveClock, board.currentGameState.isInCheck);
+        staticEvals[board.fullMoveClock] = (board.gameStateHistory[board.fullMoveClock].isInCheck) ? negativeInfinity : staticEval;
+        bool isImproving = isPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
         if (plyFromRoot > 0 )
         {
@@ -186,7 +186,7 @@ public class Search
             {
                 int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
                 int nonPawnCount = board.pieceCounts[currentColorIndex, Piece.Knight] + board.pieceCounts[currentColorIndex, Piece.Bishop] + board.pieceCounts[currentColorIndex, Piece.Rook] + board.pieceCounts[currentColorIndex, Piece.Queen];
-                if (!board.currentGameState.isInCheck && nonPawnCount > 0 && staticEval > beta)
+                if (!board.gameStateHistory[board.fullMoveClock].isInCheck && nonPawnCount > 0 && staticEval > beta)
                 {
                     int r = 2;
 
@@ -200,7 +200,7 @@ public class Search
                 }
             }
             //RFP
-            if (depth < 4 && !board.currentGameState.isInCheck && staticEval >= beta + (isImproving ? RFPImprovingMargin : RFPMargin) * depth )
+            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && staticEval >= beta + (isImproving ? RFPImprovingMargin : RFPMargin) * depth )
             {
                 return staticEval;
             }
@@ -212,7 +212,7 @@ public class Search
         //Check for mate or stalemate
         if (numLegalMoves == 0)
         {
-            if (board.currentGameState.isInCheck){ return checkmate + plyFromRoot;}
+            if (board.gameStateHistory[board.fullMoveClock].isInCheck){ return checkmate + plyFromRoot;}
             else { return 0; }
         }
 
@@ -231,7 +231,7 @@ public class Search
             //Store the move and piece type
             moveOrder.movesAndPieceTypes[board.fullMoveClock] = (legalMoves[i], Piece.PieceType(board.board[legalMoves[i].oldIndex]));
 
-            if(!board.currentGameState.isInCheck && depth < 4 && !legalMoves[i].isCapture() && !legalMoves[i].isPromotion())
+            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && depth < 4 && !legalMoves[i].isCapture() && !legalMoves[i].isPromotion())
             {
                 if((staticEval + (150 * depth)) < alpha ){ continue; }
             }
@@ -242,7 +242,7 @@ public class Search
 
             //Check extension
             int extension = (numLegalMoves == 1) ? 1 : 0;
-            if (board.currentGameState.isInCheck && numCheckExtensions < 15 && extension == 0)
+            if (board.gameStateHistory[board.fullMoveClock].isInCheck && numCheckExtensions < 15 && extension == 0)
             {
                 extension = 1;
                 numCheckExtensions++;

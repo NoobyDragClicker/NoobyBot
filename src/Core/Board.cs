@@ -40,7 +40,7 @@ public class Board
 
     public Stack<Move> gameMoveHistory = new Stack<Move>();
 
-    public Stack<ulong> zobristHistory = new Stack<ulong>();
+    public ulong[] zobristHistory = new ulong[Search.maxGamePly];
     public ulong zobristKey;
     
     SearchLogger logger;
@@ -50,11 +50,10 @@ public class Board
     public void setPosition(string fenPosition, SearchLogger logger)
     {
         this.logger = logger;
-        zobristHistory.Clear();
         gameMoveHistory.Clear();
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
-        zobristHistory.Push(zobristKey);
+        zobristHistory[fullMoveClock] = zobristKey;
         startFen = fenPosition;
     }
 
@@ -328,8 +327,7 @@ public class Board
         }
         
         zobristKey ^= Zobrist.sideToMove;
-        zobristHistory.Push(zobristKey);
-        
+        zobristHistory[fullMoveClock] = zobristKey;
     }
     public void UndoMove(Move move)
     {
@@ -347,8 +345,7 @@ public class Board
         int enPassantFile = gameStateHistory[fullMoveClock].enPassantFile;
         halfMoveClock = gameStateHistory[fullMoveClock].halfMoveClock;
 
-        zobristHistory.Pop();
-        zobristKey = zobristHistory.Peek();
+        zobristKey = zobristHistory[fullMoveClock];
 
         //Setting the ep index to what it used to be
         if (enPassantFile != 0)
@@ -515,8 +512,8 @@ public class Board
 
     public void MakeNullMove()
     {
-        halfMoveClock += 1;
-        fullMoveClock += 1;
+        halfMoveClock++;
+        fullMoveClock++;
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
         int oldEPFile = gameStateHistory[fullMoveClock - 1].enPassantFile;
         
@@ -531,15 +528,14 @@ public class Board
         zobristKey ^= Zobrist.sideToMove;
         zobristKey ^= Zobrist.enPassantFile[oldEPFile];
         zobristKey ^= Zobrist.enPassantFile[0];
-        zobristHistory.Push(zobristKey);
+        zobristHistory[fullMoveClock] = zobristKey;
     }
     public void UnmakeNullMove()
     {
-        halfMoveClock -= 1;
-        fullMoveClock -= 1;
+        halfMoveClock--;
+        fullMoveClock--;
 
-        zobristHistory.Pop();
-        zobristKey = zobristHistory.Peek();
+        zobristKey = zobristHistory[fullMoveClock];
         if (gameStateHistory[fullMoveClock].enPassantFile != 0)
         {
             enPassantIndex = EnPassantFileToIndex(colorTurn, gameStateHistory[fullMoveClock].enPassantFile);
@@ -766,16 +762,13 @@ public class Board
     }
     public bool IsRepetitionDraw()
     {
-        int repCount = zobristHistory.Count(x => x == zobristKey);
-        if (repCount >= 2)
+        int repCount = 0;
+        for(int index = fullMoveClock; index >= fullMoveClock - halfMoveClock; index--)
         {
-            return true;
+            if (zobristHistory[index] == zobristKey) { repCount++; }
+            if(repCount >= 2){ return true; }
         }
-        else
-        {
-            return false;
-        }
-
+        return false;
     }
 
     public bool IsSearchDraw()

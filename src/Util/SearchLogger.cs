@@ -2,13 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
-
-
-#if UNITY_EDITOR
-using UnityEngine;
-#endif
-
 public class SearchLogger
 {
     string logPath;
@@ -157,7 +150,7 @@ public class SearchLogger
 
     public void AddToLog(string message, LoggingLevel level)
     {
-        if (level >= searchLevel)
+        if (level >= searchLevel && false)
         {
             try
             {
@@ -168,11 +161,6 @@ public class SearchLogger
             }
             catch (Exception){}
         }
-        
-
-#if UNITY_EDITOR
-        Debug.Log(message);
-#endif
     }
 }
 

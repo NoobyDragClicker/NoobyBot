@@ -52,13 +52,13 @@ public static class Zobrist
 			}
 		}
 
-		int epIndex = board.currentGameState.enPassantFile;
+		int epIndex = board.gameStateHistory[board.fullMoveClock].enPassantFile;
 		zobristKey ^= enPassantFile[epIndex];
 		if (board.colorTurn == Piece.Black)
 		{
 			zobristKey ^= sideToMove;
 		}
-		zobristKey ^= castlingRights[board.currentGameState.castlingRights];
+		zobristKey ^= castlingRights[board.gameStateHistory[board.fullMoveClock].castlingRights];
 		return zobristKey;
 	}
 

@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
+using System.ComponentModel;
 
 public class Perft
 {
@@ -20,7 +21,8 @@ public class Perft
     bool hasQuiescencePassed = true;
     SearchLogger logger;
     Stopwatch genTimer = new Stopwatch();
-    Stopwatch makeUnmakeTimer = new Stopwatch();
+    Stopwatch make = new Stopwatch();
+    Stopwatch unmake = new Stopwatch();
 
     public Perft(SearchLogger logger)
     {
@@ -104,6 +106,10 @@ public class Perft
         Console.WriteLine("Failed " + (numTotal - (ulong)numPassed));
         Console.WriteLine("Quiescence Failed " + failedQuiescence.Count);
         Console.WriteLine("Total time: " + moveGenTimer.Elapsed);
+        Console.WriteLine("Total movegen time: " + genTimer.Elapsed);
+        Console.WriteLine("Total make time: " + make.Elapsed);
+        Console.WriteLine("Total unmake time: " + unmake.Elapsed);
+
         Console.WriteLine("Total end nodes searched: " + endNodesSearched);
         Console.WriteLine("Nodes/second: " + (float)endNodesSearched / moveGenTimer.ElapsedMilliseconds * 1000f);
 
@@ -140,7 +146,6 @@ public class Perft
             return 1;
         }
         Span<Move> moves = stackalloc Move[218];
-
         MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
 
         int numCaptures = 0;
@@ -185,7 +190,9 @@ public class Perft
             {
                 expectedCaptures++;
             }
+            //make.Start();
             board.Move(moves[i], true);
+            //make.Stop();
 
             ulong numNodesFromThisPosition = Search(depth - 1, board, testQuiescence, batch);
             numLocalNodes += numNodesFromThisPosition;

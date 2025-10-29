@@ -45,8 +45,6 @@ public class Board
     public ulong zobristKey;
     
     SearchLogger logger;
-    bool isMoveGenUpdated = false;
-    bool areAttacksUpdated = false;
     public string startFen;
 
 
@@ -60,8 +58,6 @@ public class Board
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory.Push(zobristKey);
-        isMoveGenUpdated = false;
-        areAttacksUpdated = false;
         startFen = fenPosition;
     }
 
@@ -69,8 +65,6 @@ public class Board
     //Moves the pieces
     public void Move(Move move, bool isSearch)
     {
-        isMoveGenUpdated = false;
-        areAttacksUpdated = false;
         gameMoveHistory.Push(move);
         int oldCastlingRights = currentGameState.castlingRights;
         int castlingRights = oldCastlingRights;
@@ -214,14 +208,14 @@ public class Board
             }
 
             //Once the king has been moved, you can't castle
-            if (movedPieceType == Piece.King)
+            if (movedPieceType == Piece.King && castlingRights > 0)
             {
                 if (colorTurn == Piece.White) { castlingRights &= 0b1100; }
                 else { castlingRights &= 0b0011; }
             }
 
             //If it's a rook move, check if its from the starting square to remove castling perms
-            if (movedPieceType == Piece.Rook)
+            if (movedPieceType == Piece.Rook && castlingRights > 0)
             {
                 if (colorTurn == Piece.White)
                 {
@@ -248,7 +242,7 @@ public class Board
                 BitboardHelper.ClearSquare(ref sideBitboard[oppositeColorIndex], newPos);
 
                 //Removing castling rights if rook is captured on starting square
-                if (capturedPieceType == Piece.Rook)
+                if (capturedPieceType == Piece.Rook && castlingRights > 0)
                 {
                     if (colorTurn == Piece.White)
                     {
@@ -342,9 +336,6 @@ public class Board
     }
     public void UndoMove(Move move)
     {
-        isMoveGenUpdated = false;
-        areAttacksUpdated = false;
-
         gameMoveHistory.Pop();
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
@@ -528,8 +519,6 @@ public class Board
 
     public void MakeNullMove()
     {
-        isMoveGenUpdated = false;
-        areAttacksUpdated = false;
         halfMoveClock += 1;
         fullMoveClock += 1;
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
@@ -550,8 +539,6 @@ public class Board
     }
     public void UnmakeNullMove()
     {
-        isMoveGenUpdated = false;
-        areAttacksUpdated = false;
         halfMoveClock -= 1;
         fullMoveClock -= 1;
 
@@ -774,18 +761,10 @@ public class Board
 
     public void GenerateMoveGenInfo()
     {
-        if (!areAttacksUpdated)
-        {
-            attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
-            attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
-            areAttacksUpdated = true;
-        }
-        if (!isMoveGenUpdated)
-        {
-            MoveGenerator.UpdateChecksAndPins(this);
-            isCurrentPlayerInDoubleCheck = (numCheckingPieces > 1) ? true : false;
-            isMoveGenUpdated = true;
-        }
+        attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
+        attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
+        MoveGenerator.UpdateChecksAndPins(this);
+        isCurrentPlayerInDoubleCheck = (numCheckingPieces > 1) ? true : false;        
     }
 
     public void UpdateSimpleCheckStatus()

@@ -232,9 +232,12 @@ public class Search
             //Store the move and piece type
             moveOrder.movesAndPieceTypes[board.fullMoveClock] = (legalMoves[i], Piece.PieceType(board.board[legalMoves[i].oldIndex]));
 
-            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && depth < 4 && !legalMoves[i].isCapture() && !legalMoves[i].isPromotion())
+            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !legalMoves[i].isCapture() && !legalMoves[i].isPromotion())
             {
-                if((staticEval + (150 * depth)) < alpha ){ continue; }
+                //Futility pruning
+                if (depth < 4 && (staticEval + (150 * depth)) < alpha) { continue; }
+                //Late Move pruning
+                if(i > 10 + depth * depth ){ continue; }
             }
 
 

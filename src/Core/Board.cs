@@ -38,8 +38,6 @@ public class Board
     //Saves info about the game
     public GameState[] gameStateHistory = new GameState[Search.maxGamePly];
 
-    public Stack<Move> gameMoveHistory = new Stack<Move>();
-
     public ulong[] zobristHistory = new ulong[Search.maxGamePly];
     public ulong zobristKey;
     
@@ -50,7 +48,6 @@ public class Board
     public void setPosition(string fenPosition, SearchLogger logger)
     {
         this.logger = logger;
-        gameMoveHistory.Clear();
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory[fullMoveClock] = zobristKey;
@@ -62,7 +59,6 @@ public class Board
     public void Move(Move move, bool isSearch)
     {
         fullMoveClock++;
-        gameMoveHistory.Push(move);
         int oldCastlingRights = gameStateHistory[fullMoveClock - 1].castlingRights;
         int castlingRights = oldCastlingRights;
 
@@ -332,8 +328,6 @@ public class Board
     public void UndoMove(Move move)
     {
         fullMoveClock--;
-        gameMoveHistory.Pop();
-
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
         int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
         int oppositeColorIndex = 1 - currentColorIndex;

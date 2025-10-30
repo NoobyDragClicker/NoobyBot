@@ -13,7 +13,7 @@ public class OpeningBook
     }
 
     public Move getBookMove(Board board){
-        int depth = board.gameMoveHistory.Count();
+        int depth = 0;//board.gameMoveHistory.Count();
         Move chosenMove = Search.nullMove;
         Dictionary<int, int> possibleMovesInPos = new Dictionary<int, int>();
         
@@ -35,7 +35,7 @@ public class OpeningBook
             }
         } 
         else {
-            int previousMoveVal = board.gameMoveHistory.Peek().GetIntValue();
+            int previousMoveVal = 0;//board.gameMoveHistory.Peek().GetIntValue();
             //Removing lines from previous player's move while simultaneously counting the different options
             for (int x = 0; x < maxLines; x++){
                 if (allLines[x][depth - 1].GetIntValue() == previousMoveVal){

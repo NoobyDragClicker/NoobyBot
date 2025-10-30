@@ -103,7 +103,8 @@ public class Search
             {
                 if (!abortSearch)
                 {
-                    logger.AddToLog($"Draw detected: {board.ConvertToFEN()}", SearchLogger.LoggingLevel.Warning);
+                    logger.AddToLog($"No move found at depth {depth}", SearchLogger.LoggingLevel.Warning);
+                    /*
                     logger.AddToLog($"Start pos: {board.startFen}", SearchLogger.LoggingLevel.Warning);
                     string message = "";
                     Move[] moves = new Move[board.gameMoveHistory.Count];
@@ -112,7 +113,7 @@ public class Search
                     {
                         message += Coord.GetUCIMoveNotation(moves[x]);
                     }
-                    logger.AddToLog("Moves: " + message, SearchLogger.LoggingLevel.Warning);
+                    logger.AddToLog("Moves: " + message, SearchLogger.LoggingLevel.Warning);*/
                 }
             }
             else

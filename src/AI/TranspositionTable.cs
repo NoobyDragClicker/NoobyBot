@@ -10,40 +10,70 @@ public class TranspositionTable
     public ulong numStored;
 
     Board board;
-    public Entry[] entries;
+    public Bucket[] entries;
     //How many can be stored    
     public readonly ulong count;
 
     public TranspositionTable(Board board, int sizeMB)
     {
         this.board = board;
-        int ttEntrySizeBytes = System.Runtime.InteropServices.Marshal.SizeOf<Entry>();
+        int ttEntrySizeBytes = System.Runtime.InteropServices.Marshal.SizeOf<Bucket>();
         int desiredTableSizeInBytes = sizeMB * 1024 * 1024;
         int numEntries = desiredTableSizeInBytes / ttEntrySizeBytes;
         count = (ulong)numEntries;
-        entries = new Entry[numEntries];
+        entries = new Bucket[numEntries];
     }
 
     public int LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta)
 	{
-        Entry entry = entries[Index];
+        Bucket bucket = entries[Index];
 
-        if(entry.key == board.zobristKey){
+        if (bucket.depthPreferred.key == board.zobristKey)
+        {
             //Don't use the stored eval if it's a lower depth
-            if(entry.depth >= depth){
-                int eval = RetrieveEval(entry.eval, plyFromRoot);
+            if (bucket.depthPreferred.depth >= depth)
+            {
+                int eval = RetrieveEval(bucket.depthPreferred.eval, plyFromRoot);
                 //The exact eval
-                if(entry.nodeType == Exact){
+                if (bucket.depthPreferred.nodeType == Exact)
+                {
                     return eval;
                 }
 
                 //We know the upper bound of the position, if it's less than our current best score it is unimportant
-                if(entry.nodeType == UpperBound && eval <= alpha){
+                if (bucket.depthPreferred.nodeType == UpperBound && eval <= alpha)
+                {
                     return eval;
                 }
 
                 //Stored the lower bound, only return if it causes a beta cutoff
-                if(entry.nodeType == LowerBound && eval >= beta){
+                if (bucket.depthPreferred.nodeType == LowerBound && eval >= beta)
+                {
+                    return eval;
+                }
+            }
+        }
+        else if (bucket.alwaysReplace.key == board.zobristKey)
+        {
+            //Don't use the stored eval if it's a lower depth
+            if (bucket.alwaysReplace.depth >= depth)
+            {
+                int eval = RetrieveEval(bucket.alwaysReplace.eval, plyFromRoot);
+                //The exact eval
+                if (bucket.alwaysReplace.nodeType == Exact)
+                {
+                    return eval;
+                }
+
+                //We know the upper bound of the position, if it's less than our current best score it is unimportant
+                if (bucket.alwaysReplace.nodeType == UpperBound && eval <= alpha)
+                {
+                    return eval;
+                }
+
+                //Stored the lower bound, only return if it causes a beta cutoff
+                if (bucket.alwaysReplace.nodeType == LowerBound && eval >= beta)
+                {
                     return eval;
                 }
             }
@@ -54,15 +84,21 @@ public class TranspositionTable
     public Entry GetEntryForPos()
     {
         ulong index = Index;
-        return entries[index];
+        if (board.zobristKey == entries[index].depthPreferred.key) { return entries[index].depthPreferred; }
+        else{ return entries[index].alwaysReplace; }
     }
     
     public void StoreEvaluation(int depth, int numPlySearched, int eval, int evalType, Move move)
     {
-        numStored++;
         ulong index = Index;
-        Entry entry = new Entry(board.zobristKey, CorrectMateEvalForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
-        entries[index] = entry;
+        if(entries[index].depthPreferred.depth <= depth)
+        {
+            entries[index].depthPreferred = new Entry(board.zobristKey, CorrectMateEvalForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
+        }
+        else
+        {
+            entries[index].alwaysReplace = new Entry(board.zobristKey, CorrectMateEvalForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
+        }
     }
 
     //Returning it to its new mate value, based on how far away this mate is
@@ -92,20 +128,12 @@ public class TranspositionTable
 
     public Move GetStoredMove()
     {
-        return entries[Index].move;
+        if (entries[Index].depthPreferred.key == board.zobristKey) { return entries[Index].depthPreferred.move; }
+        else if (entries[Index].alwaysReplace.key == board.zobristKey) { return entries[Index].alwaysReplace.move; }
+        else{ return Search.nullMove; }
     }
 
-    public Move GetSafeMove()
-    {
-        if(entries[Index].key == board.zobristKey)
-        {
-            return entries[Index].move;
-        }
-        else
-        {
-            return Search.nullMove;
-        }
-    }
+    
     public struct Entry
     {
         public readonly ulong key;
@@ -118,11 +146,18 @@ public class TranspositionTable
         {
             this.key = key;
             eval = evaluation;
-            this.depth = depth; 
+            this.depth = depth;
             this.nodeType = nodeType;
             this.move = move;
         }
     }
+    public struct Bucket
+    {
+        public Entry depthPreferred;
+        public Entry alwaysReplace;
+    }
+    
+    
 
     public void DeleteEntries(){
         entries = null;

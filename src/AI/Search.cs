@@ -346,7 +346,7 @@ public class Search
             moveOrder.GetNextBestMove(moveScores, legalMoves, i);
 
             //Delta pruning
-            if ((standPat + getCapturedPieceVal(legalMoves[i]) + 200) < alpha){ continue; }
+            if ((standPat + getCapturedPieceVal(legalMoves[i]) + 150) < alpha){ continue; }
 
             board.Move(legalMoves[i], true);
             logger.currentDiagnostics.nodesSearched++;

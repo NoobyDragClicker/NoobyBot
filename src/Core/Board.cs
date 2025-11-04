@@ -788,6 +788,7 @@ public class Board
         
         if (gameStateHistory[fullMoveClock].isInCheck)
         {
+            GenerateMoveGenInfo();
             Span<Move> legalKingMoves = stackalloc Move[218];
             int currMoveIndex = MoveGenerator.GenerateKingMoves(legalKingMoves, 0, color, this);
             //If there are any valid king moves

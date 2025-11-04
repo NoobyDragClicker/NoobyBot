@@ -96,7 +96,7 @@ public class Search
             }
             catch (Exception e)
             {
-                logger.AddToLog("SearchMoves error: " + e.Message, SearchLogger.LoggingLevel.Deadly);
+                Console.WriteLine("SearchMoves error: " + e);
             }
 
             if (bestMoveThisIteration.isNull())

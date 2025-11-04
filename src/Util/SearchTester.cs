@@ -31,7 +31,14 @@ public class SearchTester
             isTestRunning = true;
             currentTestNumber = 0;
             Console.WriteLine($"Started suite with {fenPositions.Count()} positions, to a max depth of {targetDepth}");
-            RunNextSearch(new Move(0, 0, false));
+            try
+            {
+                RunNextSearch(new Move(0, 0, false));
+            } catch(Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            
         }
     }
 
@@ -54,7 +61,9 @@ public class SearchTester
         {
             isTestRunning = false;
             Console.WriteLine("Suite finished");
-            logger.logAllSearches();
+            SearchDiagnostics temp = logger.logAllSearches();
+            Console.WriteLine($"Search time: {temp.totalSearchTime}");
+            Console.WriteLine($"NPS: {temp.nodesSearched / temp.totalSearchTime.TotalMilliseconds * 1000}");
         }
     }
 

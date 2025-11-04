@@ -237,7 +237,7 @@ public static class Coord
 
                     } else if (strMove.Length == 1 && possibleStartIndexes.Count > 1){
                         for(int x = 0; x< possibleStartIndexes.Count; x++){
-                            if (((board.diagPins | board.straightPins) & (1ul << possibleStartIndexes[x])) != 0){
+                            if (((board.gameStateHistory[board.fullMoveClock].diagPins | board.gameStateHistory[board.fullMoveClock].straightPins) & (1ul << possibleStartIndexes[x])) != 0){
                                 possibleStartIndexes.RemoveAt(x);
                             }
                         }

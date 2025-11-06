@@ -13,6 +13,7 @@ public class MoveOrder
     int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
 
     public (Move, int)[] movesAndPieceTypes = new (Move, int)[Search.maxGamePly];
+    public enum Stage { TTMove, Other, Finished }
 
     static int[] MVV_LVA = {
         0, 0, 0, 0, 0, 0, 0, //None
@@ -88,8 +89,9 @@ public class MoveOrder
         return moveScores;
     }
 
-    public void GetNextBestMove(int[] moveScores, Span<Move> moves, int currentMoveIndex)
+    public Move GetNextBestMove(int[] moveScores, Span<Move> moves, int currentMoveIndex)
     {
+        if(currentMoveIndex > moves.Length - 1){ Console.WriteLine("issue"); }
         //Take the index the search is currently at
         int highest = currentMoveIndex;
         for (int i = highest + 1; i < moveScores.Length; i++)
@@ -99,12 +101,13 @@ public class MoveOrder
         }
 
         //Swap the next highest move into the spot that is about to be searched, hoping for a quick beta cutoff
-        Move tempMove = moves[highest];
+        Move bestMove = moves[highest];
         int tempScore = moveScores[highest];
         moves[highest] = moves[currentMoveIndex];
         moveScores[highest] = moveScores[currentMoveIndex];
-        moves[currentMoveIndex] = tempMove;
+        moves[currentMoveIndex] = bestMove;
         moveScores[currentMoveIndex] = tempScore;
+        return bestMove;
     }
     static int GetPieceValue(int pieceType)
     {

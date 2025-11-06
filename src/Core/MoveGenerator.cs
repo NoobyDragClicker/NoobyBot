@@ -506,7 +506,6 @@ public static class MoveGenerator
         if (pawnCheck != 0) { return true; }
         return false;
     }
-    //Returns king's position
     public static int GetKingIndex(int kingColor, Board board)
     {
         int colorIndex = (kingColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;

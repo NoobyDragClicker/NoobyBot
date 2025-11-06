@@ -53,8 +53,9 @@ public class SearchTester
         else
         {
             isTestRunning = false;
-            Console.WriteLine("Suite finished");
-            logger.logAllSearches();
+            SearchDiagnostics temp = logger.logAllSearches();
+            Console.WriteLine($"Search time: {temp.totalSearchTime}");
+            Console.WriteLine($"NPS: {temp.nodesSearched / temp.totalSearchTime.TotalMilliseconds * 1000}");
         }
     }
 

@@ -88,7 +88,7 @@ public class SearchLogger
         
     }
 
-    public void logAllSearches()
+    public SearchDiagnostics logAllSearches()
     {
         SearchDiagnostics totaldiagnostics = new SearchDiagnostics();
         totaldiagnostics.ttHits = 0;
@@ -145,7 +145,7 @@ public class SearchLogger
         }
 
         currentDiagnostics = totaldiagnostics;
-        logSingleSearch();
+        return totaldiagnostics;
     }
 
     public void AddToLog(string message, LoggingLevel level)

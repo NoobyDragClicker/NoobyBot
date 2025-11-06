@@ -741,7 +741,10 @@ public class Board
     {
         if(!gameStateHistory[fullMoveClock].isMoveGenUpdated)
         {
-            gameStateHistory[fullMoveClock].attackedSquares = new ulong[2];
+            if(gameStateHistory[fullMoveClock].attackedSquares == null)
+            {
+                gameStateHistory[fullMoveClock].attackedSquares = new ulong[2];
+            }
             gameStateHistory[fullMoveClock].attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
             gameStateHistory[fullMoveClock].attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
             MoveGenerator.UpdateChecksAndPins(this);

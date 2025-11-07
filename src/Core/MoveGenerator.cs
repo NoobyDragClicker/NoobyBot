@@ -12,7 +12,7 @@ public static class MoveGenerator
         int currMoveIndex = 0;
         currMoveIndex = GenerateKingMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
         //Double check
-        if (!board.isCurrentPlayerInDoubleCheck)
+        if (!board.gameStateHistory[board.fullMoveClock].isCurrentPlayerInDoubleCheck)
         {
             currMoveIndex = GenerateBishopMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
             currMoveIndex = GenerateRookMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
@@ -72,10 +72,10 @@ public static class MoveGenerator
 
         ulong pawns = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Pawn)];
         ulong blockers = board.allPiecesBitboard;
+        ulong diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        ulong checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
+        ulong straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
 
-        ulong diagPins = board.diagPins;
-        ulong straightPins = board.straightPins;
-        ulong checkIndexes = board.checkIndexes;
         while (pawns != 0)
         {
             int index = BitboardHelper.PopLSB(ref pawns);
@@ -227,9 +227,9 @@ public static class MoveGenerator
 
         ulong knights = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Knight)];
 
-        ulong diagPins = board.diagPins;
-        ulong straightPins = board.straightPins;
-        ulong checkIndexes = board.checkIndexes;
+        ulong diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        ulong straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
+        ulong checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
         while (knights != 0)
         {
             int index = BitboardHelper.PopLSB(ref knights);
@@ -265,9 +265,9 @@ public static class MoveGenerator
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
         ulong bishops = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
-        ulong diagPins = board.diagPins;
-        ulong straightPins = board.straightPins;
-        ulong checkIndexes = board.checkIndexes;
+        ulong diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        ulong straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
+        ulong checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
 
         while (bishops != 0)
         {
@@ -307,9 +307,9 @@ public static class MoveGenerator
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
         ulong rooks = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
-        ulong diagPins = board.diagPins;
-        ulong straightPins = board.straightPins;
-        ulong checkIndexes = board.checkIndexes;
+        ulong diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        ulong straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
+        ulong checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
 
         while (rooks != 0)
         {
@@ -357,7 +357,7 @@ public static class MoveGenerator
 
         //Removing squares attacked by the enemy
         ulong kingMoves = BitboardHelper.kingAttacks[index];
-        kingMoves &= ~board.attackedSquares[oppositeColorIndex];
+        kingMoves &= ~board.gameStateHistory[board.fullMoveClock].attackedSquares[oppositeColorIndex];
         kingMoves &= ~board.sideBitboard[colorIndex];
 
         ulong kingCaptures = kingMoves & board.sideBitboard[oppositeColorIndex];
@@ -378,7 +378,7 @@ public static class MoveGenerator
         }
 
         //Add castling
-        ulong piecesAndAttackedSquares = board.attackedSquares[oppositeColorIndex] | board.allPiecesBitboard;
+        ulong piecesAndAttackedSquares = board.gameStateHistory[board.fullMoveClock].attackedSquares[oppositeColorIndex] | board.allPiecesBitboard;
         if (board.HasKingsideRight(pieceColor) && !board.gameStateHistory[board.fullMoveClock].isInCheck)
         {
             //No pieces/attacked squares between castling points
@@ -387,8 +387,8 @@ public static class MoveGenerator
         }
         if (board.HasQueensideRight(pieceColor) && !board.gameStateHistory[board.fullMoveClock].isInCheck)
         {
-            if (pieceColor == Piece.White && (board.attackedSquares[oppositeColorIndex] & BitboardHelper.whiteQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.whiteQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 58, false, 5); }
-            else if (pieceColor == Piece.Black && (board.attackedSquares[oppositeColorIndex] & BitboardHelper.blackQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.blackQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 2, false, 5); }
+            if (pieceColor == Piece.White && (board.gameStateHistory[board.fullMoveClock].attackedSquares[oppositeColorIndex] & BitboardHelper.whiteQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.whiteQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 58, false, 5); }
+            else if (pieceColor == Piece.Black && (board.gameStateHistory[board.fullMoveClock].attackedSquares[oppositeColorIndex] & BitboardHelper.blackQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.blackQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 2, false, 5); }
         }
         return currMoveIndex;
     }
@@ -428,10 +428,10 @@ public static class MoveGenerator
         checkRays |= pawnCheck;
         if(pawnCheck != 0) { numCheckingPieces++; }
 
-        board.checkIndexes = checkRays;
-        board.diagPins = diagPins;
-        board.straightPins = straightPins;
-        board.numCheckingPieces = numCheckingPieces;
+        board.gameStateHistory[board.fullMoveClock].checkIndexes = checkRays;
+        board.gameStateHistory[board.fullMoveClock].diagPins = diagPins;
+        board.gameStateHistory[board.fullMoveClock].straightPins = straightPins;
+        board.gameStateHistory[board.fullMoveClock].isCurrentPlayerInDoubleCheck  = numCheckingPieces > 1;
         
 
         void SlidersDetection(bool rook, ulong blocker, ulong friendly, ulong enemy, ref ulong checkRays, ref ulong pins)

@@ -15,19 +15,11 @@ public class Board
 
     public ulong[] pieceBitboards = new ulong[14];
     public ulong[] sideBitboard = new ulong[2];
-    public ulong[] attackedSquares = new ulong[2];
     public ulong allPiecesBitboard;
 
-    //Ray of squares in the pin, including the attacking piece
-    public ulong diagPins = 0;
-    public ulong straightPins = 0;
-     //Ray of squares in the check, including the attacking piece
-    public ulong checkIndexes = 0;
     public int[,] pieceCounts = new int[2, 7];
-    public bool isCurrentPlayerInDoubleCheck;
     
     public int colorTurn;
-    public int numCheckingPieces;
 
     //Saves the index where a pawn can capture
     public int enPassantIndex;
@@ -305,6 +297,8 @@ public class Board
         gameStateHistory[fullMoveClock].enPassantFile = enPassantFile;
         gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
         gameStateHistory[fullMoveClock].castlingRights = castlingRights;
+        gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
+
         UpdateSimpleCheckStatus();
 
         //Moving friendly piece
@@ -515,6 +509,8 @@ public class Board
         gameStateHistory[fullMoveClock].enPassantFile = 0;
         gameStateHistory[fullMoveClock].capturedPiece = 0;
         gameStateHistory[fullMoveClock].isInCheck = false;
+        gameStateHistory[fullMoveClock].isCurrentPlayerInDoubleCheck = false;
+        gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
         gameStateHistory[fullMoveClock].castlingRights = 0;//gameStateHistory[fullMoveClock - 1].castlingRights;
 
         enPassantIndex = -1;
@@ -622,26 +618,25 @@ public class Board
                 try
                 {
                     halfMoveClock = int.Parse(fenComponents[4]);
-                } catch(Exception){}
-                
+                }
+                catch (Exception) { }
+
             }
             if (fenComponents.Length >= 6)
             {
                 try
                 {
                     fullMoveClock = int.Parse(fenComponents[5]);
-                } catch(Exception){}
-                
+                }
+                catch (Exception) { }
             }
         }
-
         
         UpdateSimpleCheckStatus();
         gameStateHistory[fullMoveClock].capturedPiece = 0;
         gameStateHistory[fullMoveClock].castlingRights = castlingRights;
         gameStateHistory[fullMoveClock].enPassantFile = 0;
         gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
-
         return position;
     }
 
@@ -721,10 +716,16 @@ public class Board
 
     public void GenerateMoveGenInfo()
     {
-        attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
-        attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
-        MoveGenerator.UpdateChecksAndPins(this);
-        isCurrentPlayerInDoubleCheck = (numCheckingPieces > 1) ? true : false;        
+        if(!gameStateHistory[fullMoveClock].isMoveGenUpdated)
+        {
+            if(gameStateHistory[fullMoveClock].attackedSquares == null)
+            {
+                gameStateHistory[fullMoveClock].attackedSquares = new ulong[2];
+            }
+            gameStateHistory[fullMoveClock].attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
+            gameStateHistory[fullMoveClock].attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
+            MoveGenerator.UpdateChecksAndPins(this);
+        }    
     }
 
     public void UpdateSimpleCheckStatus()
@@ -765,8 +766,10 @@ public class Board
     public bool IsCheckmate(int color)
     {
         int kingIndex = MoveGenerator.GetKingIndex(color, this);
+        
         if (gameStateHistory[fullMoveClock].isInCheck)
         {
+            GenerateMoveGenInfo();
             Span<Move> legalKingMoves = stackalloc Move[218];
             int currMoveIndex = MoveGenerator.GenerateKingMoves(legalKingMoves, 0, color, this);
             //If there are any valid king moves
@@ -838,5 +841,11 @@ public struct GameState {
     public int enPassantFile;
     public int capturedPiece;
     public int halfMoveClock;
+    public ulong[] attackedSquares;
+    public ulong diagPins;
+    public ulong straightPins;
+    public ulong checkIndexes;
     public bool isInCheck;
+    public bool isMoveGenUpdated;
+    public bool isCurrentPlayerInDoubleCheck;
 }

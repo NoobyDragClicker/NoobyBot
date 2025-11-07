@@ -87,7 +87,6 @@ public class Evaluation
         int mgMaterialCount = board.gameStateHistory[board.fullMoveClock].mgPSQTVal;
         int egMaterialCount = board.gameStateHistory[board.fullMoveClock].egPSQTVal;
 
-
         int pawnEval = 0;
 
         ulong whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
@@ -124,8 +123,8 @@ public class Evaluation
         mgMaterialCount += queenValue * (board.pieceCounts[Board.WhiteIndex, Piece.Queen] - board.pieceCounts[Board.BlackIndex, Piece.Queen]);
         egMaterialCount += queenValue * (board.pieceCounts[Board.WhiteIndex, Piece.Queen] - board.pieceCounts[Board.BlackIndex, Piece.Queen]);
 
-        int phase = 4 * (board.pieceCounts[Board.WhiteIndex, Piece.Queen] + board.pieceCounts[Board.BlackIndex, Piece.Queen]) + 2 * (board.pieceCounts[Board.WhiteIndex, Piece.Rook] + board.pieceCounts[Board.BlackIndex, Piece.Rook]);
-        phase += 1 * (board.pieceCounts[Board.WhiteIndex, Piece.Knight] + board.pieceCounts[Board.BlackIndex, Piece.Knight] + board.pieceCounts[Board.WhiteIndex, Piece.Bishop] + board.pieceCounts[Board.BlackIndex, Piece.Bishop]);
+        int phase = (4 * (board.pieceCounts[Board.WhiteIndex, Piece.Queen] + board.pieceCounts[Board.BlackIndex, Piece.Queen])) + (2 * (board.pieceCounts[Board.WhiteIndex, Piece.Rook] + board.pieceCounts[Board.BlackIndex, Piece.Rook]));
+        phase += board.pieceCounts[Board.WhiteIndex, Piece.Knight] + board.pieceCounts[Board.BlackIndex, Piece.Knight] + board.pieceCounts[Board.WhiteIndex, Piece.Bishop] + board.pieceCounts[Board.BlackIndex, Piece.Bishop];
 
         int egScore = egMaterialCount + pawnEval;
         if (phase > 24) { phase = 24; }

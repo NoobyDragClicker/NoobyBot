@@ -189,7 +189,7 @@ public class Board
             {
                 //Set to the square behind the spot moved to
                 enPassantIndex = (colorTurn == Piece.White) ? (newPos + 8) : (newPos - 8);
-                enPassantFile = IndexToFile(startPos);
+                enPassantFile = Coord.IndexToFile(startPos);
             }
 
             //Once the king has been moved, you can't castle
@@ -713,29 +713,6 @@ public class Board
         fen += $" {fullMoveClock}";
         return fen;
     }
-    public bool IsDraw()
-    {
-        //Stalemate
-        Span<Move> moves = new Move[256];
-        int numMoves = MoveGenerator.GenerateLegalMoves(this, ref moves, colorTurn);
-        if (numMoves == 0 && !gameStateHistory[fullMoveClock].isInCheck) { return true; }
-        //50 move rule
-        if (halfMoveClock >= 100) { return true; }
-        if (IsRepetitionDraw()) { return true; }
-
-        if (pieceCounts[WhiteIndex, Piece.Pawn] + pieceCounts[BlackIndex, Piece.Pawn] +
-                pieceCounts[WhiteIndex, Piece.Rook] + pieceCounts[BlackIndex, Piece.Rook] +
-                pieceCounts[WhiteIndex, Piece.Queen] + pieceCounts[BlackIndex, Piece.Queen]
-                != 0) { return false; }
-        else if (pieceCounts[WhiteIndex, Piece.Knight] + pieceCounts[WhiteIndex, Piece.Bishop] <= 1 && pieceCounts[BlackIndex, Piece.Knight] + pieceCounts[BlackIndex, Piece.Bishop] <= 1)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
 
     public void GenerateMoveGenInfo()
     {
@@ -755,6 +732,7 @@ public class Board
     {
         gameStateHistory[fullMoveClock].isInCheck = MoveGenerator.DetermineCheckStatus(this);
     }
+
     public bool IsRepetitionDraw()
     {
         int repCount = 0;
@@ -814,24 +792,6 @@ public class Board
         }
     }
 
-
-    //Utilities
-    public int IndexToRank(int index)
-    {
-        return 8 - ((index - (index % 8)) / 8);
-    }
-
-    public int IndexToFile(int index)
-    {
-        int file = index % 8 + 1;
-        return file;
-    }
-
-    public int RankFileToIndex(int file, int rank)
-    {
-        int index = ((8 - rank) * 8) + file - 1;
-        return index;
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int PieceBitboardIndex(int colorIndex, int pieceType)

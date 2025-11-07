@@ -56,7 +56,7 @@ public class Search
         }
         catch (Exception e)
         {
-            logger.AddToLog("Iterative deepening error: " + e.Message, SearchLogger.LoggingLevel.Deadly);
+            Console.WriteLine(e);
         }
 
         if (bestMove.isNull())
@@ -64,7 +64,7 @@ public class Search
             Span<Move> legalMoves = new Move[256];
             int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
             bestMove = legalMoves[0];
-            logger.AddToLog($"Timed out, no move found. Num moves: {numMoves}. Generating random", SearchLogger.LoggingLevel.Deadly);
+            Console.WriteLine($"Timed out, no move found. Num moves: {numMoves}. Generating random");
         }
 
         onSearchComplete?.Invoke(bestMove);
@@ -96,7 +96,7 @@ public class Search
             }
             catch (Exception e)
             {
-                Console.WriteLine("SearchMoves error: " + e);
+                Console.WriteLine(e.Message);
             }
 
             if (bestMoveThisIteration.isNull())
@@ -207,8 +207,11 @@ public class Search
             }
         }
 
+
+        MoveOrder.Stage stage = MoveOrder.Stage.Other;
         Span<Move> legalMoves = stackalloc Move[218];
         int numLegalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
+        
 
         //Check for mate or stalemate
         if (numLegalMoves == 0)
@@ -223,25 +226,28 @@ public class Search
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
 
-        int bestScore = negativeInfinity;
 
-        for (int i = 0; i < numLegalMoves; i++)
+        int bestScore = negativeInfinity;
+        int moveNum = -1;
+        while(stage != MoveOrder.Stage.Finished)
         {
-            moveOrder.GetNextBestMove(moveScores, legalMoves, i);
+            moveNum++;
+            Move currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, moveNum);
+            if(moveNum == numLegalMoves - 1){ stage++; }
 
             //Store the move and piece type
-            moveOrder.movesAndPieceTypes[board.fullMoveClock] = (legalMoves[i], Piece.PieceType(board.board[legalMoves[i].oldIndex]));
+            moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, Piece.PieceType(board.board[currentMove.oldIndex]));
 
-            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !legalMoves[i].isCapture() && !legalMoves[i].isPromotion())
+            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !currentMove.isCapture() && !currentMove.isPromotion())
             {
                 //Futility pruning
                 if (depth < 4 && (staticEval + (150 * depth)) < alpha) { continue; }
                 //Late Move pruning
-                if(i > 10 + depth * depth ){ continue; }
+                if(moveNum > 10 + depth * depth ){ continue; }
             }
 
 
-            board.Move(legalMoves[i], true);
+            board.Move(currentMove, true);
             logger.currentDiagnostics.nodesSearched++;
 
             //Check extension
@@ -255,9 +261,9 @@ public class Search
 
             int reductions = 0;
             //LMR
-            if (i > 0 && depth > 3)
+            if (moveNum > 0 && depth > 3)
             {
-                reductions = 1 + (int)(Math.Log(i) * Math.Log(depth) / 3);
+                reductions = 1 + (int)(Math.Log(moveNum) * Math.Log(depth) / 3);
             }
 
             int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
@@ -267,18 +273,18 @@ public class Search
                 eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
             }
 
-            board.UndoMove(legalMoves[i]);
+            board.UndoMove(currentMove);
 
             if (abortSearch) { return 0; }
 
             if (eval > bestScore)
             {
                 bestScore = eval;
-                bestMoveInThisPosition = legalMoves[i];
+                bestMoveInThisPosition = currentMove;
                 //If this is a root move, set it to the best move
                 if (plyFromRoot == 0)
                 {
-                    bestMoveThisIteration = legalMoves[i];
+                    bestMoveThisIteration = currentMove;
                 }
 
                 //This move is better than the current move
@@ -293,14 +299,14 @@ public class Search
             if (eval >= beta)
             {
                 //Exiting search early, so it is a lower bound
-                tt.StoreEvaluation(depth - reductions, plyFromRoot, bestScore, TranspositionTable.LowerBound, legalMoves[i]);
+                tt.StoreEvaluation(depth - reductions, plyFromRoot, bestScore, TranspositionTable.LowerBound, currentMove);
                 //Saving quiet move to killers
-                if (!legalMoves[i].isCapture())
+                if (!currentMove.isCapture())
                 {
                     moveOrder.UpdateMoveOrderTables(depth, board.fullMoveClock, board.colorTurn);
-                    if(i > 0)
+                    if (moveNum > 0)
                     {
-                        moveOrder.ApplyHistoryPenalties(ref legalMoves, i, depth, board);
+                        moveOrder.ApplyHistoryPenalties(ref legalMoves, moveNum, depth, board);
                     }
                 }
                 return bestScore;
@@ -341,17 +347,23 @@ public class Search
         int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
         int[] moveScores = moveOrder.ScoreCaptures(board, legalMoves);
 
-        for (int i = 0; i < numMoves; i++)
+        MoveOrder.Stage stage = MoveOrder.Stage.Other;
+        if(numMoves == 0){ stage++; }
+
+        int moveNum = -1;
+        while(stage !=  MoveOrder.Stage.Finished)
         {
-            moveOrder.GetNextBestMove(moveScores, legalMoves, i);
+            moveNum++;
+            Move currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, moveNum);
+            if(moveNum == numMoves - 1){ stage++; }
 
             //Delta pruning
-            if ((standPat + getCapturedPieceVal(legalMoves[i]) + 150) < alpha){ continue; }
+            if ((standPat + getCapturedPieceVal(currentMove) + 150) < alpha){ continue; }
 
-            board.Move(legalMoves[i], true);
+            board.Move(currentMove, true);
             logger.currentDiagnostics.nodesSearched++;
             int eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
-            board.UndoMove(legalMoves[i]);
+            board.UndoMove(currentMove);
             
             if (eval > bestEval)
             {
@@ -365,7 +377,6 @@ public class Search
             {
                 return bestEval;
             }
-            
         }
         return bestEval;
     }

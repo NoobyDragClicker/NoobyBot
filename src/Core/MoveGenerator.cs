@@ -5,25 +5,6 @@ using System.Linq;
 
 public static class MoveGenerator
 {
-
-    //Used for a player when clicking on a piece
-    public static List<Move> GeneratePieceMove(int piece, int index, Board board)
-    {
-        Span<Move> legalMoves = new Move[256];
-        GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
-        List<Move> correctMoves = new List<Move>();
-        foreach (Move move in legalMoves)
-        {
-            if (move.oldIndex == index)
-            {
-                correctMoves.Add(move);
-            }
-        }
-        
-        return correctMoves;
-    }
-
-    //Returns all legal moves in a position
     public static int GenerateLegalMoves(Board board, ref Span<Move> legalMoves, int pieceColor, bool isCapturesOnly = false)
     {
 
@@ -84,7 +65,6 @@ public static class MoveGenerator
         return attacks;
     }
 
-    //Self explanatory
     public static int GeneratePawnMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor,  Board board, bool isCapturesOnly = false)
     {
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
@@ -101,8 +81,6 @@ public static class MoveGenerator
             int index = BitboardHelper.PopLSB(ref pawns);
             int rank = Coord.IndexToRank(index);
             ulong moves = 0;
-
-            
             bool isDiagPinned = BitboardHelper.ContainsSquare(diagPins, index);
 
             if (pieceColor == Piece.White)
@@ -528,7 +506,6 @@ public static class MoveGenerator
         if (pawnCheck != 0) { return true; }
         return false;
     }
-    //Returns king's position
     public static int GetKingIndex(int kingColor, Board board)
     {
         int colorIndex = (kingColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;

@@ -83,6 +83,7 @@ public class Search
             {
                 bestEval = SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
             }
+            
 
             if (bestMoveThisIteration.isNull())
             {

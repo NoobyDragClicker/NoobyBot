@@ -803,7 +803,7 @@ public class Board
     public bool IsRepetitionDraw()
     {
         int repCount = 0;
-        for(int index = fullMoveClock; index >= fullMoveClock - halfMoveClock; index--)
+        for(int index = fullMoveClock; index >= ((fullMoveClock - halfMoveClock) > 0 ? (fullMoveClock - halfMoveClock) : 0); index--)
         {
             if (zobristHistory[index] == zobristKey) { repCount++; }
             if(repCount >= 2){ return true; }

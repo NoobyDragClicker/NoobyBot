@@ -79,14 +79,14 @@ public class Evaluation
         numWhiteIsolatedPawns = 0;
         numBlackIsolatedPawns = 0;
         int boardVal = IncrementalCount(board);
-        numWhiteIsolatedPawns = 0;
+        /*numWhiteIsolatedPawns = 0;
         numBlackIsolatedPawns = 0;
         int normalVal = CountMaterial(board);
         if(boardVal != normalVal)
         {
             throw new Exception();
             Console.WriteLine($"Mismatch {boardVal} | {normalVal} | {board.startFen}");
-        }
+        }*/
         return boardVal;
     }
 

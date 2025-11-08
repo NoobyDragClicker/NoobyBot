@@ -164,8 +164,6 @@ public class Board
                 mgValDifference -= Evaluation.mg_PSQT[Piece.Rook, 63 - newRookIndex] + Evaluation.mg_PSQT[Piece.King, 63 - newPos] - Evaluation.mg_PSQT[Piece.Rook, 63 - oldRookIndex] - Evaluation.mg_PSQT[Piece.King, 63 - startPos];
                 egValDifference -= Evaluation.eg_PSQT[Piece.Rook, 63 - newRookIndex] + Evaluation.eg_PSQT[Piece.King, 63 - newPos] - Evaluation.eg_PSQT[Piece.Rook, 63 - oldRookIndex] - Evaluation.eg_PSQT[Piece.King, 63 - startPos];
             }
-
-
             board[newPos] = movedPiece;
             board[startPos] = 0;
 

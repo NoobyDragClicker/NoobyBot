@@ -40,7 +40,6 @@ public class Board
     public void setPosition(string fenPosition, SearchLogger logger)
     {
         this.logger = logger;
-        gameStateHistory = new GameState[Search.maxGamePly];
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory[fullMoveClock] = zobristKey;
@@ -590,6 +589,13 @@ public class Board
 
     public int[] ConvertFromFEN(string fenPosition)
     {
+
+        gameStateHistory = new GameState[Search.maxGamePly];
+        zobristHistory = new ulong[Search.maxGamePly];
+        pieceBitboards = new ulong[14];
+        pieceCounts = new int[2, 7];
+        sideBitboard = new ulong[2];
+        allPiecesBitboard = 0;
 
         Dictionary<char, int> pieceTypeFromSymbol = new Dictionary<char, int>()
         {

@@ -40,6 +40,7 @@ public class Board
     public void setPosition(string fenPosition, SearchLogger logger)
     {
         this.logger = logger;
+        gameStateHistory = new GameState[Search.maxGamePly];
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory[fullMoveClock] = zobristKey;

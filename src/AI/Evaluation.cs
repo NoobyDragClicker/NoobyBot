@@ -84,6 +84,7 @@ public class Evaluation
         int normalVal = CountMaterial(board);
         if(boardVal != normalVal)
         {
+            throw new Exception();
             Console.WriteLine($"Mismatch {boardVal} | {normalVal} | {board.startFen}");
         }
         return boardVal;

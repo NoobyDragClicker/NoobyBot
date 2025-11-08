@@ -65,18 +65,14 @@ public class Engine
             case "ucinewgame":
                 board = new Board();
                 player.NewGame(board, aiSettings);
-                hasStartedGame = true;
                 break;
             case "bench":
                 SearchTester tester = new SearchTester(logger);
                 tester.RunBench();
                 break;
             case "position":
-                if (!hasStartedGame)
-                {
-                    board = new Board();
-                    player.NewGame(board, aiSettings);
-                }
+                board = new Board();
+                player.NewGame(board, aiSettings);
                 ProcessPositionCommand(command);
                 break;
             case "go":

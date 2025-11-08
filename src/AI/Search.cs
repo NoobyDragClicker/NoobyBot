@@ -50,15 +50,7 @@ public class Search
     {
         bestMove = nullMove;
         abortSearch = false;
-        try
-        {
-            bestEval = StartIterativeDeepening(aiSettings.maxDepth, writeInfoLine);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-
+        bestEval = StartIterativeDeepening(aiSettings.maxDepth, writeInfoLine);
         if (bestMove.isNull())
         {
             Span<Move> legalMoves = new Move[256];
@@ -86,17 +78,10 @@ public class Search
             //Aspiration windows
             int alpha = bestEval - window;
             int beta = bestEval + window;
-            try
+            bestEval = SearchMoves(depth, 0, alpha, beta, 0);
+            if(bestEval <= alpha || bestEval >= beta)
             {
-                bestEval = SearchMoves(depth, 0, alpha, beta, 0);
-                if(bestEval <= alpha || bestEval >= beta)
-                {
-                    bestEval = SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
+                bestEval = SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
             }
 
             if (bestMoveThisIteration.isNull())

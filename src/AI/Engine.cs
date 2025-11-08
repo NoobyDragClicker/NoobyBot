@@ -186,7 +186,7 @@ public class Engine
         {
             SearchTester tester = new SearchTester(testingLogger);
             int targetDepth = 6;
-            int numPositions = 125;
+            int numPositions = 500;
 
             if (message.Contains("depth"))
             {

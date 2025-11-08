@@ -74,8 +74,9 @@ public class Engine
             case "position":
                 if (!hasStartedGame)
                 {
-                    board = new Board();
+                   board = new Board();
                     player.NewGame(board, aiSettings);
+                    hasStartedGame = true;
                 }
                 ProcessPositionCommand(command);
                 break;
@@ -110,17 +111,7 @@ public class Engine
 
     void MakeMove(Move move, string name)
     {
-        try
-        {
-            board.Move(move, false);
-            Console.WriteLine("bestmove " + convertMoveToUCI(move));
-            player.logger.AddToLog("bestmove " + convertMoveToUCI(move), SearchLogger.LoggingLevel.Info);
-        }
-        catch (Exception e)
-        {
-            player.logger.AddToLog("MakeMove Error:" + e.Message, SearchLogger.LoggingLevel.Deadly);
-        }
-        
+        Console.WriteLine("bestmove " + convertMoveToUCI(move));
     }
 
     //Sets up board position
@@ -150,7 +141,6 @@ public class Engine
             {
                 board.Move(convertUCIMove(move), false);
             }
-
         }
     }
 
@@ -186,7 +176,7 @@ public class Engine
         {
             SearchTester tester = new SearchTester(testingLogger);
             int targetDepth = 6;
-            int numPositions = 125;
+            int numPositions = 500;
 
             if (message.Contains("depth"))
             {

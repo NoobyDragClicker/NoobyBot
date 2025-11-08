@@ -501,23 +501,23 @@ public class TexelTuner
             case "rookVal": Evaluation.rookValue = newEval; break;
             case "queenVal": Evaluation.queenValue = newEval; break;
 
-            case "mg_pawn_table": Evaluation.mg_pawn_table[index] = newEval; break;
-            case "eg_pawn_table": Evaluation.eg_pawn_table[index] = newEval; break;
+            case "mg_pawn_table": Evaluation.mg_PSQT[Piece.Pawn, index] = newEval; break;
+            case "eg_pawn_table": Evaluation.eg_PSQT[Piece.Pawn, index] = newEval; break;
 
-            case "mg_knight_table": Evaluation.mg_knight_table[index] = newEval; break;
-            case "eg_knight_table": Evaluation.eg_knight_table[index] = newEval; break;
+            case "mg_knight_table": Evaluation.mg_PSQT[Piece.Knight, index] = newEval; break;
+            case "eg_knight_table": Evaluation.eg_PSQT[Piece.Knight, index] = newEval; break;
 
-            case "mg_bishop_table": Evaluation.mg_bishop_table[index] = newEval; break;
-            case "eg_bishop_table": Evaluation.eg_bishop_table[index] = newEval; break;
+            case "mg_bishop_table": Evaluation.mg_PSQT[Piece.Bishop, index] = newEval; break;
+            case "eg_bishop_table": Evaluation.eg_PSQT[Piece.Bishop, index] = newEval; break;
 
-            case "mg_rook_table": Evaluation.mg_rook_table[index] = newEval; break;
-            case "eg_rook_table": Evaluation.eg_rook_table[index] = newEval; break;
+            case "mg_rook_table": Evaluation.mg_PSQT[Piece.Rook, index] = newEval; break;
+            case "eg_rook_table": Evaluation.eg_PSQT[Piece.Rook, index] = newEval; break;
 
-            case "mg_queen_table": Evaluation.mg_queen_table[index] = newEval; break;
-            case "eg_queen_table": Evaluation.eg_queen_table[index] = newEval; break;
+            case "mg_queen_table": Evaluation.mg_PSQT[Piece.Queen, index] = newEval; break;
+            case "eg_queen_table": Evaluation.eg_PSQT[Piece.Queen, index] = newEval; break;
 
-            case "mg_king_table": Evaluation.mg_king_table[index] = newEval; break;
-            case "eg_king_table": Evaluation.eg_king_table[index] = newEval; break;
+            case "mg_king_table": Evaluation.mg_PSQT[Piece.King, index] = newEval; break;
+            case "eg_king_table": Evaluation.eg_PSQT[Piece.King, index] = newEval; break;
 
             case "isolatedPawnPenalty": Evaluation.isolatedPawnPenalty[index] = newEval; break;
             case "passedPawnBonuses": Evaluation.passedPawnBonuses[index] = newEval; break;
@@ -676,8 +676,8 @@ public class TexelTuner
         loadedParams.Add(ConvertParam("bishopVal", Evaluation.bishopValue));
         loadedParams.Add(ConvertParam("rookVal", Evaluation.rookValue));
         loadedParams.Add(ConvertParam("queenVal", Evaluation.queenValue));
-        
-        loadedParams.AddRange(ConvertArrayToParams("mg_pawn_table", Evaluation.mg_pawn_table));
+        /*
+        loadedParams.AddRange(ConvertArrayToParams("mg_pawn_table", Evaluation.mg_PSQT[]));
         loadedParams.AddRange(ConvertArrayToParams("eg_pawn_table", Evaluation.eg_pawn_table));
 
         loadedParams.AddRange(ConvertArrayToParams("mg_knight_table", Evaluation.mg_knight_table));
@@ -696,7 +696,7 @@ public class TexelTuner
         loadedParams.AddRange(ConvertArrayToParams("eg_king_table", Evaluation.eg_king_table));
 
         loadedParams.AddRange(ConvertArrayToParams("passedPawnBonuses", Evaluation.passedPawnBonuses));
-        loadedParams.AddRange(ConvertArrayToParams("isolatedPawnPenalty", Evaluation.isolatedPawnPenalty));
+        loadedParams.AddRange(ConvertArrayToParams("isolatedPawnPenalty", Evaluation.isolatedPawnPenalty));*/
         
         
         numParameters = loadedParams.Count();

@@ -481,6 +481,6 @@ public class Perft
         "rnbq1rk1/p3bppp/5n2/2pp4/8/2N1PN2/PP2BPPP/R1BQ1RK1 w - - c9 ; 1/2-1/2",
         "1r3rk1/3bqpp1/1ppp3p/p7/P1PPPnP1/4NB2/2QB1PP1/1R3RK1 b - - c9 ; 1-0",
         "8/1p4k1/p7/b7/4P1Bp/5K2/2P5/8 w - - c9 ; 1/2-1/2",
-        "r1bqk2r/pppp1ppp/5n2/4n3/2PP4/P5P1/5P1P/R1BQKBNR b KQkq - c9 ; 1/2-1/2",
-    };
+        "r1bqk2r/pppp1ppp/5n2/4n3/2PP4/P5P1/5P1P/R1BQKBNR b KQkq - c9 ; 1/2-1/2"
+        };
 }

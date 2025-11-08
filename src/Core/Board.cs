@@ -63,6 +63,9 @@ public class Board
         int newPiece; //Used for promotions
         int capturedPiece = 0;
 
+        int mgValDifference = 0;
+        int egValDifference = 0;
+
         int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
         int oppositeColorIndex = 1 - currentColorIndex;
 
@@ -151,6 +154,16 @@ public class Board
             BitboardHelper.ClearSquare(ref sideBitboard[currentColorIndex], startPos);
             BitboardHelper.SetSquare(ref sideBitboard[currentColorIndex], newPos);
 
+            if(colorTurn == Piece.White)
+            {
+                mgValDifference += Evaluation.mg_PSQT[Piece.Rook, newRookIndex] + Evaluation.mg_PSQT[Piece.King, newPos] - Evaluation.mg_PSQT[Piece.Rook, oldRookIndex] - Evaluation.mg_PSQT[Piece.King, startPos];
+                egValDifference += Evaluation.eg_PSQT[Piece.Rook, newRookIndex] + Evaluation.eg_PSQT[Piece.King, newPos] - Evaluation.eg_PSQT[Piece.Rook, oldRookIndex] - Evaluation.eg_PSQT[Piece.King, startPos];
+            }
+            else
+            {
+                mgValDifference -= Evaluation.mg_PSQT[Piece.Rook, 63 - newRookIndex] + Evaluation.mg_PSQT[Piece.King, 63 - newPos] - Evaluation.mg_PSQT[Piece.Rook, 63 - oldRookIndex] - Evaluation.mg_PSQT[Piece.King, 63 - startPos];
+                egValDifference -= Evaluation.eg_PSQT[Piece.Rook, 63 - newRookIndex] + Evaluation.eg_PSQT[Piece.King, 63 - newPos] - Evaluation.eg_PSQT[Piece.Rook, 63 - oldRookIndex] - Evaluation.eg_PSQT[Piece.King, 63 - startPos];
+            }
             board[newPos] = movedPiece;
             board[startPos] = 0;
 
@@ -176,6 +189,17 @@ public class Board
 
             BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)], attackedPawnIndex);
             BitboardHelper.ClearSquare(ref sideBitboard[oppositeColorIndex], attackedPawnIndex);
+
+            if(colorTurn == Piece.White)
+            {
+                mgValDifference += Evaluation.mg_PSQT[Piece.Pawn, newPos] - Evaluation.mg_PSQT[Piece.Pawn, startPos] + Evaluation.mg_PSQT[Piece.Pawn, 63 - attackedPawnIndex];
+                egValDifference += Evaluation.eg_PSQT[Piece.Pawn, newPos] - Evaluation.eg_PSQT[Piece.Pawn, startPos] + Evaluation.eg_PSQT[Piece.Pawn, 63 - attackedPawnIndex];
+            }
+            else
+            {
+                mgValDifference -= Evaluation.mg_PSQT[Piece.Pawn, 63 - newPos] - Evaluation.mg_PSQT[Piece.Pawn, 63 - startPos] + Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex];
+                egValDifference -= Evaluation.eg_PSQT[Piece.Pawn, 63 - newPos] - Evaluation.eg_PSQT[Piece.Pawn, 63 - startPos] + Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex];
+            }
 
             zobristKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
 
@@ -250,6 +274,17 @@ public class Board
                 BitboardHelper.ClearSquare(ref sideBitboard[currentColorIndex], startPos);
                 BitboardHelper.SetSquare(ref sideBitboard[currentColorIndex], newPos);
 
+                if(colorTurn == Piece.White)
+                {
+                    mgValDifference += Evaluation.mg_PSQT[newPieceType, newPos] - Evaluation.mg_PSQT[movedPieceType, startPos] + Evaluation.mg_PSQT[capturedPieceType, 63 - newPos];
+                    egValDifference += Evaluation.eg_PSQT[newPieceType, newPos] - Evaluation.eg_PSQT[movedPieceType, startPos] + Evaluation.eg_PSQT[capturedPieceType, 63 - newPos];
+                }
+                else
+                {
+                    mgValDifference -= Evaluation.mg_PSQT[newPieceType, 63 - newPos] - Evaluation.mg_PSQT[movedPieceType, 63 - startPos] + Evaluation.mg_PSQT[capturedPieceType, newPos];
+                    egValDifference -= Evaluation.eg_PSQT[newPieceType, 63 - newPos] - Evaluation.eg_PSQT[movedPieceType, 63 - startPos] + Evaluation.eg_PSQT[capturedPieceType, newPos];
+                }
+
 
                 board[newPos] = newPiece;
                 board[startPos] = 0;
@@ -273,6 +308,17 @@ public class Board
                 BitboardHelper.ClearSquare(ref sideBitboard[currentColorIndex], startPos);
                 BitboardHelper.SetSquare(ref sideBitboard[currentColorIndex], newPos);
 
+                if (colorTurn == Piece.White)
+                {
+                    mgValDifference += Evaluation.mg_PSQT[newPieceType, newPos] - Evaluation.mg_PSQT[movedPieceType, startPos];
+                    egValDifference += Evaluation.eg_PSQT[newPieceType, newPos] - Evaluation.eg_PSQT[movedPieceType, startPos];
+                }
+                else
+                {
+                    mgValDifference -= Evaluation.mg_PSQT[newPieceType, 63 - newPos] - Evaluation.mg_PSQT[movedPieceType, 63 - startPos];
+                    egValDifference -= Evaluation.eg_PSQT[newPieceType, 63 - newPos] - Evaluation.eg_PSQT[movedPieceType, 63 - startPos];
+                }
+                
                 board[newPos] = newPiece;
                 board[startPos] = 0;
 
@@ -298,6 +344,8 @@ public class Board
         gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
         gameStateHistory[fullMoveClock].castlingRights = castlingRights;
         gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
+        gameStateHistory[fullMoveClock].mgPSQTVal = gameStateHistory[fullMoveClock - 1].mgPSQTVal + mgValDifference;
+        gameStateHistory[fullMoveClock].egPSQTVal = gameStateHistory[fullMoveClock - 1].egPSQTVal + egValDifference;
 
         UpdateSimpleCheckStatus();
 
@@ -512,6 +560,8 @@ public class Board
         gameStateHistory[fullMoveClock].isCurrentPlayerInDoubleCheck = false;
         gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
         gameStateHistory[fullMoveClock].castlingRights = 0;//gameStateHistory[fullMoveClock - 1].castlingRights;
+        gameStateHistory[fullMoveClock].mgPSQTVal = gameStateHistory[fullMoveClock - 1].mgPSQTVal;
+        gameStateHistory[fullMoveClock].egPSQTVal = gameStateHistory[fullMoveClock - 1].egPSQTVal;
 
         enPassantIndex = -1;
 
@@ -540,6 +590,13 @@ public class Board
     public int[] ConvertFromFEN(string fenPosition)
     {
 
+        gameStateHistory = new GameState[Search.maxGamePly];
+        zobristHistory = new ulong[Search.maxGamePly];
+        pieceBitboards = new ulong[14];
+        pieceCounts = new int[2, 7];
+        sideBitboard = new ulong[2];
+        allPiecesBitboard = 0;
+
         Dictionary<char, int> pieceTypeFromSymbol = new Dictionary<char, int>()
         {
             ['k'] = Piece.King,
@@ -556,6 +613,8 @@ public class Board
         //Part denoting position of each piece
         string posString = fenComponents[0];
         int index = 0;
+        int mgVal = 0;
+        int egVal = 0;
         foreach (char c in posString)
         {
             if (c == '/')
@@ -575,6 +634,18 @@ public class Board
 
                     BitboardHelper.SetSquare(ref pieceBitboards[PieceBitboardIndex(colorIndex, pieceType)], index);
                     pieceCounts[colorIndex, pieceType] += 1;
+
+                    if(pieceColour == Piece.White)
+                    {
+                        mgVal += Evaluation.mg_PSQT[pieceType, index];
+                        egVal += Evaluation.eg_PSQT[pieceType, index];
+                    }
+                    else
+                    {
+                        mgVal -= Evaluation.mg_PSQT[pieceType, 63 - index];
+                        egVal -= Evaluation.eg_PSQT[pieceType, 63 - index];
+                    }
+
                     index++;
                 }
                 else if (Char.IsNumber(c))
@@ -637,6 +708,8 @@ public class Board
         gameStateHistory[fullMoveClock].castlingRights = castlingRights;
         gameStateHistory[fullMoveClock].enPassantFile = 0;
         gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
+        gameStateHistory[fullMoveClock].mgPSQTVal = mgVal;
+        gameStateHistory[fullMoveClock].egPSQTVal = egVal;
         return position;
     }
 
@@ -736,7 +809,7 @@ public class Board
     public bool IsRepetitionDraw()
     {
         int repCount = 0;
-        for(int index = fullMoveClock; index >= fullMoveClock - halfMoveClock; index--)
+        for(int index = fullMoveClock; index >= ((fullMoveClock - halfMoveClock) > 0 ? (fullMoveClock - halfMoveClock) : 0); index--)
         {
             if (zobristHistory[index] == zobristKey) { repCount++; }
             if(repCount >= 2){ return true; }
@@ -848,4 +921,6 @@ public struct GameState {
     public bool isInCheck;
     public bool isMoveGenUpdated;
     public bool isCurrentPlayerInDoubleCheck;
+    public int mgPSQTVal;
+    public int egPSQTVal;
 }

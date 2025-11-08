@@ -38,7 +38,6 @@ public class SearchTester
             {
                 Console.WriteLine(e);
             }
-            
         }
     }
 

@@ -76,13 +76,13 @@ public class Evaluation
         colorTurn = board.colorTurn;
         playerTurnMultiplier = (colorTurn == Piece.White) ? 1 : -1;
 
-        /*numWhiteIsolatedPawns = 0;
-        numBlackIsolatedPawns = 0;
-        int boardVal = IncrementalCount(board);*/
         numWhiteIsolatedPawns = 0;
         numBlackIsolatedPawns = 0;
-        int normalVal = CountMaterial(board);
-        return normalVal;
+        int boardVal = IncrementalCount(board);
+        /*numWhiteIsolatedPawns = 0;
+        numBlackIsolatedPawns = 0;
+        int normalVal = CountMaterial(board);*/
+        return boardVal;
     }
 
     int IncrementalCount(Board board)

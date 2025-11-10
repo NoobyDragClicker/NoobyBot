@@ -5,22 +5,22 @@ using System.Linq;
 
 public static class MoveGenerator
 {
-    public static int GenerateLegalMoves(Board board, ref Span<Move> legalMoves, int pieceColor, bool isCapturesOnly = false)
+    public static int GenerateLegalMoves(Board board, ref Span<Move> legalMoves, int pieceColor, int currMoveIndex, bool isCapturesOnly = false)
     {
 
         board.GenerateMoveGenInfo();
-        int currMoveIndex = 0;
-        currMoveIndex = GenerateKingMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
+        int moveIndex = currMoveIndex;
+        moveIndex = GenerateKingMoves(legalMoves, moveIndex, pieceColor, board, isCapturesOnly);
         //Double check
         if (!board.gameStateHistory[board.fullMoveClock].isCurrentPlayerInDoubleCheck)
         {
-            currMoveIndex = GenerateBishopMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
-            currMoveIndex = GenerateRookMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
-            currMoveIndex = GenerateKnightMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
-            currMoveIndex = GeneratePawnMoves(legalMoves, currMoveIndex, pieceColor, board, isCapturesOnly);
+            moveIndex = GenerateBishopMoves(legalMoves, moveIndex, pieceColor, board, isCapturesOnly);
+            moveIndex = GenerateRookMoves(legalMoves, moveIndex, pieceColor, board, isCapturesOnly);
+            moveIndex = GenerateKnightMoves(legalMoves, moveIndex, pieceColor, board, isCapturesOnly);
+            moveIndex = GeneratePawnMoves(legalMoves, moveIndex, pieceColor, board, isCapturesOnly);
         }
-        legalMoves = legalMoves.Slice(0, currMoveIndex);
-        return currMoveIndex;
+        legalMoves = legalMoves.Slice(0, moveIndex);
+        return moveIndex;
     }
     
     public static ulong GenerateAttackedSquares(Board board, int attackingPieceColor)
@@ -65,7 +65,7 @@ public static class MoveGenerator
         return attacks;
     }
 
-    public static int GeneratePawnMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor,  Board board, bool isCapturesOnly = false)
+    public static int GeneratePawnMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor, Board board, bool isCapturesOnly = false)
     {
         int colorIndex = (pieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
@@ -90,28 +90,28 @@ public static class MoveGenerator
                 if (!BitboardHelper.ContainsSquare(straightPins, index))
                 {
                     moves = BitboardHelper.wPawnAttacks[index] & board.sideBitboard[oppositeColorIndex];
-                    if(isDiagPinned) { moves &= diagPins; }
+                    if (isDiagPinned) { moves &= diagPins; }
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
                     while (moves != 0)
                     {
-                        if (!isMovePromotion){ legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true); }
+                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true); }
                         else
                         {
                             int newIndex = BitboardHelper.PopLSB(ref moves);
-                            for (int flag = 1; flag < 5; flag++){ legalMoves[currMoveIndex++] = new Move(index, newIndex, true, flag); }
+                            for (int flag = 1; flag < 5; flag++) { legalMoves[currMoveIndex++] = new Move(index, newIndex, true, flag); }
                         }
-                        
+
                     }
 
                     //EnPassant
                     if (board.enPassantIndex != -1)
                     {
                         moves = BitboardHelper.wPawnAttacks[index] & (1ul << board.enPassantIndex);
-                        if(isDiagPinned) { moves &= diagPins; }
+                        if (isDiagPinned) { moves &= diagPins; }
                         if (board.gameStateHistory[board.fullMoveClock].isInCheck & !BitboardHelper.ContainsSquare(checkIndexes, board.enPassantIndex + 8)) { moves &= checkIndexes; }
                         if (moves != 0)
                         {
-                            if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex + 8)) | moves)))
+                            if (isLegalEP(pieceColor, board, board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex + 8)) | moves)))
                             {
                                 legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, 7);
                             }
@@ -125,7 +125,7 @@ public static class MoveGenerator
                     {
                         moves = BitboardHelper.wPawnDouble[index];
                         if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                        if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                        if (BitboardHelper.ContainsSquare(straightPins, index)) { moves &= straightPins; }
                     }
 
                     while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, 6); }
@@ -133,7 +133,7 @@ public static class MoveGenerator
                     moves = !isDiagPinned ? BitboardHelper.wPawnMoves[index] : 0;
                     moves &= ~blockers;
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                    if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                    if (BitboardHelper.ContainsSquare(straightPins, index)) { moves &= straightPins; }
 
                     while (moves != 0)
                     {
@@ -154,7 +154,7 @@ public static class MoveGenerator
                 {
                     moves = BitboardHelper.bPawnAttacks[index] & board.sideBitboard[oppositeColorIndex];
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                    if(isDiagPinned) { moves &= diagPins; }
+                    if (isDiagPinned) { moves &= diagPins; }
                     while (moves != 0)
                     {
                         if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true); }
@@ -170,11 +170,11 @@ public static class MoveGenerator
                     if (board.enPassantIndex != -1)
                     {
                         moves = BitboardHelper.bPawnAttacks[index] & (1ul << board.enPassantIndex);
-                        if(isDiagPinned) { moves &= diagPins; }
-                        if (board.gameStateHistory[board.fullMoveClock].isInCheck & ! BitboardHelper.ContainsSquare(checkIndexes, board.enPassantIndex - 8)) { moves &= checkIndexes; }
+                        if (isDiagPinned) { moves &= diagPins; }
+                        if (board.gameStateHistory[board.fullMoveClock].isInCheck & !BitboardHelper.ContainsSquare(checkIndexes, board.enPassantIndex - 8)) { moves &= checkIndexes; }
                         if (moves != 0)
                         {
-                            if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex - 8)) | moves)))
+                            if (isLegalEP(pieceColor, board, board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex - 8)) | moves)))
                             {
                                 legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, 7);
                             }
@@ -188,7 +188,7 @@ public static class MoveGenerator
                     {
                         moves = BitboardHelper.bPawnDouble[index];
                         if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                        if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                        if (BitboardHelper.ContainsSquare(straightPins, index)) { moves &= straightPins; }
                     }
 
                     while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, 6); }
@@ -196,7 +196,7 @@ public static class MoveGenerator
                     moves = !isDiagPinned ? BitboardHelper.bPawnMoves[index] : 0;
                     moves &= ~blockers;
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                    if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                    if (BitboardHelper.ContainsSquare(straightPins, index)) { moves &= straightPins; }
 
                     while (moves != 0)
                     {
@@ -209,16 +209,18 @@ public static class MoveGenerator
                     }
                 }
             }
-            
+
         }
         return currMoveIndex;
 
-        bool isLegalEP(ulong boardMinusPawnsInvolved)
-        {
-            int kingIndex = GetKingIndex(pieceColor, board);
-            ulong attackingPiecesMask = BitboardHelper.GetRookAttacks(kingIndex, boardMinusPawnsInvolved);
-            return (attackingPiecesMask & (board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Queen)])) == 0;
-        }
+
+    }
+    public static bool isLegalEP(int pieceColor, Board board, ulong boardMinusPawnsInvolved)
+    {
+        int oppositeColorIndex = (pieceColor == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
+        int kingIndex = GetKingIndex(pieceColor, board);
+        ulong attackingPiecesMask = BitboardHelper.GetRookAttacks(kingIndex, boardMinusPawnsInvolved);
+        return (attackingPiecesMask & (board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Queen)])) == 0;
     }
     public static int GenerateKnightMoves(Span<Move> legalMoves, int currMoveIndex, int pieceColor, Board board, bool isCapturesOnly = false)
     {

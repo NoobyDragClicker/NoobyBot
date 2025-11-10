@@ -146,15 +146,14 @@ public class Perft
             return 1;
         }
         Span<Move> moves = stackalloc Move[218];
-        MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
+        MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn, 0);
 
         int numCaptures = 0;
         int expectedCaptures = 0;
         if (testQuiescence)
         {
             Span<Move> captures = stackalloc Move[218];
-
-            numCaptures = MoveGenerator.GenerateLegalMoves(board, ref captures, board.colorTurn, true);
+            numCaptures = MoveGenerator.GenerateLegalMoves(board, ref captures, board.colorTurn, 0, true);
         }
 
         //Regular perft
@@ -163,6 +162,7 @@ public class Perft
             endNodesSearched += (ulong)moves.Length;
             return (ulong)moves.Length;
         }
+
         //For testing quiescence
         else if (depth == 1 && batch)
         {
@@ -190,6 +190,7 @@ public class Perft
             {
                 expectedCaptures++;
             }
+            if(!board.isLegalMove(moves[i])){ Console.WriteLine(board.ConvertToFEN() + " | " + Coord.GetUCIMoveNotation(moves[i])); }
             //make.Start();
             board.Move(moves[i], true);
             //make.Stop();
@@ -212,7 +213,7 @@ public class Perft
     ulong SearchDivide(int startDepth, int currentDepth, Board board)
     {
         Span<Move> moves = stackalloc Move[218];
-        MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
+        MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn, 0);
 
         if (currentDepth == 1)
         {

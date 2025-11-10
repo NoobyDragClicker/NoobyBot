@@ -54,7 +54,7 @@ public class Search
         if (bestMove.isNull())
         {
             Span<Move> legalMoves = new Move[256];
-            int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
+            int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, 0);
             bestMove = legalMoves[0];
             Console.WriteLine($"Timed out, no move found. Num moves: {numMoves}. Generating random");
         }
@@ -193,35 +193,32 @@ public class Search
             }
         }
 
-
-        MoveOrder.Stage stage = MoveOrder.Stage.Other;
-        Span<Move> legalMoves = stackalloc Move[218];
-        int numLegalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
         
 
-        //Check for mate or stalemate
-        if (numLegalMoves == 0)
-        {
-            if (board.gameStateHistory[board.fullMoveClock].isInCheck){ return checkmate + plyFromRoot;}
-            else { return 0; }
-        }
-
-        //Move ordering
-        int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove());
-
         int evaluationBound = TranspositionTable.UpperBound;
+        int bestScore = negativeInfinity;
         Move bestMoveInThisPosition = nullMove;
 
+        Move ttMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
+        if (ttMove.isNull() || !board.isLegalMove(ttMove)) { ttMove = nullMove; }
+        
+        MovePicker picker = new MovePicker(ttMove, board, moveOrder, false);
+        Span<Move> legalMoves = stackalloc Move[218];
 
-        int bestScore = negativeInfinity;
         int moveNum = -1;
-        while(stage != MoveOrder.Stage.Finished)
+        while(picker.currentStage != MovePicker.Stage.Finished)
         {
             moveNum++;
-            Move currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, moveNum);
-            if(moveNum == numLegalMoves - 1){ stage++; }
+            Move currentMove = picker.GetNextMove(ref legalMoves);
 
-            //Store the move and piece type
+            //No moves
+            if (currentMove.isNull())
+            {
+                if (board.gameStateHistory[board.fullMoveClock].isInCheck) { return checkmate + plyFromRoot; }
+                else { return 0; }
+            }
+            
+            //Store the move and piece type for conthist
             moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, Piece.PieceType(board.board[currentMove.oldIndex]));
 
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !currentMove.isCapture() && !currentMove.isPromotion())
@@ -237,7 +234,7 @@ public class Search
             logger.currentDiagnostics.nodesSearched++;
 
             //Check extension
-            int extension = (numLegalMoves == 1) ? 1 : 0;
+            int extension = 0;
             if (board.gameStateHistory[board.fullMoveClock].isInCheck && numCheckExtensions < 15 && extension == 0)
             {
                 extension = 1;
@@ -299,7 +296,7 @@ public class Search
             }
         }
         
-        tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
+        tt.StoreEvaluation(depth, plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
         return bestScore;
     }
 
@@ -330,18 +327,14 @@ public class Search
         //if (bestEval + Evaluation.queenValue < alpha) { return alpha; }
 
         Span<Move> legalMoves = stackalloc Move[218];
-        int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
-        int[] moveScores = moveOrder.ScoreCaptures(board, legalMoves);
-
-        MoveOrder.Stage stage = MoveOrder.Stage.Other;
-        if(numMoves == 0){ stage++; }
+        MovePicker picker = new MovePicker(nullMove, board, moveOrder, true);
 
         int moveNum = -1;
-        while(stage !=  MoveOrder.Stage.Finished)
+        while(picker.currentStage != MovePicker.Stage.Finished)
         {
             moveNum++;
-            Move currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, moveNum);
-            if(moveNum == numMoves - 1){ stage++; }
+            Move currentMove = picker.GetNextMove(ref legalMoves);
+            if(currentMove.isNull()){ break; }
 
             //Delta pruning
             if ((standPat + getCapturedPieceVal(currentMove) + 150) < alpha){ continue; }

@@ -138,9 +138,9 @@ public class TranspositionTable
     {
         public readonly ulong key;
         public readonly byte depth;
-        public readonly int eval;
         public readonly byte nodeType;
         public readonly Move move;
+        public readonly int eval;
 
         public Entry(ulong key, int evaluation, byte depth, byte nodeType, Move move)
         {

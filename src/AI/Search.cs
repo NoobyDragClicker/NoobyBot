@@ -144,16 +144,19 @@ public class Search
         if (plyFromRoot > 0 && board.IsSearchDraw()) { return 0; }
 
         //Check the TT for a valid entry
-        int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
-        if (ttEval != TranspositionTable.LookupFailed)
+        (Move, int) ttEntry = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
+        if (ttEntry.Item2 != TranspositionTable.LookupFailed)
         {
             //Set the best move
             if (plyFromRoot == 0)
             {
                 bestMoveThisIteration = tt.GetStoredMove();
             }
-            return ttEval;
+            return ttEntry.Item2;
         }
+
+        Move ttMove = (plyFromRoot == 0) ? bestMove : ttEntry.Item1;
+
 
         //Quiescence search
         if (depth <= 0)
@@ -193,20 +196,17 @@ public class Search
             }
         }
 
-        
-
         int evaluationBound = TranspositionTable.UpperBound;
         int bestScore = negativeInfinity;
         Move bestMoveInThisPosition = nullMove;
 
-        Move ttMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
         if (!ttMove.isNull() && !board.isLegalMove(ttMove)) { ttMove = nullMove; }
         
         MovePicker picker = new MovePicker(ttMove, board, moveOrder, false);
         Span<Move> legalMoves = stackalloc Move[218];
 
         int moveNum = -1;
-        while(picker.currentStage != MovePicker.Stage.Finished)
+        while (picker.currentStage != MovePicker.Stage.Finished)
         {
             moveNum++;
             Move currentMove = picker.GetNextMove(ref legalMoves);
@@ -217,16 +217,16 @@ public class Search
                 if (board.gameStateHistory[board.fullMoveClock].isInCheck) { return checkmate + plyFromRoot; }
                 else { return 0; }
             }
-            
+
             //Store the move and piece type for conthist
             moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, Piece.PieceType(board.board[currentMove.oldIndex]));
 
-            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !currentMove.isCapture() && !currentMove.isPromotion())
+            if (!board.gameStateHistory[board.fullMoveClock].isInCheck && !currentMove.isCapture() && !currentMove.isPromotion())
             {
                 //Futility pruning
                 if (depth < 4 && (staticEval + (150 * depth)) < alpha) { continue; }
                 //Late Move pruning
-                if(moveNum > 10 + depth * depth ){ continue; }
+                if (moveNum > 10 + depth * depth) { continue; }
             }
 
 
@@ -296,6 +296,7 @@ public class Search
             }
         }
         
+        if(plyFromRoot == 0){ Console.WriteLine(moveNum); }
         tt.StoreEvaluation(depth, plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
         return bestScore;
     }

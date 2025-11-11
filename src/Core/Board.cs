@@ -798,6 +798,7 @@ public class Board
             gameStateHistory[fullMoveClock].attackedSquares[WhiteIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.White);
             gameStateHistory[fullMoveClock].attackedSquares[BlackIndex] = MoveGenerator.GenerateAttackedSquares(this, Piece.Black);
             MoveGenerator.UpdateChecksAndPins(this);
+            gameStateHistory[fullMoveClock].isMoveGenUpdated = true;
         }    
     }
 
@@ -957,9 +958,9 @@ public class Board
     bool isLegalRookMove(Move move)
     {
         //Diag pinned?
-        if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { return false; }
+        if (gameStateHistory[fullMoveClock].diagPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { return false; }
         ulong moves = BitboardHelper.GetRookAttacks(move.oldIndex, allPiecesBitboard);
-        if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].straightPins; }
+        if (gameStateHistory[fullMoveClock].straightPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].straightPins; }
         if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
         return BitboardHelper.ContainsSquare(moves, move.newIndex);
     }
@@ -967,10 +968,10 @@ public class Board
     bool isLegalBishopMove(Move move)
     {
         //Straight pinned?
-        if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { return false; }
+        if (gameStateHistory[fullMoveClock].straightPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { return false; }
 
         ulong moves = BitboardHelper.GetBishopAttacks(move.oldIndex, allPiecesBitboard);
-        if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].diagPins; }
+        if (gameStateHistory[fullMoveClock].diagPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].diagPins; }
         if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
         return BitboardHelper.ContainsSquare(moves, move.newIndex);
     }

@@ -53,7 +53,6 @@ public class MovePicker
 
     Move GetMoveFromList(ref Span<Move> moves)
     {
-        
         //Take the index the search is currently at
         int highest = currentIndexInStage;
         for (int i = highest + 1; i < moveScores.Length; i++)

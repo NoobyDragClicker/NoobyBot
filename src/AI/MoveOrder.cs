@@ -32,9 +32,9 @@ public class MoveOrder
         {
             Move move = moves[x];
             int score = 0;
-            if (!firstMove.isNull() && move.GetIntValue() == firstMove.GetIntValue())
+            if (!firstMove.isNull() && move.oldIndex == firstMove.oldIndex && move.newIndex == firstMove.newIndex && move.flag == firstMove.flag)
             {
-                score = -8 * million;
+                score -= 8 * million;
             }
             else if (!killers[board.fullMoveClock].isNull() && move.GetIntValue() == killers[board.fullMoveClock].GetIntValue())
             {

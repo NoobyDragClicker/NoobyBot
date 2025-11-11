@@ -200,7 +200,7 @@ public class Search
         Move bestMoveInThisPosition = nullMove;
 
         Move ttMove = (plyFromRoot == 0) ? bestMove : tt.GetStoredMove();
-        if (ttMove.isNull() || !board.isLegalMove(ttMove)) { ttMove = nullMove; }
+        if (!ttMove.isNull() && !board.isLegalMove(ttMove)) { ttMove = nullMove; }
         
         MovePicker picker = new MovePicker(ttMove, board, moveOrder, false);
         Span<Move> legalMoves = stackalloc Move[218];

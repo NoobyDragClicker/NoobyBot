@@ -11,6 +11,7 @@ public class MovePicker
     int[] moveScores = new int[1];
     bool genNextStage;
     bool isQuiescence;
+    bool isTTMoveNull;
 
     public MovePicker(Move ttMove, Board board, MoveOrder moveOrder, bool isQuiescence)
     {
@@ -19,8 +20,8 @@ public class MovePicker
         this.moveOrder = moveOrder;
         this.isQuiescence = isQuiescence;
         genNextStage = true;
-
-        currentStage = isQuiescence ? Stage.Other : Stage.TTMove;
+        isTTMoveNull = ttMove.isNull();
+        currentStage = isTTMoveNull ? Stage.Other : Stage.TTMove;
     }
 
     public Move GetNextMove(ref Span<Move> moves)
@@ -29,16 +30,14 @@ public class MovePicker
         {
             currentStage++;
             genNextStage = true;
-            if (!ttMove.isNull())
-            {   
-                return ttMove;
-            }
+            return ttMove;
         }
+
         if (currentStage == Stage.Other && genNextStage)
         {
             GenerateAllMoves(ref moves);
             genNextStage = false;
-            if (maxIndexInStage == -1) {currentStage++; return Search.nullMove; }
+            if (maxIndexInStage <= -1) {currentStage++; return Search.nullMove; }
         }
 
         Move bestMove = GetMoveFromList(ref moves);
@@ -77,7 +76,15 @@ public class MovePicker
     {
         currentIndexInStage = 0;
         maxIndexInStage = MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn, currentIndexInStage, isQuiescence) - 1;
-        moveScores = moveOrder.ScoreMoves(board, moves, ttMove);
+        //if(!isTTMoveNull && !isQuiescence) { maxIndexInStage--; }
+        if (isQuiescence)
+        {
+            moveScores = moveOrder.ScoreCaptures(board, moves);
+        }
+        else
+        {
+            moveScores = moveOrder.ScoreMoves(board, moves, ttMove);
+        }
     }
         
     

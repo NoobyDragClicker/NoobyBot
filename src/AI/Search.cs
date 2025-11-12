@@ -23,6 +23,7 @@ public class Search
     int selDepth;
 
     bool abortSearch = false;
+    bool softCapHit = true;
     const int positiveInfinity = 99999;
     const int negativeInfinity = -99999;
     const int checkmate = -99998;
@@ -50,6 +51,7 @@ public class Search
     {
         bestMove = nullMove;
         abortSearch = false;
+        softCapHit = false;
         bestEval = StartIterativeDeepening(aiSettings.maxDepth, writeInfoLine);
         if (bestMove.isNull())
         {
@@ -107,7 +109,6 @@ public class Search
                 bestMove = bestMoveThisIteration;
             }
 
-
             string infoLine;
             string pv = "";
             try
@@ -129,7 +130,8 @@ public class Search
             }
             logger.AddToLog(infoLine, SearchLogger.LoggingLevel.Info);
 
-            if (abortSearch){ break; }
+            if (abortSearch) { break; }
+            if(softCapHit){ break; }
             if (IsMateScore(bestEvalThisIteration)){ break; }
 
         }
@@ -399,6 +401,7 @@ public class Search
         const int maxMatePly = 150;
         return Math.Abs(score) > (positiveInfinity - maxMatePly);
     }
+    public void TriggerSoftCap(){ softCapHit = true; }
     public void EndSearch() { abortSearch = true; }
     string ExtractPV()
     {

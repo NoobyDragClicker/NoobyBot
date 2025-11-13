@@ -12,8 +12,10 @@ public class AIPlayer : Player
     public SearchLogger logger;
     public SearchDiagnostics currentDiagnostics;
 
-    public TimeSpan MoveTimeLimit;
-    private CancellationTokenSource moveTimeoutTokenSource;
+    public TimeSpan hardCap;
+    public TimeSpan softCap;
+    private CancellationTokenSource hardCapToken;
+    private CancellationTokenSource softCapToken;
 
 
     public AIPlayer(string name, SearchLogger logger)
@@ -35,36 +37,52 @@ public class AIPlayer : Player
     {
         if (clockType != ClockType.None)
         {
-            int millisecondsForMove = 100;
+            int millisecondsForHardCap = 100;
+            int millisecondsForSoftCap = 100;
             if (clockType == ClockType.Regular)
             {
-                millisecondsForMove = (int)((timeRemaining.TotalMilliseconds / 20) + (increment.TotalSeconds * 500));
+                millisecondsForHardCap = (int)(timeRemaining.TotalMilliseconds / 2);
+                millisecondsForSoftCap = (int)((timeRemaining.TotalMilliseconds / 20) + (increment.TotalSeconds * 500));
             }
             else if (clockType == ClockType.PerMove)
             {
-                millisecondsForMove = (int)(timeRemaining.TotalMilliseconds * 0.75f);
+                millisecondsForHardCap = (int)(timeRemaining.TotalMilliseconds * 0.75f);
+                millisecondsForSoftCap = millisecondsForHardCap;
             }
-            MoveTimeLimit = TimeSpan.FromMilliseconds(millisecondsForMove);
+            hardCap = TimeSpan.FromMilliseconds(millisecondsForHardCap);
+            softCap = TimeSpan.FromMilliseconds(millisecondsForSoftCap);
 
-            moveTimeoutTokenSource = new CancellationTokenSource();
+            hardCapToken = new CancellationTokenSource();
+            softCapToken = new CancellationTokenSource();
             // Start monitoring in background
-            Task.Run(() => MonitorMoveTime(moveTimeoutTokenSource.Token));
+            Task.Run(() => MonitorSoftCap(softCapToken.Token));
+            Task.Run(() => MonitorHardCap(hardCapToken.Token));
         }
         logger.startNewSearch();
         Task.Run(() => search.StartSearch(true));
     }
 
-    private async Task MonitorMoveTime(CancellationToken token)
+    private async Task MonitorHardCap(CancellationToken token)
     {
         try
         {
-            await Task.Delay(MoveTimeLimit, token);
+            await Task.Delay(hardCap, token);
             search.EndSearch();
         }
         //Expected when search finishes earlier
         catch (TaskCanceledException){}
     }
 
+    private async Task MonitorSoftCap(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(softCap, token);
+            search.TriggerSoftCap();
+        }
+        //Expected when search finishes earlier
+        catch (TaskCanceledException){}
+    }
     public override void NotifyGameOver()
     {
         search.EndSearch();
@@ -74,16 +92,8 @@ public class AIPlayer : Player
     //Triggered by the onSearchComplete event, makes move
     void OnSearchComplete(Move move)
     {
-        moveTimeoutTokenSource.Cancel();
-        try
-        {
-            logger.logSingleSearch();
-        }
-        catch (Exception e)
-        {
-            logger.AddToLog(e.Message, SearchLogger.LoggingLevel.Warning);
-        }
-        
+        hardCapToken.Cancel();
+        softCapToken.Cancel();
         ChoseMove(move, name);
     }
 

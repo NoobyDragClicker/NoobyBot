@@ -817,6 +817,11 @@ public class Board
         return false;
     }
 
+    public int MovedPieceType(Move move)
+    {
+        return Piece.PieceType(board[move.oldIndex]);
+    }
+
     public bool IsSearchDraw()
     {
         if (halfMoveClock >= 100) { return true; }
@@ -865,7 +870,6 @@ public class Board
         }
     }
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int PieceBitboardIndex(int colorIndex, int pieceType)
     {
@@ -895,6 +899,18 @@ public class Board
             return true;
         }
         else { return false; }
+    }
+
+    public ulong GetAttackersToSquare(int square, ulong occupancy)
+    {
+        ulong bishops = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)];
+        ulong rooks = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)];
+        return(
+            (BitboardHelper.GetRookAttacks(square, occupancy) & rooks)
+            | (BitboardHelper.GetBishopAttacks(square, occupancy) & bishops) 
+            | (BitboardHelper.knightAttacks[square] & (pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Knight)]))
+            | (BitboardHelper.wPawnAttacks[square] & pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Pawn)])
+            | (BitboardHelper.bPawnAttacks[square] & pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)]));
     }
 
     public int EnPassantFileToIndex(int pieceColor, int epFile)

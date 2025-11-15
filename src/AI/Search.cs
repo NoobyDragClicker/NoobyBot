@@ -17,23 +17,33 @@ public class Search
     Move bestMoveThisIteration;
     int bestEvalThisIteration;
     int bestEval;
-    int[] staticEvals = new int[maxGamePly];
+    int[] staticEvals = new int[MAX_GAME_PLY];
     int selDepth;
 
     bool abortSearch = false;
     bool softCapHit = true;
-    const int positiveInfinity = 99999;
-    const int negativeInfinity = -99999;
-    const int checkmate = -99998;
-    const int window = 100;
-    const int RFPMargin = 150;
-    const int RFPImprovingMargin = 100;
-    public const int maxGamePly = 1024;
+    const int POSITIVE_INFINITY = 99999;
+    const int NEGATIVE_INFINITY = -99999;
+    const int CHECKMATE = -99998;
+    public const int MAX_GAME_PLY = 1024;
     public event Action<Move> onSearchComplete;
-
 
     Stopwatch searchTimer = new Stopwatch();
     SearchLogger logger;
+
+    //PARAMS:
+
+    const int ASP_WINDOW = 100;
+    const int RFP_MARGIN = 150;
+    const int RFP_IMPROVING_MARGIN = 100;
+    
+    //SEE
+    const int SEE_QUIET_MARGIN = -100;
+    const int SEE_NOISY_MARGIN = -50;
+    int[] SEEPieceVals = [0, 100, 300, 300, 500, 900, 0];
+
+
+    
 
     public Search(Board board, AISettings aiSettings, SearchLogger logger)
     {
@@ -68,7 +78,7 @@ public class Search
 
         searchTimer.Restart();
 
-        bestEval = SearchMoves(1, 0, negativeInfinity, positiveInfinity, 0);
+        bestEval = SearchMoves(1, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0);
         
         for (int depth = 2; depth <= maxDepth; depth++)
         {
@@ -76,12 +86,12 @@ public class Search
             bestMoveThisIteration = nullMove;
 
             //Aspiration windows
-            int alpha = bestEval - window;
-            int beta = bestEval + window;
+            int alpha = bestEval - ASP_WINDOW;
+            int beta = bestEval + ASP_WINDOW;
             bestEval = SearchMoves(depth, 0, alpha, beta, 0);
             if(bestEval <= alpha || bestEval >= beta)
             {
-                bestEval = SearchMoves(depth, 0, negativeInfinity, positiveInfinity, 0);
+                bestEval = SearchMoves(depth, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0);
             }
             
 
@@ -118,7 +128,7 @@ public class Search
                 Console.WriteLine(e);
             }
 
-            string scoreString = IsMateScore(bestEval) ? $"mate {(bestEval < 0 ? "-" : "")}{positiveInfinity - 1 - Math.Abs(bestEval)}" : $"cp {bestEval}";
+            string scoreString = IsMateScore(bestEval) ? $"mate {(bestEval < 0 ? "-" : "")}{POSITIVE_INFINITY - 1 - Math.Abs(bestEval)}" : $"cp {bestEval}";
 
             infoLine = $"info depth {depth} seldepth {selDepth} score {scoreString} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000f} pv {pv}";
 
@@ -163,7 +173,7 @@ public class Search
         }
 
         int staticEval = evaluation.EvaluatePosition(board);
-        staticEvals[board.fullMoveClock] = (board.gameStateHistory[board.fullMoveClock].isInCheck) ? negativeInfinity : staticEval;
+        staticEvals[board.fullMoveClock] = (board.gameStateHistory[board.fullMoveClock].isInCheck) ? NEGATIVE_INFINITY : staticEval;
         bool isImproving = isPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
         if (plyFromRoot > 0 )
@@ -187,7 +197,7 @@ public class Search
                 }
             }
             //RFP
-            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && staticEval >= beta + (isImproving ? RFPImprovingMargin : RFPMargin) * depth )
+            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && staticEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
             {
                 return staticEval;
             }
@@ -202,7 +212,7 @@ public class Search
         //Check for mate or stalemate
         if (numLegalMoves == 0)
         {
-            if (board.gameStateHistory[board.fullMoveClock].isInCheck){ return checkmate + plyFromRoot;}
+            if (board.gameStateHistory[board.fullMoveClock].isInCheck){ return CHECKMATE + plyFromRoot;}
             else { return 0; }
         }
 
@@ -213,7 +223,7 @@ public class Search
         Move bestMoveInThisPosition = nullMove;
 
 
-        int bestScore = negativeInfinity;
+        int bestScore = NEGATIVE_INFINITY;
         int moveNum = -1;
         while(stage != MoveOrder.Stage.Finished)
         {
@@ -224,13 +234,20 @@ public class Search
             //Store the move and piece type
             moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, Piece.PieceType(board.board[currentMove.oldIndex]));
 
-            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !currentMove.isCapture() && !currentMove.isPromotion())
+
+            bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
+
+            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
                 //Futility pruning
                 if (depth < 4 && (staticEval + (150 * depth)) < alpha) { continue; }
                 //Late Move pruning
                 if(moveNum > 10 + depth * depth ){ continue; }
             }
+
+            //SEE pruning
+            int seeMargin = isTactical ? SEE_NOISY_MARGIN * depth : SEE_QUIET_MARGIN * depth;
+            if(depth < 5 && !SEE(currentMove, seeMargin)){ continue; }
 
 
             board.Move(currentMove, true);
@@ -308,7 +325,7 @@ public class Search
         if(plyFromRoot > selDepth) { selDepth = plyFromRoot; }
         if (board.IsCheckmate(board.colorTurn))
         {
-            return checkmate + plyFromRoot;
+            return CHECKMATE + plyFromRoot;
         }
 
         int bestEval = 0;
@@ -397,7 +414,7 @@ public class Search
     bool isPositionImproving(int fullMoveClock, bool isInCheck)
     {
         if (isInCheck) { return false; }
-        if (fullMoveClock > 1 && staticEvals[fullMoveClock - 2] != negativeInfinity) { return staticEvals[fullMoveClock] > staticEvals[fullMoveClock - 2]; }
+        if (fullMoveClock > 1 && staticEvals[fullMoveClock - 2] != NEGATIVE_INFINITY) { return staticEvals[fullMoveClock] > staticEvals[fullMoveClock - 2]; }
         return true;
     }
 
@@ -486,7 +503,7 @@ public class Search
     public static bool IsMateScore(int score)
     {
         const int maxMatePly = 150;
-        return Math.Abs(score) > (positiveInfinity - maxMatePly);
+        return Math.Abs(score) > (POSITIVE_INFINITY - maxMatePly);
     }
     public void TriggerSoftCap(){ softCapHit = true; }
     public void EndSearch() { abortSearch = true; }
@@ -523,7 +540,5 @@ public class Search
         }
         return pv;
     }
-
-    public int[] SEEPieceVals = [0, 100, 300, 300, 500, 900, 0];
 }
 

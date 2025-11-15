@@ -28,9 +28,9 @@ public class Board
     public int[] board = new int[64];
 
     //Saves info about the game
-    public GameState[] gameStateHistory = new GameState[Search.maxGamePly];
+    public GameState[] gameStateHistory = new GameState[Search.MAX_GAME_PLY];
 
-    public ulong[] zobristHistory = new ulong[Search.maxGamePly];
+    public ulong[] zobristHistory = new ulong[Search.MAX_GAME_PLY];
     public ulong zobristKey;
     
     SearchLogger logger;
@@ -590,8 +590,8 @@ public class Board
     public int[] ConvertFromFEN(string fenPosition)
     {
 
-        gameStateHistory = new GameState[Search.maxGamePly];
-        zobristHistory = new ulong[Search.maxGamePly];
+        gameStateHistory = new GameState[Search.MAX_GAME_PLY];
+        zobristHistory = new ulong[Search.MAX_GAME_PLY];
         pieceBitboards = new ulong[14];
         pieceCounts = new int[2, 7];
         sideBitboard = new ulong[2];

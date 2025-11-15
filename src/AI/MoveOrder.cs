@@ -8,11 +8,11 @@ public class MoveOrder
     const int million = 1000000;
     const int HISTORY_MAX = 32768;
 
-    Move[] killers = new Move[Search.maxGamePly];
+    Move[] killers = new Move[Search.MAX_GAME_PLY];
     int[,,] history = new int[2, 64, 64];
     int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
 
-    public (Move, int)[] movesAndPieceTypes = new (Move, int)[Search.maxGamePly];
+    public (Move, int)[] movesAndPieceTypes = new (Move, int)[Search.MAX_GAME_PLY];
     public enum Stage { TTMove, Other, Finished }
 
     static int[] MVV_LVA = {

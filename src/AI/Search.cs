@@ -36,8 +36,11 @@ public class Search
     const int ASP_WINDOW = 100;
     const int RFP_MARGIN = 150;
     const int RFP_IMPROVING_MARGIN = 100;
+    
+    //SEE
     const int SEE_QUIET_MARGIN = -100;
     const int SEE_NOISY_MARGIN = -50;
+    int[] SEEPieceVals = [0, 100, 300, 300, 500, 900, 0];
 
 
     
@@ -537,7 +540,5 @@ public class Search
         }
         return pv;
     }
-
-    public int[] SEEPieceVals = [0, 100, 300, 300, 500, 900, 0];
 }
 

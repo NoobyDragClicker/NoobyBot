@@ -419,7 +419,7 @@ public class Search
 
         //Update occupancy
         ulong allPieces = board.allPiecesBitboard;
-        allPieces = (allPieces & (1ul<<move.oldIndex)) | (1ul<<move.newIndex);
+        allPieces = (allPieces ^ (1ul<<move.oldIndex)) | (1ul<<move.newIndex);
         if(move.flag == 7){ allPieces ^= 1ul<<board.enPassantIndex; }
 
         ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces);

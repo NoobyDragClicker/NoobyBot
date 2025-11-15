@@ -422,7 +422,7 @@ public class Search
         allPieces = (allPieces ^ (1ul<<move.oldIndex)) | (1ul<<move.newIndex);
         if(move.flag == 7){ allPieces ^= 1ul<<board.enPassantIndex; }
 
-        ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces, rooks, bishops);
+        ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces, rooks, bishops) & allPieces;
 
         int currentColorIndex = board.colorTurn == Piece.White ? Board.BlackIndex : Board.WhiteIndex;
 
@@ -430,7 +430,7 @@ public class Search
         while (true)
         {
             myAttackers = attackers & board.sideBitboard[currentColorIndex];
-            if(myAttackers == 0ul){ break; }
+            if(myAttackers == 0){ break; }
             for(nextVictim = Piece.Pawn; nextVictim <= Piece.Queen; nextVictim++)
             {
                 if((myAttackers & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, nextVictim)]) != 0){ break; }

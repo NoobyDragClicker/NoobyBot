@@ -422,12 +422,11 @@ public class Search
         allPieces = (allPieces ^ (1ul<<move.oldIndex)) | (1ul<<move.newIndex);
         if(move.flag == 7){ allPieces ^= 1ul<<board.enPassantIndex; }
 
-        ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces);
+        ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces, rooks, bishops);
 
         int currentColorIndex = board.colorTurn == Piece.White ? Board.BlackIndex : Board.WhiteIndex;
 
-
-        ulong myAttackers = 0ul;
+        ulong myAttackers;
         while (true)
         {
             myAttackers = attackers & board.sideBitboard[currentColorIndex];
@@ -469,12 +468,12 @@ public class Search
                 break;
             }
         }
-        return (board.colorTurn == Piece.White ? Board.WhiteIndex : Board.BlackIndex) != currentColorIndex;
+        return ((board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex) != currentColorIndex;
     }
 
     int EstimatedCaptureValue(Move move)
     {
-        if(move.flag == 7){ return Evaluation.pawnValue; }
+        if(move.flag == 7){ return SEEPieceVals[Piece.Pawn]; }
         else if (move.isPromotion()){
             return SEEPieceVals[Piece.PieceType(board.board[move.newIndex])] + SEEPieceVals[move.PromotedPieceType()] - SEEPieceVals[Piece.Pawn];
         }

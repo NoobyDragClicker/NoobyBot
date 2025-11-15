@@ -901,10 +901,10 @@ public class Board
         else { return false; }
     }
 
-    public ulong GetAttackersToSquare(int square, ulong occupancy)
+    public ulong GetAttackersToSquare(int square, ulong occupancy, ulong rooks, ulong bishops)
     {
-        ulong bishops = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)];
-        ulong rooks = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)];
+        //ulong bishops = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)];
+        //ulong rooks = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)];
         return(
             (BitboardHelper.GetRookAttacks(square, occupancy) & rooks)
             | (BitboardHelper.GetBishopAttacks(square, occupancy) & bishops) 

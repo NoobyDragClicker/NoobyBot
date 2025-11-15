@@ -375,7 +375,7 @@ public class Search
         if (move.flag != 7)
         {
             int pieceType = Piece.PieceType(board.board[move.newIndex]);
-            pieceType = GetPieceValue(pieceType);
+            pieceVal = GetPieceValue(pieceType);
         }
         else { pieceVal = Evaluation.pawnValue; }
         return pieceVal;

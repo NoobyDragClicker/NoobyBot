@@ -430,7 +430,7 @@ public class Search
         while (true)
         {
             myAttackers = attackers & board.sideBitboard[currentColorIndex];
-            if(myAttackers == 0){ break; }
+            if(myAttackers == 0ul){ break; }
             for(nextVictim = Piece.Pawn; nextVictim <= Piece.Queen; nextVictim++)
             {
                 if((myAttackers & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, nextVictim)]) != 0){ break; }

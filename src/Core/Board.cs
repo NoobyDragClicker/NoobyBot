@@ -911,7 +911,7 @@ public class Board
             | (BitboardHelper.knightAttacks[square] & (pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Knight)]))
             | (BitboardHelper.wPawnAttacks[square] & pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Pawn)])
             | (BitboardHelper.bPawnAttacks[square] & pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)])
-            | (BitboardHelper.kingAttacks[square] & (pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)]))
+            | (BitboardHelper.kingAttacks[square] & (pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)]))
             );
     }
 

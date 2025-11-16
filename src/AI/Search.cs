@@ -174,7 +174,7 @@ public class Search
         }
 
         int staticEval = evaluation.EvaluatePosition(board);
-        staticEvals[board.fullMoveClock] = (board.gameStateHistory[board.fullMoveClock].isInCheck) ? NEGATIVE_INFINITY : staticEval;
+        staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
         bool isImproving = isPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
         if (plyFromRoot > 0 )

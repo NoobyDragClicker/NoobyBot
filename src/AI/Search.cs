@@ -38,7 +38,7 @@ public class Search
     const int RFP_IMPROVING_MARGIN = 100;
     
     //SEE
-    const int SEE_QUIET_MARGIN = -100;
+    const int SEE_QUIET_MARGIN = -80;
     const int SEE_NOISY_MARGIN = -50;
     int[] SEEPieceVals = [0, 100, 300, 300, 500, 900, 0];
 

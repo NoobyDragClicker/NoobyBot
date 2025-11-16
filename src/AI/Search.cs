@@ -247,7 +247,7 @@ public class Search
 
             //SEE pruning
             int seeMargin = isTactical ? SEE_NOISY_MARGIN * depth : SEE_QUIET_MARGIN * depth;
-            if(depth < 5 && !SEE(currentMove, seeMargin)){ continue; }
+            if(depth < 8 && !SEE(currentMove, seeMargin)){ continue; }
 
 
             board.Move(currentMove, true);

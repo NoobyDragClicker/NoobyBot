@@ -100,16 +100,6 @@ public class Search
                 if (!abortSearch)
                 {
                     logger.AddToLog($"No move found at depth {depth}", SearchLogger.LoggingLevel.Warning);
-                    /*
-                    logger.AddToLog($"Start pos: {board.startFen}", SearchLogger.LoggingLevel.Warning);
-                    string message = "";
-                    Move[] moves = new Move[board.gameMoveHistory.Count];
-                    board.gameMoveHistory.CopyTo(moves, 0);
-                    for (int x = 0; x < moves.Length; x++)
-                    {
-                        message += Coord.GetUCIMoveNotation(moves[x]);
-                    }
-                    logger.AddToLog("Moves: " + message, SearchLogger.LoggingLevel.Warning);*/
                 }
             }
             else

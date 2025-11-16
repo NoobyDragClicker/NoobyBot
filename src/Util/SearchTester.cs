@@ -68,8 +68,8 @@ public class SearchTester
 
     public void RunBench()
     {
-        loadPositions(20);
-        aiSettings.maxDepth = 10;
+        loadPositions(25);
+        aiSettings.maxDepth = 12;
         ulong nodes = 0;
         Stopwatch watch = new Stopwatch();
         watch.Start();

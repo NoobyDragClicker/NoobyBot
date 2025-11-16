@@ -144,17 +144,16 @@ public class Search
         if (plyFromRoot > 0 && board.IsSearchDraw()) { return 0; }
 
         //Check the TT for a valid entry
-        (Move, int) ttInfo = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
-        if (ttInfo.Item2 != TranspositionTable.LookupFailed)
+        int ttEval = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
+        if (ttEval != TranspositionTable.LookupFailed)
         {
             //Set the best move
             if (plyFromRoot == 0)
             {
-                bestMoveThisIteration = ttInfo.Item1;
+                bestMoveThisIteration = tt.GetStoredMove();
             }
-            return ttInfo.Item2;
+            return ttEval;
         }
-        Move ttMove = ttInfo.Item1;
 
         //Quiescence search
         if (depth <= 0)
@@ -164,7 +163,7 @@ public class Search
         }
 
         int staticEval = evaluation.EvaluatePosition(board);
-        staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
+        staticEvals[board.fullMoveClock] = (board.gameStateHistory[board.fullMoveClock].isInCheck) ? NEGATIVE_INFINITY : staticEval;
         bool isImproving = isPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
         if (plyFromRoot > 0 )
@@ -208,7 +207,7 @@ public class Search
         }
 
         //Move ordering
-        int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
+        int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : tt.GetStoredMove());
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;

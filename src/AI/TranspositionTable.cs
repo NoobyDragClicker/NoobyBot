@@ -24,7 +24,7 @@ public class TranspositionTable
         entries = new Bucket[numEntries];
     }
 
-    public int LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta)
+    public (Move, int) LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta)
 	{
         Bucket bucket = entries[Index];
 
@@ -35,23 +35,12 @@ public class TranspositionTable
             {
                 int eval = RetrieveEval(bucket.depthPreferred.eval, plyFromRoot);
                 //The exact eval
-                if (bucket.depthPreferred.nodeType == Exact)
+                if (bucket.depthPreferred.nodeType == Exact || (bucket.depthPreferred.nodeType == UpperBound && eval <= alpha) || (bucket.depthPreferred.nodeType == LowerBound && eval >= beta))
                 {
-                    return eval;
-                }
-
-                //We know the upper bound of the position, if it's less than our current best score it is unimportant
-                if (bucket.depthPreferred.nodeType == UpperBound && eval <= alpha)
-                {
-                    return eval;
-                }
-
-                //Stored the lower bound, only return if it causes a beta cutoff
-                if (bucket.depthPreferred.nodeType == LowerBound && eval >= beta)
-                {
-                    return eval;
+                    return (bucket.depthPreferred.move, eval);
                 }
             }
+            return (bucket.depthPreferred.move, LookupFailed); 
         }
         else if (bucket.alwaysReplace.key == board.zobristKey)
         {
@@ -60,25 +49,14 @@ public class TranspositionTable
             {
                 int eval = RetrieveEval(bucket.alwaysReplace.eval, plyFromRoot);
                 //The exact eval
-                if (bucket.alwaysReplace.nodeType == Exact)
+                if (bucket.alwaysReplace.nodeType == Exact || (bucket.alwaysReplace.nodeType == UpperBound && eval <= alpha) || (bucket.alwaysReplace.nodeType == LowerBound && eval >= beta))
                 {
-                    return eval;
-                }
-
-                //We know the upper bound of the position, if it's less than our current best score it is unimportant
-                if (bucket.alwaysReplace.nodeType == UpperBound && eval <= alpha)
-                {
-                    return eval;
-                }
-
-                //Stored the lower bound, only return if it causes a beta cutoff
-                if (bucket.alwaysReplace.nodeType == LowerBound && eval >= beta)
-                {
-                    return eval;
+                    return (bucket.alwaysReplace.move, eval);
                 }
             }
+            return (bucket.alwaysReplace.move, LookupFailed); 
         }
-        return LookupFailed;
+        return (Search.nullMove, LookupFailed); 
     }
 
     public Entry GetEntryForPos()
@@ -138,9 +116,9 @@ public class TranspositionTable
     {
         public readonly ulong key;
         public readonly byte depth;
-        public readonly int eval;
         public readonly byte nodeType;
         public readonly Move move;
+        public readonly int eval;
 
         public Entry(ulong key, int evaluation, byte depth, byte nodeType, Move move)
         {

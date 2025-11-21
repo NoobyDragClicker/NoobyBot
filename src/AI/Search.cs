@@ -163,6 +163,12 @@ public class Search
             return eval;
         }
 
+        //IIR
+        if(depth >= 5 && ttMove.isNull())
+        {
+            depth--;
+        }
+
         int staticEval = evaluation.EvaluatePosition(board);
         staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
         bool isImproving = isPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);

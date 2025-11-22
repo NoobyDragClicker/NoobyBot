@@ -120,7 +120,7 @@ public class Search
 
             string scoreString = IsMateScore(bestEval) ? $"mate {(bestEval < 0 ? "-" : "")}{POSITIVE_INFINITY - 1 - Math.Abs(bestEval)}" : $"cp {bestEval}";
 
-            infoLine = $"info depth {depth} seldepth {selDepth} score {scoreString} currmove {Engine.convertMoveToUCI(bestMove)} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000f} pv {pv}";
+            infoLine = $"info depth {depth} seldepth {selDepth} score {scoreString} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000f} pv {pv}";
 
             if (writeInfoLine)
             {

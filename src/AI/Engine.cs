@@ -5,7 +5,7 @@ using System.IO;
 public class Engine
 {
     AIPlayer player;
-    AISettings aiSettings = new AISettings(40, 0, 16);
+    AISettings aiSettings = new AISettings(100, 0, 16);
     Board board;
     //BookLoader bookLoader;
     SearchLogger logger;
@@ -55,7 +55,7 @@ public class Engine
                 if (command.Contains("name Hash value "))
                 {
                     int hashSize = TryGetLabelledValueInt(command, "value", new string[] { "test" });
-                    aiSettings = new AISettings(40, 0, hashSize);
+                    aiSettings = new AISettings(100, 0, hashSize);
                 }
                 if(command.Contains("name Threads value"))
                 {

@@ -246,6 +246,10 @@ public class Engine
             int moveTimeMs = TryGetLabelledValueInt(message, "movetime", goLabels, 0);
             player.NotifyToMove(TimeSpan.FromMilliseconds(moveTimeMs), TimeSpan.Zero, Player.ClockType.PerMove);
         }
+        else if (message.Contains("infinite"))
+        {
+            player.NotifyToMove(TimeSpan.Zero, TimeSpan.Zero, Player.ClockType.Infinite);
+        }
         else
         {
             int timeRemainingWhiteMs = TryGetLabelledValueInt(message, "wtime", goLabels, 0);

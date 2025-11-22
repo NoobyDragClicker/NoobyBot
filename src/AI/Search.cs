@@ -75,14 +75,10 @@ public class Search
     int StartIterativeDeepening(int maxDepth, bool writeInfoLine)
     {
         selDepth = 0;
-
         searchTimer.Restart();
-
         bestEval = SearchMoves(1, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0);
-        
         for (int depth = 2; depth <= maxDepth; depth++)
         {
-
             bestMoveThisIteration = nullMove;
 
             //Aspiration windows
@@ -109,18 +105,10 @@ public class Search
 
             string infoLine;
             string pv = "";
-            try
-            {
-                pv = ExtractPV();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-
+            pv = ExtractPV();
             string scoreString = IsMateScore(bestEval) ? $"mate {(bestEval < 0 ? "-" : "")}{POSITIVE_INFINITY - 1 - Math.Abs(bestEval)}" : $"cp {bestEval}";
 
-            infoLine = $"info depth {depth} seldepth {selDepth} score {scoreString} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000f} pv {pv}";
+            infoLine = $"info depth {depth} seldepth {selDepth} time {searchTimer.ElapsedMilliseconds} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000f} score {scoreString} pv {pv}";
 
             if (writeInfoLine)
             {
@@ -131,7 +119,6 @@ public class Search
             if (abortSearch) { break; }
             if(softCapHit){ break; }
             if (IsMateScore(bestEvalThisIteration)){ break; }
-
         }
         logger.currentDiagnostics.totalSearchTime = searchTimer.Elapsed;
 

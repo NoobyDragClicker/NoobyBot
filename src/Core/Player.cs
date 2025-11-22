@@ -8,7 +8,7 @@ public abstract class Player
   public abstract void NotifyGameOver();
   public abstract void NewGame(Board board, AISettings aiSettings);
 
-  public enum ClockType{None, PerMove, Regular}
+  public enum ClockType{PerMove, Regular, Infinite}
   public virtual void ChoseMove(Move move, string name)
   {
     onMoveChosen?.Invoke(move, name);

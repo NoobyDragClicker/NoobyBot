@@ -35,7 +35,7 @@ public class AIPlayer : Player
     //Called when it is our turn to move
     public override void NotifyToMove(TimeSpan timeRemaining, TimeSpan increment, ClockType clockType)
     {
-        if (clockType != ClockType.None)
+        if (clockType != ClockType.Infinite)
         {
             int millisecondsForHardCap = 100;
             int millisecondsForSoftCap = 100;

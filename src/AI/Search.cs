@@ -76,7 +76,7 @@ public class Search
     {
         selDepth = 0;
         searchTimer.Restart();
-        bestEval = SearchMoves(1, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0);
+        bestEval = SearchMoves(1, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, true);
         for (int depth = 2; depth <= maxDepth; depth++)
         {
             bestMoveThisIteration = nullMove;
@@ -84,10 +84,10 @@ public class Search
             //Aspiration windows
             int alpha = bestEval - ASP_WINDOW;
             int beta = bestEval + ASP_WINDOW;
-            bestEval = SearchMoves(depth, 0, alpha, beta, 0);
+            bestEval = SearchMoves(depth, 0, alpha, beta, 0, true);
             if(bestEval <= alpha || bestEval >= beta)
             {
-                bestEval = SearchMoves(depth, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0);
+                bestEval = SearchMoves(depth, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0, true);
             }
             
 
@@ -125,7 +125,7 @@ public class Search
         return bestEvalThisIteration;
     }
 
-    int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numCheckExtensions)
+    int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numCheckExtensions, bool isPV)
     {
         if (abortSearch) { return 0; }
         if (plyFromRoot > 0 && board.IsSearchDraw()) { return 0; }
@@ -173,7 +173,7 @@ public class Search
 
                     board.MakeNullMove();
                     moveOrder.movesAndPieceTypes[board.fullMoveClock] = (nullMove, 0);
-                    int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions);
+                    int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions, false);
                     board.UnmakeNullMove();
 
                     if (abortSearch) { return 0; }
@@ -181,7 +181,7 @@ public class Search
                 }
             }
             //RFP
-            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && staticEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
+            if (!isPV && depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && staticEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
             {
                 return staticEval;
             }
@@ -253,11 +253,11 @@ public class Search
                 reductions = 1 + (int)(Math.Log(moveNum) * Math.Log(depth) / 3);
             }
 
-            int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
+            int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions, moveNum == 0 ? isPV : false);
 
             if (eval > alpha && reductions > 0)
             {
-                eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
+                eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions, isPV);
             }
 
             board.UndoMove(currentMove);

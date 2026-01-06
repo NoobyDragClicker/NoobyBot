@@ -32,7 +32,6 @@ public class Search
     SearchLogger logger;
 
     //PARAMS:
-
     const int ASP_WINDOW = 100;
     const int RFP_MARGIN = 150;
     const int RFP_IMPROVING_MARGIN = 100;
@@ -41,9 +40,6 @@ public class Search
     const int SEE_QUIET_MARGIN = -100;
     const int SEE_NOISY_MARGIN = -50;
     int[] SEEPieceVals = [0, 100, 300, 300, 500, 900, 0];
-
-
-    
 
     public Search(Board board, AISettings aiSettings, SearchLogger logger)
     {
@@ -205,10 +201,9 @@ public class Search
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
-
-
         int bestScore = NEGATIVE_INFINITY;
         int moveNum = -1;
+
         while(stage != MoveOrder.Stage.Finished)
         {
             moveNum++;
@@ -253,8 +248,10 @@ public class Search
                 reductions = 1 + (int)(Math.Log(moveNum) * Math.Log(depth) / 3);
             }
 
+            //Main search
             int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
 
+            //Unreduced search
             if (eval > alpha && reductions > 0)
             {
                 eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
@@ -327,8 +324,6 @@ public class Search
         {
             alpha = bestEval;
         }
-        //If even after winning a queen it is still worse, don't bother searching
-        //if (bestEval + Evaluation.queenValue < alpha) { return alpha; }
 
         Span<Move> legalMoves = stackalloc Move[218];
         int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);

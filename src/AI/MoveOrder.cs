@@ -7,6 +7,8 @@ public class MoveOrder
 {
     const int million = 1000000;
     const int HISTORY_MAX = 32768;
+    const int HISTORY_MULTIPLE = 300;
+    const int HISTORY_SUB = 250;
 
     Move[] killers = new Move[Search.MAX_GAME_PLY];
     int[,,] history = new int[2, 64, 64];
@@ -137,7 +139,7 @@ public class MoveOrder
         int movedPieceType = movesAndPieceTypes[fullMoveClock].Item2;
 
         killers[fullMoveClock] = move;
-        int bonus = 300 * depth - 250;
+        int bonus = HISTORY_MULTIPLE * depth - HISTORY_SUB;
         ApplyHistoryBonus(move.oldIndex, move.newIndex, bonus, colorTurn);
         if(fullMoveClock > 0)
         {

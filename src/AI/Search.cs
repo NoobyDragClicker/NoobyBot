@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 
 
@@ -72,21 +73,36 @@ public class Search
     {
         selDepth = 0;
         searchTimer.Restart();
-        bestEval = SearchMoves(1, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0);
-        for (int depth = 2; depth <= maxDepth; depth++)
-        {
-            bestMoveThisIteration = nullMove;
 
-            //Aspiration windows
-            int alpha = bestEval - ASP_WINDOW;
-            int beta = bestEval + ASP_WINDOW;
+        int delta = ASP_WINDOW;
+        int alpha = NEGATIVE_INFINITY;
+        int beta = POSITIVE_INFINITY;
+
+        for (int depth = 1; depth <= maxDepth; depth++)
+        {
+            bestMoveThisIteration = nullMove;           
             bestEval = SearchMoves(depth, 0, alpha, beta, 0);
-            if(bestEval <= alpha || bestEval >= beta)
+
+            if(alpha != NEGATIVE_INFINITY && bestEval <= alpha )
             {
-                bestEval = SearchMoves(depth, 0, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0);
+                alpha -= delta;
+                delta *= 2;
+                depth--;
+                continue;
+            }
+
+            if(beta != POSITIVE_INFINITY && bestEval >= beta)
+            {
+                beta += delta;
+                delta *= 2;
+                depth--;
+                continue;
             }
             
-
+            delta = ASP_WINDOW;
+            alpha = bestEval - delta;
+            beta = bestEval + delta;
+            
             if (bestMoveThisIteration.isNull())
             {
                 if (!abortSearch)

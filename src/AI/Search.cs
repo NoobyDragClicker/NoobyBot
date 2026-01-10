@@ -33,7 +33,7 @@ public class Search
     SearchLogger logger;
 
     //PARAMS:
-    const int ASP_WINDOW = 100;
+    const int ASP_WINDOW = 50;
     const int RFP_MARGIN = 150;
     const int RFP_IMPROVING_MARGIN = 100;
     

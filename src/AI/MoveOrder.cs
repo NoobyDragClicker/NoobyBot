@@ -11,7 +11,7 @@ public class MoveOrder
     const int HISTORY_SUB = 250;
 
     Move[] killers = new Move[Search.MAX_GAME_PLY];
-    int[,,] history = new int[2, 64, 64];
+    public int[,,] history = new int[2, 64, 64];
     int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
 
     public (Move, int)[] movesAndPieceTypes = new (Move, int)[Search.MAX_GAME_PLY];

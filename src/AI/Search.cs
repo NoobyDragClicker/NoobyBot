@@ -238,6 +238,8 @@ public class Search
                 if (depth < 4 && (staticEval + (150 * depth)) < alpha) { continue; }
                 //Late Move pruning
                 if(moveNum > 10 + depth * depth ){ continue; }
+                //History pruning
+                if(depth <= 4 && moveOrder.history[board.colorTurn == Piece.White ? Board.WhiteIndex : Board.BlackIndex, currentMove.oldIndex, currentMove.newIndex] < -3000 * depth){ continue; }
             }
 
             //SEE pruning

@@ -174,6 +174,11 @@ public class Search
 
         if (plyFromRoot > 0 )
         {
+            //RFP
+            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && staticEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
+            {
+                return staticEval;
+            }
             //NMP
             if (depth > 2)
             {
@@ -192,11 +197,7 @@ public class Search
                     if (eval >= beta) {return eval; }
                 }
             }
-            //RFP
-            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && staticEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
-            {
-                return staticEval;
-            }
+            
         }
 
 

@@ -308,10 +308,6 @@ public class Search
                 if (currentMove.isCapture())
                 {
                     moveOrder.ApplyCaptHistBonus(board.colorTurn, currentMove.newIndex, Piece.PieceType(board.board[currentMove.oldIndex]), Piece.PieceType(board.board[currentMove.newIndex]), 300 * depth - 250);
-                    if(moveNum > 0)
-                    {
-                        moveOrder.ApplyNoisyPenalties(ref legalMoves, moveNum, depth, board);
-                    }
                 }
                 //Updating quiet histories
                 else
@@ -321,6 +317,11 @@ public class Search
                     {
                         moveOrder.ApplyQuietPenalties(ref legalMoves, moveNum, depth, board);
                     }
+                }
+                
+                if(moveNum > 0)
+                {
+                    moveOrder.ApplyNoisyPenalties(ref legalMoves, moveNum, depth, board);
                 }
                 return bestScore;
             }

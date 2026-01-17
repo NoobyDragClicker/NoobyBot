@@ -16,6 +16,8 @@ public class Evaluation
     public static int bishopValue = 366;
     public static int rookValue = 538;
     public static int queenValue = 1024;
+    public static int protectedPawnBonus = 5;
+    public static int doubledPawnPenalty = 20;
 
     public static int[,] mg_PSQT = {
         //Piece.None
@@ -311,11 +313,11 @@ public class Evaluation
             //Passed pawn
             if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
-            if (Piece.PieceType(board.board[pawnIndex - 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 8]) == Piece.White) { bonus -= 20; }
+            if (Piece.PieceType(board.board[pawnIndex - 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 8]) == Piece.White) { bonus -= doubledPawnPenalty; }
             //Defended from left
-            if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex + 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 7]) == Piece.White) { bonus += 5; }
+            if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex + 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 7]) == Piece.White) { bonus += protectedPawnBonus; }
             //Defended from right
-            if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex + 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 9]) == Piece.White) { bonus += 5; }
+            if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex + 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 9]) == Piece.White) { bonus += protectedPawnBonus; }
             if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { numWhiteIsolatedPawns++; }
         }
         else
@@ -324,11 +326,11 @@ public class Evaluation
             //Passed pawn
             if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
-            if (Piece.PieceType(board.board[pawnIndex + 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 8]) == Piece.Black) { bonus -= 20; }
+            if (Piece.PieceType(board.board[pawnIndex + 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 8]) == Piece.Black) { bonus -= doubledPawnPenalty; }
             //Defended from left
-            if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex - 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 9]) == Piece.Black) { bonus += 5; }
+            if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex - 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 9]) == Piece.Black) { bonus += protectedPawnBonus; }
             //Defended from right
-            if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex - 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 7]) == Piece.Black) { bonus += 5; }
+            if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex - 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 7]) == Piece.Black) { bonus += protectedPawnBonus; }
             if((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)]) == 0){ numBlackIsolatedPawns++; }
         }
 

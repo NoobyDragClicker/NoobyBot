@@ -147,19 +147,25 @@ public class MoveOrder
         }
     }
 
+    int CalculateNewScore(int score, int bonus)
+    {
+        int clampedBonus = Math.Clamp(bonus, -HISTORY_MAX, HISTORY_MAX);
+        return score + clampedBonus - score * Math.Abs(clampedBonus) / HISTORY_MAX;
+    }
+
     void ApplyHistoryBonus(int oldIndex, int newIndex, int bonus, int colorTurn)
     {
         int currentColorIndex = (colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
-        int clampedBonus = Math.Clamp(bonus, -HISTORY_MAX, HISTORY_MAX);
-        history[currentColorIndex, oldIndex, newIndex] += clampedBonus - history[currentColorIndex, oldIndex, newIndex] * Math.Abs(clampedBonus) / HISTORY_MAX;
+        //int clampedBonus = Math.Clamp(bonus, -HISTORY_MAX, HISTORY_MAX);
+        history[currentColorIndex, oldIndex, newIndex] = CalculateNewScore(history[currentColorIndex, oldIndex, newIndex], bonus);
     }
 
     void ApplyContHistBonus(Move previousMove, int previousPiece, Move currentMove, int currentPiece, int colorTurn, int bonus)
     {
         int currentColorIndex = (colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
-        int clampedBonus = Math.Clamp(bonus, -HISTORY_MAX, HISTORY_MAX);
+        //int clampedBonus = Math.Clamp(bonus, -HISTORY_MAX, HISTORY_MAX);
         int contHistIndex = FlattenConthistIndex(1 - currentColorIndex, previousPiece, previousMove.newIndex, currentColorIndex, currentPiece, currentMove.newIndex);
-        continuationHistory[contHistIndex] += clampedBonus - continuationHistory[contHistIndex] * Math.Abs(clampedBonus) / HISTORY_MAX;
+        continuationHistory[contHistIndex] = CalculateNewScore(continuationHistory[contHistIndex], bonus);
     }
     
     int FlattenConthistIndex(int prevColor, int prevPiece, int prevTo, int currColor, int currPiece, int currTo)

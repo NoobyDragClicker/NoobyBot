@@ -11,8 +11,12 @@ public class MoveOrder
     const int HISTORY_SUB = 250;
 
     Move[] killers = new Move[Search.MAX_GAME_PLY];
+    
+    //Color turn, from, to
     public int[,,] history = new int[2, 64, 64];
     int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
+    //Color turn, to, moved piece, captured piece
+    int[,,,] captureHistory = new int[2, 64, 7, 7];
 
     public (Move, int)[] movesAndPieceTypes = new (Move, int)[Search.MAX_GAME_PLY];
     public enum Stage { TTMove, Other, Finished }
@@ -26,6 +30,8 @@ public class MoveOrder
         0, 2, 8, 14, 20, 26, 100 , //Queen
         0, 1, 7, 13, 19, 25, 100   //King
      };
+    
+    static int[] MVV = {0, 100, 300, 330, 500, 900, 0};
     public int[] ScoreMoves(Board board, Span<Move> moves, Move firstMove)
     {
         int[] moveScores = new int[moves.Length];
@@ -53,7 +59,7 @@ public class MoveOrder
                 movedPieceType = Piece.PieceType(board.board[moves[x].oldIndex]);
 
                 //MVV LVA 
-                score = million + 10 + MVV_LVA[(movedPieceType * 7) + capturedPieceType];
+                score = million + 10 + MVV[capturedPieceType] * 20 + captureHistory[currentColorIndex, move.newIndex, movedPieceType, capturedPieceType];
             }
             else if (move.isPromotion())
             {
@@ -139,8 +145,10 @@ public class MoveOrder
         int movedPieceType = movesAndPieceTypes[fullMoveClock].Item2;
 
         killers[fullMoveClock] = move;
+
         int bonus = HISTORY_MULTIPLE * depth - HISTORY_SUB;
         ApplyHistoryBonus(move.oldIndex, move.newIndex, bonus, colorTurn);
+
         if(fullMoveClock > 0)
         {
             ApplyContHistBonus(movesAndPieceTypes[fullMoveClock - 1].Item1, movesAndPieceTypes[fullMoveClock - 1].Item2, move, movedPieceType, colorTurn, bonus);
@@ -160,6 +168,12 @@ public class MoveOrder
         history[currentColorIndex, oldIndex, newIndex] = CalculateNewScore(history[currentColorIndex, oldIndex, newIndex], bonus);
     }
 
+    public void ApplyCaptHistBonus(int colorTurn, int newIndex, int movedPieceType, int capturedPieceType, int bonus)
+    {
+        int currentColorIndex = (colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
+        captureHistory[currentColorIndex, newIndex, movedPieceType, capturedPieceType] = CalculateNewScore(captureHistory[currentColorIndex, newIndex, movedPieceType, capturedPieceType], bonus);
+    }
+
     void ApplyContHistBonus(Move previousMove, int previousPiece, Move currentMove, int currentPiece, int colorTurn, int bonus)
     {
         int currentColorIndex = (colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
@@ -173,7 +187,7 @@ public class MoveOrder
         return ((((prevColor * 7 + prevPiece) * 64 + prevTo) * 2 + currColor) * 7 + currPiece) * 64 + currTo;
     }
 
-    public void ApplyHistoryPenalties(ref Span<Move> moves, int startNum, int depth, Board board)
+    public void ApplyQuietPenalties(ref Span<Move> moves, int startNum, int depth, Board board)
     {
         for (int i = startNum - 1; i >= 0; i--)
         {
@@ -184,6 +198,17 @@ public class MoveOrder
                 {
                     ApplyContHistBonus(movesAndPieceTypes[board.fullMoveClock - 1].Item1, movesAndPieceTypes[board.fullMoveClock - 1].Item2, moves[i], Piece.PieceType(board.board[moves[i].oldIndex]), board.colorTurn, -(300 * depth - 250));
                 }
+            }
+        }
+    }
+
+    public void ApplyNoisyPenalties(ref Span<Move> moves, int startNum, int depth, Board board)
+    {
+        for (int i = startNum - 1; i >= 0; i--)
+        {
+            if (moves[i].isCapture())
+            {
+                ApplyCaptHistBonus(board.colorTurn, moves[i].newIndex, Piece.PieceType(board.board[moves[i].oldIndex]), Piece.PieceType(board.board[moves[i].newIndex]), -(300 * depth - 250));
             }
         }
     }
@@ -208,7 +233,7 @@ public class MoveOrder
             }
             movedPieceType = Piece.PieceType(board.board[captures[x].oldIndex]);
 
-            score = MVV_LVA[(movedPieceType * 7) + capturedPieceType];
+            score = MVV[capturedPieceType] * 20 + captureHistory[board.colorTurn==Piece.White? Board.WhiteIndex : Board.BlackIndex, move.newIndex, movedPieceType, capturedPieceType];
             moveScores[x] = score;
         }
 

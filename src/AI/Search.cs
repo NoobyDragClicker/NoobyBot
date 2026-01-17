@@ -303,13 +303,23 @@ public class Search
             {
                 //Exiting search early, so it is a lower bound
                 tt.StoreEvaluation(depth - reductions, plyFromRoot, bestScore, TranspositionTable.LowerBound, currentMove);
-                //Saving quiet move to killers
-                if (!currentMove.isCapture())
+                
+                //Update capthist
+                if (currentMove.isCapture())
+                {
+                    moveOrder.ApplyCaptHistBonus(board.colorTurn, currentMove.newIndex, Piece.PieceType(board.board[currentMove.oldIndex]), Piece.PieceType(board.board[currentMove.newIndex]), 300 * depth - 250);
+                    if(moveNum > 0)
+                    {
+                        moveOrder.ApplyNoisyPenalties(ref legalMoves, moveNum, depth, board);
+                    }
+                }
+                //Updating quiet histories
+                else
                 {
                     moveOrder.UpdateMoveOrderTables(depth, board.fullMoveClock, board.colorTurn);
                     if (moveNum > 0)
                     {
-                        moveOrder.ApplyHistoryPenalties(ref legalMoves, moveNum, depth, board);
+                        moveOrder.ApplyQuietPenalties(ref legalMoves, moveNum, depth, board);
                     }
                 }
                 return bestScore;

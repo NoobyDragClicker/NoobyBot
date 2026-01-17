@@ -233,7 +233,7 @@ public class MoveOrder
             }
             movedPieceType = Piece.PieceType(board.board[captures[x].oldIndex]);
 
-            score = MVV[capturedPieceType] * 20 + captureHistory[board.colorTurn==Piece.White? Board.WhiteIndex : Board.BlackIndex, move.newIndex, movedPieceType, capturedPieceType];
+            score = MVV_LVA[(movedPieceType * 7) + capturedPieceType];
             moveScores[x] = score;
         }
 

@@ -20,6 +20,8 @@ public class Board
     public int[,] pieceCounts = new int[2, 7];
     
     public int colorTurn;
+    public int currentColorIndex;
+    public int oppositeColorIndex;
 
     //Saves the index where a pawn can capture
     public int enPassantIndex;
@@ -66,8 +68,6 @@ public class Board
         int mgValDifference = 0;
         int egValDifference = 0;
 
-        int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
-        int oppositeColorIndex = 1 - currentColorIndex;
 
         //Set to none 
         enPassantIndex = -1;
@@ -346,12 +346,14 @@ public class Board
         gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
         gameStateHistory[fullMoveClock].mgPSQTVal = gameStateHistory[fullMoveClock - 1].mgPSQTVal + mgValDifference;
         gameStateHistory[fullMoveClock].egPSQTVal = gameStateHistory[fullMoveClock - 1].egPSQTVal + egValDifference;
-
-        UpdateSimpleCheckStatus();
-
         //Moving friendly piece
         zobristKey ^= Zobrist.piecesArray[movedPieceType, currentColorIndex, startPos];
         zobristKey ^= Zobrist.piecesArray[newPieceType, currentColorIndex, newPos];
+
+        oppositeColorIndex = currentColorIndex;
+        currentColorIndex = 1 - currentColorIndex;
+        UpdateSimpleCheckStatus();
+
 
         if(oldCastlingRights != castlingRights)
         {
@@ -371,8 +373,8 @@ public class Board
     {
         fullMoveClock--;
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
-        int currentColorIndex = (colorTurn == Piece.White) ? WhiteIndex : BlackIndex;
-        int oppositeColorIndex = 1 - currentColorIndex;
+        oppositeColorIndex = currentColorIndex;
+        currentColorIndex = 1 - currentColorIndex;
         //Removing the current one and getting the required info
         GameState oldGameStateHistory = gameStateHistory[fullMoveClock + 1];
 
@@ -551,6 +553,9 @@ public class Board
         halfMoveClock++;
         fullMoveClock++;
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
+        oppositeColorIndex = currentColorIndex;
+        currentColorIndex = 1 - currentColorIndex;
+
         int oldEPFile = gameStateHistory[fullMoveClock - 1].enPassantFile;
         
         gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
@@ -559,7 +564,7 @@ public class Board
         gameStateHistory[fullMoveClock].isInCheck = false;
         gameStateHistory[fullMoveClock].isCurrentPlayerInDoubleCheck = false;
         gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
-        gameStateHistory[fullMoveClock].castlingRights = 0;//gameStateHistory[fullMoveClock - 1].castlingRights;
+        gameStateHistory[fullMoveClock].castlingRights = 0;
         gameStateHistory[fullMoveClock].mgPSQTVal = gameStateHistory[fullMoveClock - 1].mgPSQTVal;
         gameStateHistory[fullMoveClock].egPSQTVal = gameStateHistory[fullMoveClock - 1].egPSQTVal;
 
@@ -585,6 +590,8 @@ public class Board
             enPassantIndex = -1;
         }
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
+        oppositeColorIndex = currentColorIndex;
+        currentColorIndex = 1 - currentColorIndex;
     }
 
     public int[] ConvertFromFEN(string fenPosition)
@@ -666,8 +673,10 @@ public class Board
 
         //Loads who's move it is
         string sidetoMove = fenPosition.Split(' ')[1];
-        if (sidetoMove == "w") { colorTurn = Piece.White; }
-        else if (sidetoMove == "b") { colorTurn = Piece.Black; }
+        if (sidetoMove == "w") { colorTurn = Piece.White; currentColorIndex = WhiteIndex; }
+        else if (sidetoMove == "b") { colorTurn = Piece.Black; currentColorIndex = BlackIndex; }
+        oppositeColorIndex = 1 - currentColorIndex;
+        
 
         string castling = fenPosition.Split(' ')[2];
 
@@ -841,15 +850,15 @@ public class Board
             }
         }
     }
-    public bool IsCheckmate(int color)
+    public bool IsCheckmate()
     {
-        int kingIndex = MoveGenerator.GetKingIndex(color, this);
+        int kingIndex = MoveGenerator.GetKingIndex(colorTurn, this);
         
         if (gameStateHistory[fullMoveClock].isInCheck)
         {
             GenerateMoveGenInfo();
             Span<Move> legalKingMoves = stackalloc Move[218];
-            int currMoveIndex = MoveGenerator.GenerateKingMoves(legalKingMoves, 0, color, this);
+            int currMoveIndex = MoveGenerator.GenerateKingMoves(legalKingMoves, 0, this);
             //If there are any valid king moves
             if (currMoveIndex != 0)
             {
@@ -859,7 +868,7 @@ public class Board
             else
             {
                 Span<Move> legalMoves = new Move[256];
-                int moveIndex = MoveGenerator.GenerateLegalMoves(this, ref legalMoves, color);
+                int moveIndex = MoveGenerator.GenerateLegalMoves(this, ref legalMoves);
                 if (moveIndex == 0) { return true; }
                 else { return false; }
             }
@@ -903,8 +912,6 @@ public class Board
 
     public ulong GetAttackersToSquare(int square, ulong occupancy, ulong rooks, ulong bishops)
     {
-        //ulong bishops = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)];
-        //ulong rooks = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)];
         return(
             (BitboardHelper.GetRookAttacks(square, occupancy) & rooks)
             | (BitboardHelper.GetBishopAttacks(square, occupancy) & bishops) 

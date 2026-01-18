@@ -146,7 +146,7 @@ public class Perft
             return 1;
         }
         Span<Move> moves = stackalloc Move[218];
-        MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
+        MoveGenerator.GenerateLegalMoves(board, ref moves);
 
         int numCaptures = 0;
         int expectedCaptures = 0;
@@ -154,7 +154,7 @@ public class Perft
         {
             Span<Move> captures = stackalloc Move[218];
 
-            numCaptures = MoveGenerator.GenerateLegalMoves(board, ref captures, board.colorTurn, true);
+            numCaptures = MoveGenerator.GenerateLegalMoves(board, ref captures, true);
         }
 
         //Regular perft
@@ -212,7 +212,7 @@ public class Perft
     ulong SearchDivide(int startDepth, int currentDepth, Board board)
     {
         Span<Move> moves = stackalloc Move[218];
-        MoveGenerator.GenerateLegalMoves(board, ref moves, board.colorTurn);
+        MoveGenerator.GenerateLegalMoves(board, ref moves);
 
         if (currentDepth == 1)
         {

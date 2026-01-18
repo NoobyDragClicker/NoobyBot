@@ -180,15 +180,15 @@ public static class Coord
                     int pieceNum = 0; 
                     Span<Move> validMoves = new Move[256];
                     switch (pieceType){
-                        case 'N': MoveGenerator.GenerateKnightMoves(validMoves, 0, board.colorTurn, board); pieceNum = Piece.Knight; break;
-                        case 'B': MoveGenerator.GenerateBishopMoves(validMoves, 0, board.colorTurn, board) ; pieceNum = Piece.Bishop; break;
+                        case 'N': MoveGenerator.GenerateKnightMoves(validMoves, 0, board); pieceNum = Piece.Knight; break;
+                        case 'B': MoveGenerator.GenerateBishopMoves(validMoves, 0, board) ; pieceNum = Piece.Bishop; break;
                         case 'Q':
-                            int moveIndex = MoveGenerator.GenerateBishopMoves(validMoves, 0, board.colorTurn,  board);
-                            MoveGenerator.GenerateRookMoves(validMoves, moveIndex, board.colorTurn, board);
+                            int moveIndex = MoveGenerator.GenerateBishopMoves(validMoves, 0,  board);
+                            MoveGenerator.GenerateRookMoves(validMoves, moveIndex, board);
                             pieceNum = Piece.Queen;
                             break;
-                        case 'R': MoveGenerator.GenerateRookMoves(validMoves, 0, board.colorTurn, board); pieceNum = Piece.Rook; break;
-                        case 'K': MoveGenerator.GenerateKingMoves(validMoves, 0, board.colorTurn, board); pieceNum = Piece.King; break;
+                        case 'R': MoveGenerator.GenerateRookMoves(validMoves, 0, board); pieceNum = Piece.Rook; break;
+                        case 'K': MoveGenerator.GenerateKingMoves(validMoves, 0, board); pieceNum = Piece.King; break;
                     }
                     List<int> possibleStartIndexes = new List<int>();
 

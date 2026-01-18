@@ -36,6 +36,13 @@ public class Search
     const int ASP_WINDOW = 50;
     const int RFP_MARGIN = 150;
     const int RFP_IMPROVING_MARGIN = 100;
+    const int FP_MARGIN = 150;
+    const int HISTORY_MARGIN = -3000;
+
+    const int QS_DELTA_PRUNING_MARGIN = 150;
+
+    const int IIR_DEPTH = 5;
+
     
     //SEE
     const int SEE_QUIET_MARGIN = -100;
@@ -61,7 +68,7 @@ public class Search
         if (bestMove.isNull())
         {
             Span<Move> legalMoves = new Move[256];
-            int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
+            int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves);
             bestMove = legalMoves[0];
             Console.WriteLine($"Timed out, no move found. Num moves: {numMoves}. Generating random");
         }
@@ -163,14 +170,14 @@ public class Search
         }
 
         //IIR
-        if(depth >= 5 && ttMove.isNull())
+        if(depth >= IIR_DEPTH && ttMove.isNull())
         {
             depth--;
         }
 
         int staticEval = evaluation.EvaluatePosition(board);
         staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
-        bool isImproving = isPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
+        bool isImproving = IsPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
         if (plyFromRoot > 0 )
         {
@@ -182,8 +189,7 @@ public class Search
             //NMP
             if (depth > 2)
             {
-                int currentColorIndex = (board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
-                int nonPawnCount = board.pieceCounts[currentColorIndex, Piece.Knight] + board.pieceCounts[currentColorIndex, Piece.Bishop] + board.pieceCounts[currentColorIndex, Piece.Rook] + board.pieceCounts[currentColorIndex, Piece.Queen];
+                int nonPawnCount = board.pieceCounts[board.currentColorIndex, Piece.Knight] + board.pieceCounts[board.currentColorIndex, Piece.Bishop] + board.pieceCounts[board.currentColorIndex, Piece.Rook] + board.pieceCounts[board.currentColorIndex, Piece.Queen];
                 if (!board.gameStateHistory[board.fullMoveClock].isInCheck && nonPawnCount > 0 && staticEval > beta)
                 {
                     int r = 2;
@@ -203,7 +209,7 @@ public class Search
 
         MoveOrder.Stage stage = MoveOrder.Stage.Other;
         Span<Move> legalMoves = stackalloc Move[218];
-        int numLegalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn);
+        int numLegalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves);
         
 
         //Check for mate or stalemate
@@ -236,11 +242,11 @@ public class Search
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
                 //Futility pruning
-                if (depth < 4 && (staticEval + (150 * depth)) < alpha) { continue; }
+                if (depth < 4 && (staticEval + (FP_MARGIN * depth)) < alpha) { continue; }
                 //Late Move pruning
                 if(moveNum > 10 + depth * depth ){ continue; }
                 //History pruning
-                if(depth <= 4 && moveOrder.history[board.colorTurn == Piece.White ? Board.WhiteIndex : Board.BlackIndex, currentMove.oldIndex, currentMove.newIndex] < -3000 * depth){ continue; }
+                if(depth <= 4 && moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] < HISTORY_MARGIN * depth){ continue; }
             }
 
             //SEE pruning
@@ -307,12 +313,12 @@ public class Search
                 //Update capthist
                 if (currentMove.isCapture())
                 {
-                    moveOrder.ApplyCaptHistBonus(board.colorTurn, currentMove.newIndex, Piece.PieceType(board.board[currentMove.oldIndex]), Piece.PieceType(board.board[currentMove.newIndex]), 300 * depth - 250);
+                    moveOrder.ApplyCaptHistBonus(board.currentColorIndex, currentMove.newIndex, Piece.PieceType(board.board[currentMove.oldIndex]), Piece.PieceType(board.board[currentMove.newIndex]), 300 * depth - 250);
                 }
                 //Updating quiet histories
                 else
                 {
-                    moveOrder.UpdateMoveOrderTables(depth, board.fullMoveClock, board.colorTurn);
+                    moveOrder.UpdateMoveOrderTables(depth, board.fullMoveClock, board.currentColorIndex);
                     if (moveNum > 0)
                     {
                         moveOrder.ApplyQuietPenalties(ref legalMoves, moveNum, depth, board);
@@ -334,7 +340,7 @@ public class Search
     public int QuiescenceSearch(int alpha, int beta, int plyFromRoot)
     {
         if(plyFromRoot > selDepth) { selDepth = plyFromRoot; }
-        if (board.IsCheckmate(board.colorTurn))
+        if (board.IsCheckmate())
         {
             return CHECKMATE + plyFromRoot;
         }
@@ -356,7 +362,7 @@ public class Search
         }
 
         Span<Move> legalMoves = stackalloc Move[218];
-        int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
+        int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, true);
         int[] moveScores = moveOrder.ScoreCaptures(board, legalMoves);
 
         MoveOrder.Stage stage = MoveOrder.Stage.Other;
@@ -373,7 +379,7 @@ public class Search
             if(!SEE(currentMove, 0)){ continue; }
 
             //Delta pruning
-            if ((standPat + getCapturedPieceVal(currentMove) + 150) < alpha){ continue; }
+            if ((standPat + GetCapturedPieceVal(currentMove) + QS_DELTA_PRUNING_MARGIN) < alpha){ continue; }
 
             board.Move(currentMove, true);
             logger.currentDiagnostics.nodesSearched++;
@@ -396,8 +402,8 @@ public class Search
         return bestEval;
     }
 
-    int getCapturedPieceVal(Move move) {
-        int pieceVal = 0;
+    int GetCapturedPieceVal(Move move) {
+        int pieceVal;
         if (move.flag != 7)
         {
             int pieceType = Piece.PieceType(board.board[move.newIndex]);
@@ -420,7 +426,7 @@ public class Search
         }
     }
 
-    bool isPositionImproving(int fullMoveClock, bool isInCheck)
+    bool IsPositionImproving(int fullMoveClock, bool isInCheck)
     {
         if (isInCheck) { return false; }
         if (fullMoveClock > 1 && staticEvals[fullMoveClock - 2] != NEGATIVE_INFINITY) { return staticEvals[fullMoveClock] > staticEvals[fullMoveClock - 2]; }
@@ -450,7 +456,7 @@ public class Search
 
         ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces, rooks, bishops) & allPieces;
 
-        int currentColorIndex = board.colorTurn == Piece.White ? Board.BlackIndex : Board.WhiteIndex;
+        int currentColorIndex = board.oppositeColorIndex;
 
         ulong myAttackers;
         while (true)
@@ -494,7 +500,7 @@ public class Search
                 break;
             }
         }
-        return ((board.colorTurn == Piece.White) ? Board.WhiteIndex : Board.BlackIndex) != currentColorIndex;
+        return board.currentColorIndex != currentColorIndex;
     }
 
     int EstimatedCaptureValue(Move move)

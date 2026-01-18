@@ -36,6 +36,13 @@ public class Search
     const int ASP_WINDOW = 50;
     const int RFP_MARGIN = 150;
     const int RFP_IMPROVING_MARGIN = 100;
+    const int FP_MARGIN = 150;
+    const int HISTORY_MARGIN = -3000;
+
+    const int QS_DELTA_PRUNING_MARGIN = 150;
+
+    const int IIR_DEPTH = 5;
+
     
     //SEE
     const int SEE_QUIET_MARGIN = -100;
@@ -163,14 +170,14 @@ public class Search
         }
 
         //IIR
-        if(depth >= 5 && ttMove.isNull())
+        if(depth >= IIR_DEPTH && ttMove.isNull())
         {
             depth--;
         }
 
         int staticEval = evaluation.EvaluatePosition(board);
         staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
-        bool isImproving = isPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
+        bool isImproving = IsPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
         if (plyFromRoot > 0 )
         {
@@ -235,11 +242,11 @@ public class Search
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
                 //Futility pruning
-                if (depth < 4 && (staticEval + (150 * depth)) < alpha) { continue; }
+                if (depth < 4 && (staticEval + (FP_MARGIN * depth)) < alpha) { continue; }
                 //Late Move pruning
                 if(moveNum > 10 + depth * depth ){ continue; }
                 //History pruning
-                if(depth <= 4 && moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] < -3000 * depth){ continue; }
+                if(depth <= 4 && moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] < HISTORY_MARGIN * depth){ continue; }
             }
 
             //SEE pruning
@@ -372,7 +379,7 @@ public class Search
             if(!SEE(currentMove, 0)){ continue; }
 
             //Delta pruning
-            if ((standPat + getCapturedPieceVal(currentMove) + 150) < alpha){ continue; }
+            if ((standPat + GetCapturedPieceVal(currentMove) + QS_DELTA_PRUNING_MARGIN) < alpha){ continue; }
 
             board.Move(currentMove, true);
             logger.currentDiagnostics.nodesSearched++;
@@ -395,8 +402,8 @@ public class Search
         return bestEval;
     }
 
-    int getCapturedPieceVal(Move move) {
-        int pieceVal = 0;
+    int GetCapturedPieceVal(Move move) {
+        int pieceVal;
         if (move.flag != 7)
         {
             int pieceType = Piece.PieceType(board.board[move.newIndex]);
@@ -419,7 +426,7 @@ public class Search
         }
     }
 
-    bool isPositionImproving(int fullMoveClock, bool isInCheck)
+    bool IsPositionImproving(int fullMoveClock, bool isInCheck)
     {
         if (isInCheck) { return false; }
         if (fullMoveClock > 1 && staticEvals[fullMoveClock - 2] != NEGATIVE_INFINITY) { return staticEvals[fullMoveClock] > staticEvals[fullMoveClock - 2]; }

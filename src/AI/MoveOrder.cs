@@ -59,7 +59,7 @@ public class MoveOrder
                 movedPieceType = Piece.PieceType(board.board[moves[x].oldIndex]);
 
                 //MVV LVA 
-                score = million + 10 + MVV[capturedPieceType] * 20 + captureHistory[currentColorIndex, move.newIndex, movedPieceType, capturedPieceType];
+                score = million + 10 + MVV[capturedPieceType] * 15 + captureHistory[currentColorIndex, move.newIndex, movedPieceType, capturedPieceType];
             }
             else if (move.isPromotion())
             {

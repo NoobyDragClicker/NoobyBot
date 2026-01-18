@@ -371,7 +371,7 @@ public class TexelTuner
                 if (!board.gameStateHistory[board.fullMoveClock].isInCheck)
                 {
                     Span<Move> legalMoves = stackalloc Move[256];
-                    MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
+                    MoveGenerator.GenerateLegalMoves(board, ref legalMoves, true);
                     //No captures
                     if (legalMoves.Length == 0)
                     {
@@ -415,7 +415,7 @@ public class TexelTuner
                     if (!board.gameStateHistory[board.fullMoveClock].isInCheck)
                     {
                         Span<Move> legalMoves = stackalloc Move[256];
-                        MoveGenerator.GenerateLegalMoves(board, ref legalMoves, board.colorTurn, true);
+                        MoveGenerator.GenerateLegalMoves(board, ref legalMoves, true);
                         //No captures
                         if (legalMoves.Length == 0)
                         {

@@ -564,7 +564,7 @@ public class Board
         gameStateHistory[fullMoveClock].isInCheck = false;
         gameStateHistory[fullMoveClock].isCurrentPlayerInDoubleCheck = false;
         gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
-        gameStateHistory[fullMoveClock].castlingRights = 0;
+        gameStateHistory[fullMoveClock].castlingRights = gameStateHistory[fullMoveClock - 1].castlingRights;
         gameStateHistory[fullMoveClock].mgPSQTVal = gameStateHistory[fullMoveClock - 1].mgPSQTVal;
         gameStateHistory[fullMoveClock].egPSQTVal = gameStateHistory[fullMoveClock - 1].egPSQTVal;
 

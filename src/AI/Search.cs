@@ -194,13 +194,14 @@ public class Search
         bool isImproving = IsPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
         int ttAdjustedEval = staticEval;
+        /*
         if (ttHit && 
             (ttInfo.nodeType == TranspositionTable.Exact 
                 || (ttInfo.nodeType == TranspositionTable.UpperBound && ttScore <= staticEval) 
                 || (ttInfo.nodeType == TranspositionTable.LowerBound && ttScore >= staticEval)))
         {
             ttAdjustedEval = ttScore;
-        }
+        }*/
 
         if (plyFromRoot > 0 )
         {

@@ -150,17 +150,31 @@ public class Search
         if (plyFromRoot > 0 && board.IsSearchDraw()) { return 0; }
 
         //Check the TT for a valid entry
-        (Move, int) ttInfo = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
-        if (ttInfo.Item2 != TranspositionTable.LookupFailed)
+        TranspositionTable.Entry ttInfo = tt.LookupEvaluation();
+        Move ttMove = nullMove;
+        int ttScore = 0;
+        bool ttHit = false;
+
+        if(ttInfo.nodeType != 3)
         {
-            //Set the best move
-            if (plyFromRoot == 0)
+            ttHit = true;
+            ttScore = tt.RetrieveEval(ttInfo.eval, plyFromRoot);
+            ttMove = ttInfo.move;
+            if (ttInfo.depth >= depth)
             {
-                bestMoveThisIteration = ttInfo.Item1;
+                //The exact eval
+                if (ttInfo.nodeType == TranspositionTable.Exact 
+                    || (ttInfo.nodeType == TranspositionTable.UpperBound && ttScore <= alpha) 
+                    || (ttInfo.nodeType == TranspositionTable.LowerBound && ttScore >= beta))
+                {
+                    if (plyFromRoot == 0)
+                    {
+                        bestMoveThisIteration = ttMove;
+                    }
+                    return ttScore;
+                }
             }
-            return ttInfo.Item2;
         }
-        Move ttMove = ttInfo.Item1;
 
         //Quiescence search
         if (depth <= 0)
@@ -179,10 +193,19 @@ public class Search
         staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
         bool isImproving = IsPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
+        int ttAdjustedEval = staticEval;
+        if (ttHit && 
+            (ttInfo.nodeType == TranspositionTable.Exact 
+                || (ttInfo.nodeType == TranspositionTable.UpperBound && ttScore <= staticEval) 
+                || (ttInfo.nodeType == TranspositionTable.LowerBound && ttScore >= staticEval)))
+        {
+            ttAdjustedEval = ttScore;
+        }
+
         if (plyFromRoot > 0 )
         {
             //RFP
-            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && staticEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
+            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && ttAdjustedEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
             {
                 return staticEval;
             }

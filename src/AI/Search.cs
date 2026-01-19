@@ -207,7 +207,7 @@ public class Search
             //RFP
             if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && ttAdjustedEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
             {
-                return staticEval;
+                return ttAdjustedEval;
             }
             //NMP
             if (depth > 2)

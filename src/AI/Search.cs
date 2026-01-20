@@ -213,7 +213,7 @@ public class Search
             if (depth > 2)
             {
                 int nonPawnCount = board.pieceCounts[board.currentColorIndex, Piece.Knight] + board.pieceCounts[board.currentColorIndex, Piece.Bishop] + board.pieceCounts[board.currentColorIndex, Piece.Rook] + board.pieceCounts[board.currentColorIndex, Piece.Queen];
-                if (!board.gameStateHistory[board.fullMoveClock].isInCheck && nonPawnCount > 0 && staticEval > beta)
+                if (!board.gameStateHistory[board.fullMoveClock].isInCheck && nonPawnCount > 0 && ttAdjustedEval > beta)
                 {
                     int r = 2;
 

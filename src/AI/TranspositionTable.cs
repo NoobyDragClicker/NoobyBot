@@ -24,39 +24,19 @@ public class TranspositionTable
         entries = new Bucket[numEntries];
     }
 
-    public (Move, int) LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta)
+    public Entry LookupEvaluation()
 	{
         Bucket bucket = entries[Index];
 
         if (bucket.depthPreferred.key == board.zobristKey)
         {
-            //Don't use the stored eval if it's a lower depth
-            if (bucket.depthPreferred.depth >= depth)
-            {
-                int eval = RetrieveEval(bucket.depthPreferred.eval, plyFromRoot);
-                //The exact eval
-                if (bucket.depthPreferred.nodeType == Exact || (bucket.depthPreferred.nodeType == UpperBound && eval <= alpha) || (bucket.depthPreferred.nodeType == LowerBound && eval >= beta))
-                {
-                    return (bucket.depthPreferred.move, eval);
-                }
-            }
-            return (bucket.depthPreferred.move, LookupFailed); 
+            return bucket.depthPreferred; 
         }
         else if (bucket.alwaysReplace.key == board.zobristKey)
         {
-            //Don't use the stored eval if it's a lower depth
-            if (bucket.alwaysReplace.depth >= depth)
-            {
-                int eval = RetrieveEval(bucket.alwaysReplace.eval, plyFromRoot);
-                //The exact eval
-                if (bucket.alwaysReplace.nodeType == Exact || (bucket.alwaysReplace.nodeType == UpperBound && eval <= alpha) || (bucket.alwaysReplace.nodeType == LowerBound && eval >= beta))
-                {
-                    return (bucket.alwaysReplace.move, eval);
-                }
-            }
-            return (bucket.alwaysReplace.move, LookupFailed); 
+            return bucket.alwaysReplace; 
         }
-        return (Search.nullMove, LookupFailed); 
+        return new Entry(0, 0, 0, 3, Search.nullMove); 
     }
 
     public Entry GetEntryForPos()
@@ -80,7 +60,7 @@ public class TranspositionTable
     }
 
     //Returning it to its new mate value, based on how far away this mate is
-    int RetrieveEval(int eval, int numPlySearched){
+    public int RetrieveEval(int eval, int numPlySearched){
         if(Search.IsMateScore(eval)){
 			int sign = System.Math.Sign(eval);
             return (eval * sign - numPlySearched) * sign;

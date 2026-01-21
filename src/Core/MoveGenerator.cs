@@ -109,7 +109,7 @@ public static class MoveGenerator
                         if (board.gameStateHistory[board.fullMoveClock].isInCheck & !BitboardHelper.ContainsSquare(checkIndexes, board.enPassantIndex + 8)) { moves &= checkIndexes; }
                         if (moves != 0)
                         {
-                            if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex + 8)) | moves)))
+                            if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex + 8)) | moves), board))
                             {
                                 legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, 7);
                             }
@@ -172,7 +172,7 @@ public static class MoveGenerator
                         if (board.gameStateHistory[board.fullMoveClock].isInCheck & ! BitboardHelper.ContainsSquare(checkIndexes, board.enPassantIndex - 8)) { moves &= checkIndexes; }
                         if (moves != 0)
                         {
-                            if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex - 8)) | moves)))
+                            if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex - 8)) | moves), board))
                             {
                                 legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, 7);
                             }
@@ -211,13 +211,15 @@ public static class MoveGenerator
         }
         return currMoveIndex;
 
-        bool isLegalEP(ulong boardMinusPawnsInvolved)
-        {
-            int kingIndex = GetKingIndex(board.colorTurn, board);
-            ulong attackingPiecesMask = BitboardHelper.GetRookAttacks(kingIndex, boardMinusPawnsInvolved);
-            return (attackingPiecesMask & (board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)])) == 0;
-        }
+        
     }
+    public static bool isLegalEP(ulong boardMinusPawnsInvolved, Board board)
+    {
+        int kingIndex = GetKingIndex(board.colorTurn, board);
+        ulong attackingPiecesMask = BitboardHelper.GetRookAttacks(kingIndex, boardMinusPawnsInvolved);
+        return (attackingPiecesMask & (board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)])) == 0;
+    }
+
     public static int GenerateKnightMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
 

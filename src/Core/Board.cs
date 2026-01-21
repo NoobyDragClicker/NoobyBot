@@ -922,6 +922,185 @@ public class Board
             );
     }
 
+    public bool isLegalMove(Move move)
+    {
+        GenerateMoveGenInfo();
+        //No piece at the origin of the move
+        if (board[move.oldIndex] == 0 || Piece.Color(board[move.oldIndex]) != colorTurn) { return false; }
+
+        ulong moves = 0;
+        int pieceType = Piece.PieceType(board[move.oldIndex]);
+
+        //Promotion, double pawn push
+        if ((move.isPromotion() || move.flag == 6 || move.flag == 7) && pieceType != Piece.Pawn) { return false; }
+        //Castling
+        if (move.flag == 5 && pieceType != Piece.King) { return false; }
+
+        //Can't capture if there's no piece to capture
+        if (move.isCapture() && move.flag != 7 && (board[move.newIndex] == 0 || Piece.Color(board[move.newIndex]) == colorTurn)) { return false; }
+
+        //Can't not be a capture if there is a piece there
+        else if (!move.isCapture() && board[move.newIndex] != 0) { return false; }
+
+        //Have to move king in double check
+        if (gameStateHistory[fullMoveClock].isCurrentPlayerInDoubleCheck && pieceType != Piece.King) { return false; }
+
+        switch (pieceType)
+        {
+            case Piece.King:
+                return isLegalKingMove(move, currentColorIndex);
+            case Piece.Knight:
+                return isLegalKnightMove(move, currentColorIndex);
+            case Piece.Bishop:
+                return isLegalBishopMove(move);
+            case Piece.Rook:
+                return isLegalRookMove(move);
+            case Piece.Queen:
+                return isLegalBishopMove(move) || isLegalRookMove(move);
+            case Piece.Pawn:
+                return isLegalPawnMove(move, currentColorIndex, colorTurn);
+            default:
+                return false;
+        }
+    }
+    bool isLegalKingMove(Move move, int currentColorIndex)
+    {
+        if (move.flag != 5)
+        {
+            ulong legalMoves = BitboardHelper.kingAttacks[move.oldIndex] & ~gameStateHistory[fullMoveClock].attackedSquares[1 - currentColorIndex] & ~sideBitboard[currentColorIndex];
+            if (move.isCapture()) { legalMoves &= sideBitboard[1 - currentColorIndex]; }
+            return BitboardHelper.ContainsSquare(legalMoves, move.newIndex);
+        }
+        //Castling conditions
+        else
+        {
+            //In check?
+            if (gameStateHistory[fullMoveClock].isInCheck) { return false; }
+
+
+            bool isKingside = move.newIndex - move.oldIndex == 2;
+            //Castling rights?
+            if (isKingside && !HasKingsideRight(colorTurn)) { return false; }
+            else if (!isKingside && !HasQueensideRight(colorTurn)) { return false; }
+
+            ulong pieceCastleMask = (currentColorIndex == WhiteIndex) ?
+            ((isKingside) ? BitboardHelper.whiteKingsideCastleMask : BitboardHelper.whiteQueensidePieceCastleMask) :
+            ((isKingside) ? BitboardHelper.blackKingsideCastleMask : BitboardHelper.blackQueensidePieceCastleMask);
+
+            //Blocking pieces?
+            if ((allPiecesBitboard & pieceCastleMask) != 0) { return false; }
+
+            ulong attackedSquaresMask = (currentColorIndex == WhiteIndex) ?
+            ((isKingside) ? BitboardHelper.whiteKingsideCastleMask : BitboardHelper.whiteQueensideAttackCastleMask) :
+            ((isKingside) ? BitboardHelper.blackKingsideCastleMask : BitboardHelper.blackQueensideAttackCastleMask);
+
+            //Attacked squares being crossed?
+            if ((gameStateHistory[fullMoveClock].attackedSquares[1 - currentColorIndex] & attackedSquaresMask) != 0) { return false; }
+            return true;
+        }
+    }
+
+    bool isLegalKnightMove(Move move, int currentColorIndex)
+    {
+        //Not pinned
+        if (gameStateHistory[fullMoveClock].diagPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { return false; }
+        if (gameStateHistory[fullMoveClock].straightPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { return false; }
+
+        ulong moves = BitboardHelper.knightAttacks[move.oldIndex] & ~sideBitboard[currentColorIndex];
+        if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
+        return BitboardHelper.ContainsSquare(moves, move.newIndex);
+    }
+
+    bool isLegalRookMove(Move move)
+    {
+        //Diag pinned?
+        if (gameStateHistory[fullMoveClock].diagPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { return false; }
+        ulong moves = BitboardHelper.GetRookAttacks(move.oldIndex, allPiecesBitboard);
+        if (gameStateHistory[fullMoveClock].straightPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].straightPins; }
+        if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
+        return BitboardHelper.ContainsSquare(moves, move.newIndex);
+    }
+    
+    bool isLegalBishopMove(Move move)
+    {
+        //Straight pinned?
+        if (gameStateHistory[fullMoveClock].straightPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { return false; }
+
+        ulong moves = BitboardHelper.GetBishopAttacks(move.oldIndex, allPiecesBitboard);
+        if (gameStateHistory[fullMoveClock].diagPins != 0 && BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].diagPins; }
+        if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
+        return BitboardHelper.ContainsSquare(moves, move.newIndex);
+    }
+
+    bool isLegalPawnMove(Move move, int currentColorIndex, int pieceColor)
+    {
+        //En passant
+        if (move.flag == 7)
+        {
+            if (enPassantIndex != move.newIndex) { return false; }
+            //Can't en passant when straight pinned
+            if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { return false; }
+            ulong moves = ((currentColorIndex == WhiteIndex) ? BitboardHelper.wPawnAttacks[move.oldIndex] : BitboardHelper.bPawnAttacks[move.oldIndex]) & (1ul << enPassantIndex);
+
+            if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
+            if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].diagPins; }
+            if (moves == 0) { return false; }
+
+            //Stupid occupancy thing
+            return MoveGenerator.isLegalEP(allPiecesBitboard ^ ((1ul << move.oldIndex) | (1ul << (enPassantIndex + ((currentColorIndex == WhiteIndex) ? 8: -8)))), this);
+        }
+        //Double pawn push
+        else if (move.flag == 6)
+        {
+            if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { return false; }
+            ulong doubleMask = (currentColorIndex == WhiteIndex) ? BitboardHelper.wPawnDoubleMask[move.oldIndex] : BitboardHelper.bPawnDoubleMask[move.oldIndex];
+            //Piece is blocking it
+            if ((doubleMask & allPiecesBitboard) != 0) { return false; }
+            ulong moves = (currentColorIndex == WhiteIndex) ? BitboardHelper.wPawnDouble[move.oldIndex] : BitboardHelper.bPawnDouble[move.oldIndex];
+            if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].straightPins; }
+            if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
+            if (moves == 0) { return false; }
+            
+            return BitboardHelper.ContainsSquare(moves, move.newIndex);
+        }
+        else if (move.isCapture())
+        {
+            //Guards against extra promotions without promotion flag
+            int rankTo = Coord.IndexToRank(move.newIndex);
+            if (((pieceColor == Piece.White && rankTo == 8) || (pieceColor == Piece.Black && rankTo == 1)) && !move.isPromotion()) { return false; }
+
+            //Can't be straight pinned 
+            if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { return false; }
+            ulong moves = (currentColorIndex == WhiteIndex) ? BitboardHelper.wPawnAttacks[move.oldIndex] : BitboardHelper.bPawnAttacks[move.oldIndex];
+            moves &= sideBitboard[1 - currentColorIndex];
+            if (moves == 0) { return false; }
+
+            if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].diagPins; }
+            if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
+            if (moves == 0) { return false; }
+
+            return BitboardHelper.ContainsSquare(moves, move.newIndex);
+        }
+        else
+        {
+            //Guards against extra promotions
+            int rankTo = Coord.IndexToRank(move.newIndex);
+            if (((pieceColor == Piece.White && rankTo == 8) || (pieceColor == Piece.Black && rankTo == 1)) && !move.isPromotion()) { return false; }
+
+            //Can't be diag pinned 
+            if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { return false; }
+            ulong moves = (currentColorIndex == WhiteIndex) ? BitboardHelper.wPawnMoves[move.oldIndex] : BitboardHelper.bPawnMoves[move.oldIndex];
+            moves &= ~allPiecesBitboard;
+            if (moves == 0) { return false; }
+            
+            if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].straightPins; }
+            if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
+            if (moves == 0) { return false; }
+            
+            return BitboardHelper.ContainsSquare(moves, move.newIndex);
+        }
+    }
+
     public int EnPassantFileToIndex(int pieceColor, int epFile)
     {
         if (pieceColor == Piece.White)

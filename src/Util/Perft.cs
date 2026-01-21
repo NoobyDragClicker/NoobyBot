@@ -190,6 +190,8 @@ public class Perft
             {
                 expectedCaptures++;
             }
+
+            //if(!board.isLegalMove(moves[i])){ Console.WriteLine(board.ConvertToFEN() + " " + Coord.GetUCIMoveNotation(moves[i])); }
             //make.Start();
             board.Move(moves[i], true);
             //make.Stop();

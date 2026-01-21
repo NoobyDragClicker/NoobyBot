@@ -229,32 +229,71 @@ public class Search
             
         }
 
+        //Starting stage;
+        MoveOrder.Stage stage = (ttMove.isNull() || !board.isLegalMove(ttMove)) ? MoveOrder.Stage.Other : MoveOrder.Stage.TTMove;
+        MoveOrder.Stage previousStage = stage;
 
-        MoveOrder.Stage stage = MoveOrder.Stage.Other;
-        Span<Move> legalMoves = stackalloc Move[218];
-        int numLegalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves);
         
 
-        //Check for mate or stalemate
-        if (numLegalMoves == 0)
-        {
-            if (board.gameStateHistory[board.fullMoveClock].isInCheck){ return CHECKMATE + plyFromRoot;}
-            else { return 0; }
-        }
+        Span<Move> legalMoves = stackalloc Move[218];
+        int[] moveScores = new int[1];
 
-        //Move ordering
-        int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
+        if(stage == MoveOrder.Stage.TTMove)
+        {
+            int maxNum = MoveGenerator.GenerateLegalMoves(board, ref legalMoves);
+            bool found = false;
+            foreach (Move move in legalMoves)
+            {
+                if (move.GetIntValue() == ttMove.GetIntValue()){found = true;}
+            }
+            if(!found){Console.WriteLine($"TT move not found, {Coord.GetUCIMoveNotation(ttMove)}, {board.ConvertToFEN()} ");}
+        }
+        //Starts at -1, so that when it is incremented on the first round, it will be at 0
+        int moveIndex = -1;
+        int indexInStage = -1;
+        //Starts at 0 (if there is a TT move), will get overidden if there is not
+        int maxIndexInStage = 0;
+        
+        int totalMoves = 1;
+        if(stage == MoveOrder.Stage.Other)
+        {
+            maxIndexInStage = MoveGenerator.GenerateLegalMoves(board, ref legalMoves) - 1;
+            totalMoves = maxIndexInStage + 1;
+            if(maxIndexInStage < 0)
+            {
+                if (board.gameStateHistory[board.fullMoveClock].isInCheck){ return CHECKMATE + plyFromRoot;}
+                else { return 0; }
+            }
+            moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
+        }
+        
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
         int bestScore = NEGATIVE_INFINITY;
-        int moveNum = -1;
 
+    
         while(stage != MoveOrder.Stage.Finished)
         {
-            moveNum++;
-            Move currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, moveNum);
-            if(moveNum == numLegalMoves - 1){ stage++; }
+            indexInStage++;
+            moveIndex++;
+            if(previousStage != stage)
+            {
+                totalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves); 
+                
+                //There is only 1 move, it has been searched by the TT move
+                if(totalMoves == 1){ break; }
+
+                //Subtract by 2, since it means we have already searched the TT move if we are in this loop
+                maxIndexInStage = totalMoves - 2;
+                moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
+                previousStage = stage;
+                indexInStage = 0;
+            }
+
+            Move currentMove = (stage == MoveOrder.Stage.TTMove) ? ttMove : moveOrder.GetNextBestMove(moveScores, legalMoves, indexInStage);
+            //We are searching the last move in the stage;
+            if(indexInStage >= maxIndexInStage){ stage++; }
 
             //Store the move and piece type
             moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, Piece.PieceType(board.board[currentMove.oldIndex]));
@@ -267,7 +306,7 @@ public class Search
                 //Futility pruning
                 if (depth < 4 && (staticEval + (FP_MARGIN * depth)) < alpha) { continue; }
                 //Late Move pruning
-                if(moveNum > 10 + depth * depth ){ continue; }
+                if(moveIndex > 10 + depth * depth ){ continue; }
                 //History pruning
                 if(depth <= 4 && moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] < HISTORY_MARGIN * depth){ continue; }
             }
@@ -281,7 +320,7 @@ public class Search
             logger.currentDiagnostics.nodesSearched++;
 
             //Check extension
-            int extension = (numLegalMoves == 1) ? 1 : 0;
+            int extension = 0;//(numLegalMoves == 1) ? 1 : 0;
             if (board.gameStateHistory[board.fullMoveClock].isInCheck && numCheckExtensions < 15 && extension == 0)
             {
                 extension = 1;
@@ -291,9 +330,9 @@ public class Search
 
             int reductions = 0;
             //LMR
-            if (moveNum > 0 && depth > 3)
+            if (moveIndex > 0 && depth > 3)
             {
-                reductions = 1 + (int)(Math.Log(moveNum) * Math.Log(depth) / 3);
+                reductions = 1 + (int)(Math.Log(moveIndex) * Math.Log(depth) / 3);
             }
 
             //Main search
@@ -342,21 +381,20 @@ public class Search
                 else
                 {
                     moveOrder.UpdateMoveOrderTables(depth, board.fullMoveClock, board.currentColorIndex);
-                    if (moveNum > 0)
+                    if (moveIndex > 0)
                     {
-                        moveOrder.ApplyQuietPenalties(ref legalMoves, moveNum, depth, board);
+                        moveOrder.ApplyQuietPenalties(ref legalMoves, moveIndex, depth, board);
                     }
                 }
                 
-                if(moveNum > 0)
+                if(moveIndex > 0)
                 {
-                    moveOrder.ApplyNoisyPenalties(ref legalMoves, moveNum, depth, board);
+                    moveOrder.ApplyNoisyPenalties(ref legalMoves, moveIndex, depth, board);
                 }
                 return bestScore;
             }
         }
-        
-        tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
+        tt.StoreEvaluation(depth, plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
         return bestScore;
     }
 

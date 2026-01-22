@@ -1047,7 +1047,7 @@ public class Board
             if (moves == 0) { return false; }
 
             //Stupid occupancy thing
-            return MoveGenerator.isLegalEP(allPiecesBitboard ^ ((1ul << move.oldIndex) | (1ul << (enPassantIndex + ((currentColorIndex == WhiteIndex) ? 8: -8)))), this);
+            return MoveGenerator.isLegalEP(allPiecesBitboard ^ ((1ul << move.oldIndex) | (1ul << (enPassantIndex + ((currentColorIndex == WhiteIndex) ? 8: -8))) | moves), this);
         }
         //Double pawn push
         else if (move.flag == 6)

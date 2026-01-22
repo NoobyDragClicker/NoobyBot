@@ -396,8 +396,7 @@ public class Search
             if (board.gameStateHistory[board.fullMoveClock].isInCheck){return CHECKMATE + plyFromRoot; }
             else{ return 0; }
         }
-        if(totalMoves != moveIndex + 1){Console.WriteLine($"Total: {totalMoves} Index {moveIndex} TTMove {Coord.GetUCIMoveNotation(ttMove)} FEN {board.ConvertToFEN()} Ply {plyFromRoot} Valid {ttValid}"); }
-
+        
         tt.StoreEvaluation(depth, plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
         return bestScore;
     }

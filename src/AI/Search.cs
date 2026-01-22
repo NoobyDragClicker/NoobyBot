@@ -247,7 +247,6 @@ public class Search
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
         int bestScore = NEGATIVE_INFINITY;
-        bool ttValid = false;
 
         Move currentMove = nullMove;
         while(stage != MoveOrder.Stage.Finished)
@@ -264,7 +263,6 @@ public class Search
                 }
                 //TT move is fake
                 else{stage++; continue; }
-                ttValid = true;
                 stage++;
             }
             else
@@ -391,7 +389,7 @@ public class Search
             }
         }
         
-        if(moveIndex <= 0)
+        if(moveIndex <= -1)
         {
             if (board.gameStateHistory[board.fullMoveClock].isInCheck){return CHECKMATE + plyFromRoot; }
             else{ return 0; }

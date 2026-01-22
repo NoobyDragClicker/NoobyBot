@@ -1042,7 +1042,7 @@ public class Board
             if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].straightPins, move.oldIndex)) { return false; }
             ulong moves = ((currentColorIndex == WhiteIndex) ? BitboardHelper.wPawnAttacks[move.oldIndex] : BitboardHelper.bPawnAttacks[move.oldIndex]) & (1ul << enPassantIndex);
 
-            if (gameStateHistory[fullMoveClock].isInCheck) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
+            if (gameStateHistory[fullMoveClock].isInCheck && !BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].checkIndexes, enPassantIndex + ((currentColorIndex == WhiteIndex) ? 8 : -8))) { moves &= gameStateHistory[fullMoveClock].checkIndexes; }
             if (BitboardHelper.ContainsSquare(gameStateHistory[fullMoveClock].diagPins, move.oldIndex)) { moves &= gameStateHistory[fullMoveClock].diagPins; }
             if (moves == 0) { return false; }
 

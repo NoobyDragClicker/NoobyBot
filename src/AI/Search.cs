@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Transactions;
 
 
 
@@ -230,7 +231,7 @@ public class Search
         }
 
         //Starting stage;
-        MoveOrder.Stage stage = (ttMove.isNull() || !board.isLegalMove(ttMove)) ? MoveOrder.Stage.Other : MoveOrder.Stage.TTMove;
+        MoveOrder.Stage stage = MoveOrder.Stage.TTMove;
         MoveOrder.Stage previousStage = stage;
         
         Span<Move> legalMoves = stackalloc Move[218];
@@ -239,53 +240,60 @@ public class Search
         //Starts at -1, so that when it is incremented on the first round, it will be at 0
         int moveIndex = -1;
         int indexInStage = -1;
-        //Starts at 0 (if there is a TT move), will get overidden if there is not
-        int maxIndexInStage = 0;
-        
-        int totalMoves = 1;
-        if(stage == MoveOrder.Stage.Other)
-        {
-            maxIndexInStage = MoveGenerator.GenerateLegalMoves(board, ref legalMoves) - 1;
-            totalMoves = maxIndexInStage + 1;
-            if(maxIndexInStage < 0)
-            {
-                if (board.gameStateHistory[board.fullMoveClock].isInCheck){ return CHECKMATE + plyFromRoot;}
-                else { return 0; }
-            }
-            moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
-        }
-        
+        int maxIndexInStage = 0;      
+        int totalMoves = 0;
+
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
         int bestScore = NEGATIVE_INFINITY;
+        bool ttValid = false;
 
-    
+        Move currentMove = nullMove;
         while(stage != MoveOrder.Stage.Finished)
         {
-            indexInStage++;
-            moveIndex++;
-            if(previousStage != stage)
+            if(stage == MoveOrder.Stage.TTMove)
             {
-                totalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves); 
-                
-                //There is only 1 move, it has been searched by the TT move
-                if(totalMoves == 1){ break; }
+                if (plyFromRoot == 0 && !bestMove.isNull())
+                {
+                    currentMove = bestMove;
+                } 
+                else if (!ttMove.isNull() && board.isLegalMove(ttMove))
+                {
+                    currentMove = ttMove;
+                }
+                //TT move is fake
+                else{stage++; continue; }
+                ttValid = true;
+                stage++;
+            }
+            else
+            {
+                //Need to movegen
+                if(previousStage != stage)
+                {
+                    maxIndexInStage = MoveGenerator.GenerateLegalMoves(board, ref legalMoves) - 1; 
+                    totalMoves = maxIndexInStage + 1;
+                    //No move found
+                    if(maxIndexInStage == -1) { break; }
 
-                //Subtract by 2, since it means we have already searched the TT move if we are in this loop
-                maxIndexInStage = totalMoves - 2;
-                moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
-                previousStage = stage;
-                indexInStage = 0;
+                    moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
+                    previousStage = stage;
+                    indexInStage = -1;
+                }
+
+                indexInStage++;
+                //Last move in stage
+                if(indexInStage >= maxIndexInStage){ stage++; }
+                //This is the TT move, skip
+                if(moveScores[indexInStage] == -8000000){ continue; }
+                currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, indexInStage);
             }
 
-            Move currentMove = (stage == MoveOrder.Stage.TTMove) ? ttMove : moveOrder.GetNextBestMove(moveScores, legalMoves, indexInStage);
-            //We are searching the last move in the stage;
-            if(indexInStage >= maxIndexInStage){ stage++; }
+            moveIndex++;
 
             //Store the move and piece type
             moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, Piece.PieceType(board.board[currentMove.oldIndex]));
-
 
             bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
 
@@ -382,6 +390,14 @@ public class Search
                 return bestScore;
             }
         }
+        
+        if(moveIndex == 0)
+        {
+            if (board.gameStateHistory[board.fullMoveClock].isInCheck){return CHECKMATE + plyFromRoot; }
+            else{ return 0; }
+        }
+        if(totalMoves != moveIndex + 1){Console.WriteLine($"Total: {totalMoves} Index {moveIndex} TTMove {Coord.GetUCIMoveNotation(ttMove)} FEN {board.ConvertToFEN()} Ply {plyFromRoot} Valid {ttValid}"); }
+
         tt.StoreEvaluation(depth, plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
         return bestScore;
     }

@@ -35,12 +35,14 @@ public class MoveOrder
     public int[] ScoreMoves(Board board, Span<Move> moves, Move firstMove)
     {
         int[] moveScores = new int[moves.Length];
+        bool firstMoveNull = firstMove.isNull();
+        int firstMoveValue = firstMove.GetIntValue();
         for (int x = 0; x < moves.Length; x++)
         {
             Move move = moves[x];
             int score = 0;
             //Order the TT move last, so we do not search it
-            if (!firstMove.isNull() && move.GetIntValue() == firstMove.GetIntValue())
+            if (!firstMoveNull && move.GetIntValue() == firstMoveValue)
             {
                 score = -8 * million;
             }

@@ -232,22 +232,10 @@ public class Search
         //Starting stage;
         MoveOrder.Stage stage = (ttMove.isNull() || !board.isLegalMove(ttMove)) ? MoveOrder.Stage.Other : MoveOrder.Stage.TTMove;
         MoveOrder.Stage previousStage = stage;
-
         
-
         Span<Move> legalMoves = stackalloc Move[218];
         int[] moveScores = new int[1];
 
-        if(stage == MoveOrder.Stage.TTMove)
-        {
-            int maxNum = MoveGenerator.GenerateLegalMoves(board, ref legalMoves);
-            bool found = false;
-            foreach (Move move in legalMoves)
-            {
-                if (move.GetIntValue() == ttMove.GetIntValue()){found = true;}
-            }
-            if(!found){Console.WriteLine($"TT move not found, {Coord.GetUCIMoveNotation(ttMove)}, {board.ConvertToFEN()} ");}
-        }
         //Starts at -1, so that when it is incremented on the first round, it will be at 0
         int moveIndex = -1;
         int indexInStage = -1;

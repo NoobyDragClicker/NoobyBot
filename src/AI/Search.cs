@@ -391,7 +391,7 @@ public class Search
             }
         }
         
-        if(moveIndex == 0)
+        if(moveIndex <= 0)
         {
             if (board.gameStateHistory[board.fullMoveClock].isInCheck){return CHECKMATE + plyFromRoot; }
             else{ return 0; }

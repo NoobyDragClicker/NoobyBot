@@ -283,9 +283,9 @@ public class Search
                 indexInStage++;
                 //Last move in stage
                 if(indexInStage >= maxIndexInStage){ stage++; }
-                //This is the TT move, skip
-                if(moveScores[indexInStage] == -8000000){ continue; }
                 currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, indexInStage);
+                //This is the TT move, skip
+                if(moveScores[indexInStage] == 8000000){ continue; }
             }
 
             moveIndex++;

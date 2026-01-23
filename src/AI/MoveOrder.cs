@@ -41,10 +41,9 @@ public class MoveOrder
         {
             Move move = moves[x];
             int score = 0;
-            //Order the TT move last, so we do not search it
             if (!firstMoveNull && move.GetIntValue() == firstMoveValue)
             {
-                score = -8 * million;
+                score = 8 * million;
             }
             else if (!killers[board.fullMoveClock].isNull() && move.GetIntValue() == killers[board.fullMoveClock].GetIntValue())
             {

@@ -241,7 +241,6 @@ public class Search
         int moveIndex = -1;
         int indexInStage = -1;
         int maxIndexInStage = 0;      
-        int totalMoves = 0;
 
 
         int evaluationBound = TranspositionTable.UpperBound;
@@ -274,7 +273,6 @@ public class Search
                 if(previousStage != stage)
                 {
                     maxIndexInStage = MoveGenerator.GenerateLegalMoves(board, ref legalMoves) - 1; 
-                    totalMoves = maxIndexInStage + 1;
                     //No move found
                     if(maxIndexInStage == -1) { break; }
                     hasLegalMove = true;
@@ -398,6 +396,7 @@ public class Search
             if (board.gameStateHistory[board.fullMoveClock].isInCheck){return CHECKMATE + plyFromRoot; }
             else{ return 0; }
         }
+
         
         tt.StoreEvaluation(depth, plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
         return bestScore;

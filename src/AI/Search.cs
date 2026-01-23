@@ -248,6 +248,8 @@ public class Search
         Move bestMoveInThisPosition = nullMove;
         int bestScore = NEGATIVE_INFINITY;
 
+        bool hasLegalMove = false;
+
         Move currentMove = nullMove;
         while(stage != MoveOrder.Stage.Finished)
         {
@@ -264,6 +266,7 @@ public class Search
                 //TT move is fake
                 else{stage++; continue; }
                 stage++;
+                hasLegalMove = true;
             }
             else
             {
@@ -274,6 +277,7 @@ public class Search
                     totalMoves = maxIndexInStage + 1;
                     //No move found
                     if(maxIndexInStage == -1) { break; }
+                    hasLegalMove = true;
 
                     moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
                     previousStage = stage;
@@ -389,7 +393,7 @@ public class Search
             }
         }
         
-        if(moveIndex <= -1)
+        if(!hasLegalMove)
         {
             if (board.gameStateHistory[board.fullMoveClock].isInCheck){return CHECKMATE + plyFromRoot; }
             else{ return 0; }

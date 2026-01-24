@@ -291,7 +291,7 @@ public class Search
 
             int reductions = 0;
             //LMR
-            if (moveNum > 0 && depth > 3)
+            if (moveNum > 0 && depth > 3 && !isTactical)
             {
                 reductions = 1 + (int)(Math.Log(moveNum) * Math.Log(depth) / 3);
             }

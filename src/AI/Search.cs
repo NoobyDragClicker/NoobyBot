@@ -88,7 +88,7 @@ public class Search
         for (int depth = 1; depth <= maxDepth; depth++)
         {
             bestMoveThisIteration = nullMove;           
-            bestEval = SearchMoves(depth, 0, alpha, beta, 0);
+            bestEval = SearchMoves(depth, 0, alpha, beta, 0, true);
 
             if(alpha != NEGATIVE_INFINITY && bestEval <= alpha )
             {
@@ -144,7 +144,7 @@ public class Search
         return bestEvalThisIteration;
     }
 
-    int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numCheckExtensions)
+    int SearchMoves(int depth, int plyFromRoot, int alpha, int beta, int numCheckExtensions, bool isPV)
     {
         if (abortSearch) { return 0; }
         if (plyFromRoot > 0 && board.IsSearchDraw()) { return 0; }
@@ -219,7 +219,7 @@ public class Search
 
                     board.MakeNullMove();
                     moveOrder.movesAndPieceTypes[board.fullMoveClock] = (nullMove, 0);
-                    int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions);
+                    int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions, false);
                     board.UnmakeNullMove();
 
                     if (abortSearch) { return 0; }
@@ -288,21 +288,31 @@ public class Search
                 numCheckExtensions++;
             }
 
+            int eval = 0;
+            int newDepth = depth + extension - 1;
+            int reducedDepth = newDepth;
 
-            int reductions = 0;
-            //LMR
-            if (moveNum > 0 && depth > 3 && !isTactical)
+            if(moveNum > 0 && depth > 3 && !isTactical)
             {
-                reductions = 1 + (int)(Math.Log(moveNum) * Math.Log(depth) / 3);
+                int reductions = 1 + (int)(Math.Log(moveNum) * Math.Log(depth) / 3);
+                
+                reducedDepth = Math.Clamp(newDepth - reductions, 1, newDepth - 1);
+
+                eval = -SearchMoves(reducedDepth, plyFromRoot + 1, -alpha-1, -alpha, numCheckExtensions, false);
+
+                if(eval > alpha)
+                {
+                    eval = -SearchMoves(newDepth, plyFromRoot + 1, -alpha-1, -alpha, numCheckExtensions, false);
+                }
+            } 
+            else if (!isPV || moveNum > 0)
+            {
+                eval = -SearchMoves(newDepth, plyFromRoot + 1, - alpha - 1, -alpha, numCheckExtensions, false);
             }
 
-            //Main search
-            int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
-
-            //Unreduced search
-            if (eval > alpha && reductions > 0)
+            if(isPV && (moveNum == 0 || eval > alpha))
             {
-                eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
+                eval = -SearchMoves(newDepth, plyFromRoot + 1, -beta, -alpha, numCheckExtensions, true);
             }
 
             board.UndoMove(currentMove);

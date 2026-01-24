@@ -331,7 +331,7 @@ public class Search
             if (eval >= beta)
             {
                 //Exiting search early, so it is a lower bound
-                tt.StoreEvaluation(depth - reductions, plyFromRoot, bestScore, TranspositionTable.LowerBound, currentMove);
+                tt.StoreEvaluation(depth, plyFromRoot, bestScore, TranspositionTable.LowerBound, currentMove);
                 
                 //Update capthist
                 if (currentMove.isCapture())

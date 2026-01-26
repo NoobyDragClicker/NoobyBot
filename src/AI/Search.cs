@@ -293,7 +293,8 @@ public class Search
             //LMR
             if (moveNum > 0 && depth > 3 && !isTactical)
             {
-                reductions = 1 + (int)((Math.Log(moveNum) * Math.Log(depth) / 3) + (isImproving ? 0 : 0.5));
+                reductions = 1024 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 3) + (isImproving ? 0 : 512);
+                reductions /= 1024;
             }
 
             //Main search

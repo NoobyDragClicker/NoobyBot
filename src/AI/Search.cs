@@ -262,6 +262,9 @@ public class Search
 
             bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
 
+            int moveHistory = moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] 
+            + (plyFromRoot > 0 ? moveOrder.continuationHistory[moveOrder.FlattenConthistIndex(board.oppositeColorIndex, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item2, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, Piece.PieceType(board.board[currentMove.oldIndex]), currentMove.newIndex)] : 0);
+
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
                 //Futility pruning
@@ -269,7 +272,7 @@ public class Search
                 //Late Move pruning
                 if(moveNum > 10 + depth * depth ){ continue; }
                 //History pruning
-                if(depth <= 4 && moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] < HISTORY_MARGIN * depth){ continue; }
+                if(depth <= 4 && moveHistory < HISTORY_MARGIN * depth){ continue; }
             }
 
             //SEE pruning

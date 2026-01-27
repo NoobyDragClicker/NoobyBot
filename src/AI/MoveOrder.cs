@@ -14,7 +14,7 @@ public class MoveOrder
     
     //Color turn, from, to
     public int[,,] history = new int[2, 64, 64];
-    int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
+    public int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
     //Color turn, to, moved piece, captured piece
     int[,,,] captureHistory = new int[2, 64, 7, 7];
 
@@ -175,7 +175,7 @@ public class MoveOrder
         continuationHistory[contHistIndex] = CalculateNewScore(continuationHistory[contHistIndex], bonus);
     }
     
-    int FlattenConthistIndex(int prevColor, int prevPiece, int prevTo, int currColor, int currPiece, int currTo)
+    public int FlattenConthistIndex(int prevColor, int prevPiece, int prevTo, int currColor, int currPiece, int currTo)
     {
         return ((((prevColor * 7 + prevPiece) * 64 + prevTo) * 2 + currColor) * 7 + currPiece) * 64 + currTo;
     }

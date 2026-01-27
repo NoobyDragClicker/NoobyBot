@@ -38,6 +38,8 @@ public class Search
     const int RFP_IMPROVING_MARGIN = 100;
     const int FP_MARGIN = 150;
     const int HISTORY_MARGIN = -3000;
+    const int LMR_IMPROVING = 512;
+    const int LMR_HISTORY_DIVISOR = 16;
 
     const int QS_DELTA_PRUNING_MARGIN = 150;
 
@@ -262,8 +264,8 @@ public class Search
 
             bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
 
-            int moveHistory = moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] 
-            + (plyFromRoot > 0 ? moveOrder.continuationHistory[moveOrder.FlattenConthistIndex(board.oppositeColorIndex, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item2, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, Piece.PieceType(board.board[currentMove.oldIndex]), currentMove.newIndex)] : 0);
+            int moveHistory = isTactical ? 0 : (moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] 
+            + (plyFromRoot > 0 ? moveOrder.continuationHistory[moveOrder.FlattenConthistIndex(board.oppositeColorIndex, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item2, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, Piece.PieceType(board.board[currentMove.oldIndex]), currentMove.newIndex)] : 0));
 
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
@@ -293,20 +295,22 @@ public class Search
 
 
             int reductions = 0;
+            int newDepth = depth + extension - 1;
             //LMR
             if (moveNum > 0 && depth > 3 && !isTactical)
             {
-                reductions = 1024 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 3) + (isImproving ? 0 : 512);
+                reductions = 1024 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 3) + (isImproving ? 0 : LMR_IMPROVING) - moveHistory/LMR_HISTORY_DIVISOR;
                 reductions /= 1024;
+                reductions = Math.Clamp(reductions, 0, newDepth);
             }
 
             //Main search
-            int eval = -SearchMoves(depth + extension - 1 - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
+            int eval = -SearchMoves(newDepth - reductions, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
 
             //Unreduced search
             if (eval > alpha && reductions > 0)
             {
-                eval = -SearchMoves(depth + extension - 1, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
+                eval = -SearchMoves(newDepth, plyFromRoot + 1, -beta, -alpha, numCheckExtensions);
             }
 
             board.UndoMove(currentMove);

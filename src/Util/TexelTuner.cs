@@ -363,7 +363,7 @@ public class TexelTuner
             string[] whiteMoveTotal = movesInTurn[0].Split("{");
             Move whiteMove = Coord.convertUCIMove(board, whiteMoveTotal[0].Trim());
             moveInfoPairs[currentMoveNum] = (whiteMove, whiteMoveTotal[1]);
-            board.Move(whiteMove, true);
+            board.MakeMove(whiteMove, true);
             //Not book move
             if (!whiteMoveTotal[1].Contains("book") && !whiteMoveTotal[1].Contains("M"))
             {
@@ -407,7 +407,7 @@ public class TexelTuner
                 string[] blackMoveTotal = movesInTurn[1].Split("{");
                 Move blackMove = Coord.convertUCIMove(board, blackMoveTotal[0].Trim());
                 moveInfoPairs[currentMoveNum] = (blackMove, blackMoveTotal[1]);
-                board.Move(blackMove, true);
+                board.MakeMove(blackMove, true);
                 //Not book move
                 if (!blackMoveTotal[1].Contains("book") && !blackMoveTotal[1].Contains("M"))
                 {

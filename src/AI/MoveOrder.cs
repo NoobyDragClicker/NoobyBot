@@ -52,7 +52,7 @@ public class MoveOrder
                 int movedPieceType;
                 int capturedPieceType;
                 //en passant
-                if (move.flag == 7) { capturedPieceType = Piece.Pawn; }
+                if (move.flag == Move.EnPassant) { capturedPieceType = Piece.Pawn; }
                 else { capturedPieceType = board.PieceAt(moves[x].newIndex); }
                 movedPieceType = board.MovedPieceType(moves[x]);
 
@@ -216,7 +216,7 @@ public class MoveOrder
             int score;
             Move move = captures[x];
             //en passant
-            if (move.flag == 7)
+            if (move.flag == Move.EnPassant)
             {
                 capturedPieceType = Piece.Pawn;
             }

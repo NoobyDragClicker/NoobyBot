@@ -50,7 +50,7 @@ public class Board
 
 
     //Moves the pieces
-    public void Move(Move move, bool isSearch)
+    public void MakeMove(Move move, bool isSearch)
     {
         fullMoveClock++;
         int oldCastlingRights = gameStateHistory[fullMoveClock - 1].castlingRights;
@@ -89,7 +89,7 @@ public class Board
         int newPieceType = Piece.PieceType(newPiece);
 
         //castle
-        if (move.flag == 5)
+        if (move.flag == Move.Castle)
         {
             int oldRookIndex = 0;
             int newRookIndex = 0;
@@ -171,7 +171,7 @@ public class Board
             zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, newRookIndex];
         }
         //en passant
-        else if (move.flag == 7)
+        else if (move.flag == Move.EnPassant)
         {
             //Moving pawn
             BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)], startPos);
@@ -209,7 +209,7 @@ public class Board
         else
         {
             //Double pawn push
-            if (move.flag == 6)
+            if (move.flag == Move.DoublePawnPush)
             {
                 //Set to the square behind the spot moved to
                 enPassantIndex = (colorTurn == Piece.White) ? (newPos + 8) : (newPos - 8);
@@ -411,7 +411,7 @@ public class Board
         }
 
         //castle
-        if (move.flag == 5)
+        if (move.flag == Move.Castle)
         {
             //Undo the castles
             if (colorTurn == Piece.White)
@@ -487,7 +487,7 @@ public class Board
 
         }
         //en passant
-        else if (move.flag == 7)
+        else if (move.flag == Move.EnPassant)
         {
             //capture
             board[startPos] = movedPiece;

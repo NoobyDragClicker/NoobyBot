@@ -282,7 +282,7 @@ public class Search
             if(depth < 5 && !SEE(currentMove, seeMargin)){ continue; }
 
 
-            board.Move(currentMove, true);
+            board.MakeMove(currentMove, true);
             logger.currentDiagnostics.nodesSearched++;
 
             //Check extension
@@ -412,7 +412,7 @@ public class Search
             //Delta pruning
             if ((standPat + GetCapturedPieceVal(currentMove) + QS_DELTA_PRUNING_MARGIN) < alpha){ continue; }
 
-            board.Move(currentMove, true);
+            board.MakeMove(currentMove, true);
             logger.currentDiagnostics.nodesSearched++;
             int eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
             board.UndoMove(currentMove);
@@ -435,7 +435,7 @@ public class Search
 
     int GetCapturedPieceVal(Move move) {
         int pieceVal;
-        if (move.flag != 7)
+        if (move.flag != Move.EnPassant)
         {
             int pieceType = board.PieceAt(move.newIndex);
             pieceVal = GetPieceValue(pieceType);
@@ -483,7 +483,7 @@ public class Search
         //Update occupancy
         ulong allPieces = board.allPiecesBitboard;
         allPieces = (allPieces ^ (1ul<<move.oldIndex)) | (1ul<<move.newIndex);
-        if(move.flag == 7){ allPieces ^= 1ul<<board.enPassantIndex; }
+        if(move.flag == Move.EnPassant){ allPieces ^= 1ul<<board.enPassantIndex; }
 
         ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces, rooks, bishops) & allPieces;
 
@@ -536,7 +536,7 @@ public class Search
 
     int EstimatedCaptureValue(Move move)
     {
-        if(move.flag == 7){ return SEEPieceVals[Piece.Pawn]; }
+        if(move.flag == Move.EnPassant){ return SEEPieceVals[Piece.Pawn]; }
         else if (move.isPromotion()){
             return SEEPieceVals[board.PieceAt(move.newIndex)] + SEEPieceVals[move.PromotedPieceType()] - SEEPieceVals[Piece.Pawn];
         }
@@ -568,7 +568,7 @@ public class Search
             {
                 if (!entry.move.isNull())
                 {
-                    board.Move(entry.move, true);
+                    board.MakeMove(entry.move, true);
                     moveList.Push(entry.move);
                     if (!board.IsSearchDraw())
                     {

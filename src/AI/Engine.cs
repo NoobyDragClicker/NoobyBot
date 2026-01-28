@@ -139,7 +139,7 @@ public class Engine
             string[] moveList = allMoves.Split(' ');
             foreach (string move in moveList)
             {
-                board.Move(convertUCIMove(move), false);
+                board.MakeMove(convertUCIMove(move), false);
             }
         }
     }

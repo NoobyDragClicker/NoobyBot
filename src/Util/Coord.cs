@@ -35,10 +35,10 @@ public static class Coord
         string end = GetNotationFromIndex(move.newIndex);
         string promotion = "";
 
-        if(move.flag == 1){ promotion = "q"; }
-        else if (move.flag == 2){ promotion = "b"; }
-        else if (move.flag == 3){ promotion = "n"; }
-        else if (move.flag == 4){ promotion = "r"; }
+        if(move.flag == Move.QueenPromo){ promotion = "q"; }
+        else if (move.flag == Move.BishopPromo){ promotion = "b"; }
+        else if (move.flag == Move.KnightPromo){ promotion = "n"; }
+        else if (move.flag == Move.RookPromo){ promotion = "r"; }
 
 
         return start + "" + end + promotion;
@@ -145,17 +145,17 @@ public static class Coord
         //Castling
         if (strMove == "O-O"){
             if(board.colorTurn == Piece.White){
-                return new Move(60, 62, false, 5);
+                return new Move(60, 62, false, Move.Castle);
             } else{
-                return new Move(4, 6, false, 5);
+                return new Move(4, 6, false, Move.Castle);
             }
 
         } 
         else if (strMove == "O-O-O"){
             if(board.colorTurn == Piece.White){
-                return new Move(60, 58, false, 5);
+                return new Move(60, 58, false, Move.Castle);
             } else{
-                return new Move(4, 2, false, 5);
+                return new Move(4, 2, false, Move.Castle);
             }
         }
         else {

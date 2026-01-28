@@ -259,13 +259,13 @@ public class Search
             if(moveNum == numLegalMoves - 1){ stage++; }
 
             //Store the move and piece type
-            moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, Piece.PieceType(board.board[currentMove.oldIndex]));
+            moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, board.MovedPieceType(currentMove));
 
 
             bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
 
             int moveHistory = isTactical ? 0 : (moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] 
-            + (plyFromRoot > 0 ? moveOrder.continuationHistory[moveOrder.FlattenConthistIndex(board.oppositeColorIndex, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item2, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, Piece.PieceType(board.board[currentMove.oldIndex]), currentMove.newIndex)] : 0));
+            + (plyFromRoot > 0 ? moveOrder.continuationHistory[moveOrder.FlattenConthistIndex(board.oppositeColorIndex, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item2, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(currentMove), currentMove.newIndex)] : 0));
 
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
@@ -344,7 +344,7 @@ public class Search
                 //Update capthist
                 if (currentMove.isCapture())
                 {
-                    moveOrder.ApplyCaptHistBonus(board.currentColorIndex, currentMove.newIndex, Piece.PieceType(board.board[currentMove.oldIndex]), Piece.PieceType(board.board[currentMove.newIndex]), 300 * depth - 250);
+                    moveOrder.ApplyCaptHistBonus(board.currentColorIndex, currentMove.newIndex, board.MovedPieceType(currentMove), board.PieceAt(currentMove.newIndex), 300 * depth - 250);
                 }
                 //Updating quiet histories
                 else
@@ -437,7 +437,7 @@ public class Search
         int pieceVal;
         if (move.flag != 7)
         {
-            int pieceType = Piece.PieceType(board.board[move.newIndex]);
+            int pieceType = board.PieceAt(move.newIndex);
             pieceVal = GetPieceValue(pieceType);
         }
         else { pieceVal = Evaluation.pawnValue; }
@@ -538,11 +538,11 @@ public class Search
     {
         if(move.flag == 7){ return SEEPieceVals[Piece.Pawn]; }
         else if (move.isPromotion()){
-            return SEEPieceVals[Piece.PieceType(board.board[move.newIndex])] + SEEPieceVals[move.PromotedPieceType()] - SEEPieceVals[Piece.Pawn];
+            return SEEPieceVals[board.PieceAt(move.newIndex)] + SEEPieceVals[move.PromotedPieceType()] - SEEPieceVals[Piece.Pawn];
         }
         else
         {
-            return SEEPieceVals[Piece.PieceType(board.board[move.newIndex])];
+            return SEEPieceVals[board.PieceAt(move.newIndex)];
         }
     }
 

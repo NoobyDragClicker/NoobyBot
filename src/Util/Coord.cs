@@ -85,7 +85,7 @@ public static class Coord
         {
             isCapture = true;
         }
-        if (Piece.PieceType(board.board[startPos]) == Piece.Pawn)
+        if (board.PieceAt(startPos) == Piece.Pawn)
         {
             int distance = Math.Abs(startPos - endPos);
             //Double pawn push
@@ -106,7 +106,7 @@ public static class Coord
                 else if (move[4] == 'r') { flag = 4; }
             }
         }
-        else if (Piece.PieceType(board.board[startPos]) == Piece.King)
+        else if (board.PieceAt(startPos) == Piece.King)
         {
             int distance = Math.Abs(startPos - endPos);
             //Castling

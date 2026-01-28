@@ -264,17 +264,17 @@ public class Evaluation
             if (Coord.IndexToRank(kingIndex) != 8)
             {
                 //White Pawn in front
-                if (Piece.PieceType(board.board[kingIndex - 8]) != Piece.Pawn || Piece.Color(board.board[kingIndex - 8]) != Piece.White) { numPenalties += 1; }
+                if (board.PieceAt(kingIndex - 8) != Piece.Pawn || board.ColorAt(kingIndex - 8) != Piece.White) { numPenalties += 1; }
 
                 //White Pawn front left
                 if (Coord.IndexToFile(kingIndex) != 1)
                 {
-                    if (Piece.PieceType(board.board[kingIndex - 9]) != Piece.Pawn || Piece.Color(board.board[kingIndex - 9]) != Piece.White) { numPenalties += 1; }
+                    if (board.PieceAt(kingIndex - 9) != Piece.Pawn || board.ColorAt(kingIndex - 9) != Piece.White) { numPenalties += 1; }
                 }
                 //White Pawn front right
                 if (Coord.IndexToFile(kingIndex) != 8)
                 {
-                    if (Piece.PieceType(board.board[kingIndex - 7]) != Piece.Pawn || Piece.Color(board.board[kingIndex - 7]) != Piece.White) { numPenalties += 1; }
+                    if (board.PieceAt(kingIndex - 7) != Piece.Pawn || board.ColorAt(kingIndex - 7) != Piece.White) { numPenalties += 1; }
                 }
             }
             penaltyMultiplier = (!board.HasKingsideRight(Piece.White) && !board.HasQueensideRight(Piece.White)) ? 6 : 1;
@@ -286,17 +286,17 @@ public class Evaluation
             if (Coord.IndexToRank(kingIndex) != 1)
             {
                 //Black Pawn in front
-                if (Piece.PieceType(board.board[kingIndex + 8]) != Piece.Pawn || Piece.Color(board.board[kingIndex + 8]) != Piece.White) { numPenalties += 1; }
+                if (board.PieceAt(kingIndex + 8) != Piece.Pawn || board.ColorAt(kingIndex + 8) != Piece.White) { numPenalties += 1; }
 
                 //Black Pawn front left
                 if (Coord.IndexToFile(kingIndex) != 1)
                 {
-                    if (Piece.PieceType(board.board[kingIndex + 7]) != Piece.Pawn || Piece.Color(board.board[kingIndex + 7]) != Piece.White) { numPenalties += 1; }
+                    if (board.PieceAt(kingIndex + 7) != Piece.Pawn || board.ColorAt(kingIndex + 7) != Piece.White) { numPenalties += 1; }
                 }
                 //Black Pawn front right
                 if (Coord.IndexToFile(kingIndex) != 8)
                 {
-                    if (Piece.PieceType(board.board[kingIndex + 9]) != Piece.Pawn || Piece.Color(board.board[kingIndex + 9]) != Piece.White) { numPenalties += 1; }
+                    if (board.PieceAt(kingIndex + 9) != Piece.Pawn || board.ColorAt(kingIndex + 9) != Piece.White) { numPenalties += 1; }
                 }
             }
             penaltyMultiplier = (!board.HasKingsideRight(Piece.Black) && !board.HasQueensideRight(Piece.Black)) ? 6 : 1;
@@ -313,11 +313,11 @@ public class Evaluation
             //Passed pawn
             if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
-            if (Piece.PieceType(board.board[pawnIndex - 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 8]) == Piece.White) { bonus -= doubledPawnPenalty; }
+            if (board.PieceAt(pawnIndex - 8) == Piece.Pawn && board.ColorAt(pawnIndex - 8) == Piece.White) { bonus -= doubledPawnPenalty; }
             //Defended from left
-            if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex + 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 7]) == Piece.White) { bonus += protectedPawnBonus; }
+            if (Coord.IndexToFile(pawnIndex) != 1 && board.PieceAt(pawnIndex + 7) == Piece.Pawn && board.ColorAt(pawnIndex + 7) == Piece.White) { bonus += protectedPawnBonus; }
             //Defended from right
-            if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex + 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 9]) == Piece.White) { bonus += protectedPawnBonus; }
+            if (Coord.IndexToFile(pawnIndex) != 8 && board.PieceAt(pawnIndex + 9) == Piece.Pawn && board.ColorAt(pawnIndex + 9) == Piece.White) { bonus += protectedPawnBonus; }
             if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { numWhiteIsolatedPawns++; }
         }
         else
@@ -326,11 +326,11 @@ public class Evaluation
             //Passed pawn
             if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
-            if (Piece.PieceType(board.board[pawnIndex + 8]) == Piece.Pawn && Piece.Color(board.board[pawnIndex + 8]) == Piece.Black) { bonus -= doubledPawnPenalty; }
+            if (board.PieceAt(pawnIndex + 8) == Piece.Pawn && board.ColorAt(pawnIndex + 8) == Piece.Black) { bonus -= doubledPawnPenalty; }
             //Defended from left
-            if (Coord.IndexToFile(pawnIndex) != 1 && Piece.PieceType(board.board[pawnIndex - 9]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 9]) == Piece.Black) { bonus += protectedPawnBonus; }
+            if (Coord.IndexToFile(pawnIndex) != 1 && board.PieceAt(pawnIndex - 9) == Piece.Pawn && board.ColorAt(pawnIndex - 9) == Piece.Black) { bonus += protectedPawnBonus; }
             //Defended from right
-            if (Coord.IndexToFile(pawnIndex) != 8 && Piece.PieceType(board.board[pawnIndex - 7]) == Piece.Pawn && Piece.Color(board.board[pawnIndex - 7]) == Piece.Black) { bonus += protectedPawnBonus; }
+            if (Coord.IndexToFile(pawnIndex) != 8 && board.PieceAt(pawnIndex - 7) == Piece.Pawn && board.ColorAt(pawnIndex - 7) == Piece.Black) { bonus += protectedPawnBonus; }
             if((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)]) == 0){ numBlackIsolatedPawns++; }
         }
 

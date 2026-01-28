@@ -76,7 +76,7 @@ public class Board
         {
             halfMoveClock = 0;
             //Sets the new piece to be the same color but whatever the new piece type is
-            newPiece = Piece.Color(board[startPos]) | move.PromotedPieceType();
+            newPiece = ColorAt(startPos) | move.PromotedPieceType();
             pieceCounts[currentColorIndex, move.PromotedPieceType()] += 1;
             pieceCounts[currentColorIndex, Piece.Pawn] -= 1;
         }
@@ -404,7 +404,7 @@ public class Board
         if (move.isPromotion())
         {
             //Sets the new piece to be the same color but whatever the new piece type is
-            movedPiece = Piece.Color(board[newPos]) | Piece.Pawn;
+            movedPiece = ColorAt(newPos) | Piece.Pawn;
             pieceTypeBeforeMove = Piece.Pawn;
             pieceCounts[currentColorIndex, Piece.Pawn] += 1;
             pieceCounts[currentColorIndex, movedPieceType] -= 1;
@@ -744,7 +744,7 @@ public class Board
                 //If empties need to be added, add them
                 if (emptyCounter != 0) { fen += emptyCounter.ToString(); emptyCounter = 0; }
                 int pieceType = Piece.PieceType(board[index]);
-                if (Piece.Color(board[index]) == Piece.White)
+                if (ColorAt(index) == Piece.White)
                 {
                     switch (pieceType)
                     {
@@ -828,7 +828,7 @@ public class Board
 
     public int MovedPieceType(Move move)
     {
-        return Piece.PieceType(board[move.oldIndex]);
+        return PieceAt(move.oldIndex);
     }
 
     public bool IsSearchDraw()
@@ -920,6 +920,16 @@ public class Board
             | (BitboardHelper.bPawnAttacks[square] & pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)])
             | (BitboardHelper.kingAttacks[square] & (pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)]))
             );
+    }
+
+    public int PieceAt(int index)
+    {
+        return Piece.PieceType(board[index]);
+    }
+
+    public int ColorAt(int index)
+    {
+        return Piece.Color(board[index]);
     }
 
     public int EnPassantFileToIndex(int pieceColor, int epFile)

@@ -316,7 +316,7 @@ public class Engine
         int startSquare = Coord.NotationToIndex(moveName.Substring(0, 2));
         int targetSquare = Coord.NotationToIndex(moveName.Substring(2, 2));
 
-        int movedPieceType = Piece.PieceType(board.board[startSquare]);
+        int movedPieceType = board.PieceAt(startSquare);
         bool isCapture = false;
 
         // Figure out move flag

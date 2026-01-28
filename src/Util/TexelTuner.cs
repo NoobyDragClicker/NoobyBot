@@ -785,7 +785,7 @@ public class TexelTuner
         int phase = 0;
         for (int index = 0; index < 64; index++)
         {
-            int pieceType = Piece.PieceType(board.board[index]);
+            int pieceType = board.PieceAt(index);
             switch (pieceType)
             {
                 case Piece.Queen: phase += 4; break;

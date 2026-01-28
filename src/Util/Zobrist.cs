@@ -45,8 +45,8 @@ public static class Zobrist
 		{
 			if (board.board[squareIndex] != 0)
 			{
-				int pieceType = Piece.PieceType(board.board[squareIndex]);
-				int pieceColour = Piece.Color(board.board[squareIndex]);
+				int pieceType = board.PieceAt(squareIndex);
+				int pieceColour = board.ColorAt(squareIndex);
 
 				zobristKey ^= piecesArray[pieceType, (pieceColour == Piece.White) ? Board.WhiteIndex : Board.BlackIndex, squareIndex];
 			}

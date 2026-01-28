@@ -6,6 +6,15 @@ public struct Move
 
     //0 = none, 1 = promote to queen, 2 = promote to bishop, 3 = promote to knight, 4 = promote to rook, 5 = castle, 6 = double pawn push, 7 = enpeasent
     public int flag;
+
+    public const int None = 0;
+    public const int QueenPromo = 1;
+    public const int BishopPromo = 2;
+    public const int KnightPromo = 3;
+    public const int RookPromo = 4;
+    public const int Castle = 5;
+    public const int DoublePawnPush = 6;
+    public const int EnPassant = 7;
     
     public Move(int prevIndex, int currIndex, bool capture, int flag)
     {
@@ -17,7 +26,7 @@ public struct Move
     public Move(int prevIndex, int currIndex, bool capture){
         oldIndex = prevIndex;
         newIndex = currIndex;
-        flag = 0;
+        flag = None;
         this.capture = capture;
     }
 
@@ -47,7 +56,7 @@ public struct Move
     }
 
     public bool isPromotion(){
-        return (flag > 0 && flag < 5) ? true : false;
+        return (flag > None && flag < Castle) ? true : false;
     }
 
     public void printMove(){

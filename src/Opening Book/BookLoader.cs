@@ -95,7 +95,7 @@ public class BookLoader
             if (sections[x] != "1." && sections[x] != "2." && sections[x] != "3." && sections[x] != "4." && sections[x] != "5." && sections[x] != "6." && sections[x] != "7." && sections[x] != "8." && sections[x] != "1/2-1/2" && sections[x] != "0-1" && sections[x] != "1-0")
             {
                 moves[index] = Coord.convertPGNMove(board, sections[x], lineNum);
-                board.Move(moves[index], false);
+                board.MakeMove(moves[index], false);
                 index++;
             }
         }

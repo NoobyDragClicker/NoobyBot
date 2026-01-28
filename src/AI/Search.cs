@@ -259,13 +259,13 @@ public class Search
             if(moveNum == numLegalMoves - 1){ stage++; }
 
             //Store the move and piece type
-            moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, Piece.PieceType(board.board[currentMove.oldIndex]));
+            moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, board.MovedPieceType(currentMove));
 
 
             bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
 
             int moveHistory = isTactical ? 0 : (moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] 
-            + (plyFromRoot > 0 ? moveOrder.continuationHistory[moveOrder.FlattenConthistIndex(board.oppositeColorIndex, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item2, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, Piece.PieceType(board.board[currentMove.oldIndex]), currentMove.newIndex)] : 0));
+            + (plyFromRoot > 0 ? moveOrder.continuationHistory[moveOrder.FlattenConthistIndex(board.oppositeColorIndex, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item2, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(currentMove), currentMove.newIndex)] : 0));
 
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
@@ -282,7 +282,7 @@ public class Search
             if(depth < 5 && !SEE(currentMove, seeMargin)){ continue; }
 
 
-            board.Move(currentMove, true);
+            board.MakeMove(currentMove, true);
             logger.currentDiagnostics.nodesSearched++;
 
             //Check extension
@@ -344,7 +344,7 @@ public class Search
                 //Update capthist
                 if (currentMove.isCapture())
                 {
-                    moveOrder.ApplyCaptHistBonus(board.currentColorIndex, currentMove.newIndex, Piece.PieceType(board.board[currentMove.oldIndex]), Piece.PieceType(board.board[currentMove.newIndex]), 300 * depth - 250);
+                    moveOrder.ApplyCaptHistBonus(board.currentColorIndex, currentMove.newIndex, board.MovedPieceType(currentMove), board.PieceAt(currentMove.newIndex), 300 * depth - 250);
                 }
                 //Updating quiet histories
                 else
@@ -412,7 +412,7 @@ public class Search
             //Delta pruning
             if ((standPat + GetCapturedPieceVal(currentMove) + QS_DELTA_PRUNING_MARGIN) < alpha){ continue; }
 
-            board.Move(currentMove, true);
+            board.MakeMove(currentMove, true);
             logger.currentDiagnostics.nodesSearched++;
             int eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
             board.UndoMove(currentMove);
@@ -435,9 +435,9 @@ public class Search
 
     int GetCapturedPieceVal(Move move) {
         int pieceVal;
-        if (move.flag != 7)
+        if (move.flag != Move.EnPassant)
         {
-            int pieceType = Piece.PieceType(board.board[move.newIndex]);
+            int pieceType = board.PieceAt(move.newIndex);
             pieceVal = GetPieceValue(pieceType);
         }
         else { pieceVal = Evaluation.pawnValue; }
@@ -483,7 +483,7 @@ public class Search
         //Update occupancy
         ulong allPieces = board.allPiecesBitboard;
         allPieces = (allPieces ^ (1ul<<move.oldIndex)) | (1ul<<move.newIndex);
-        if(move.flag == 7){ allPieces ^= 1ul<<board.enPassantIndex; }
+        if(move.flag == Move.EnPassant){ allPieces ^= 1ul<<board.enPassantIndex; }
 
         ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces, rooks, bishops) & allPieces;
 
@@ -536,13 +536,13 @@ public class Search
 
     int EstimatedCaptureValue(Move move)
     {
-        if(move.flag == 7){ return SEEPieceVals[Piece.Pawn]; }
+        if(move.flag == Move.EnPassant){ return SEEPieceVals[Piece.Pawn]; }
         else if (move.isPromotion()){
-            return SEEPieceVals[Piece.PieceType(board.board[move.newIndex])] + SEEPieceVals[move.PromotedPieceType()] - SEEPieceVals[Piece.Pawn];
+            return SEEPieceVals[board.PieceAt(move.newIndex)] + SEEPieceVals[move.PromotedPieceType()] - SEEPieceVals[Piece.Pawn];
         }
         else
         {
-            return SEEPieceVals[Piece.PieceType(board.board[move.newIndex])];
+            return SEEPieceVals[board.PieceAt(move.newIndex)];
         }
     }
 
@@ -568,7 +568,7 @@ public class Search
             {
                 if (!entry.move.isNull())
                 {
-                    board.Move(entry.move, true);
+                    board.MakeMove(entry.move, true);
                     moveList.Push(entry.move);
                     if (!board.IsSearchDraw())
                     {

@@ -111,7 +111,7 @@ public static class MoveGenerator
                         {
                             if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex + 8)) | moves)))
                             {
-                                legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, 7);
+                                legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, Move.EnPassant);
                             }
                         }
                     }
@@ -126,7 +126,7 @@ public static class MoveGenerator
                         if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
                     }
 
-                    while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, 6); }
+                    while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, Move.DoublePawnPush); }
 
                     moves = !isDiagPinned ? BitboardHelper.wPawnMoves[index] : 0;
                     moves &= ~blockers;
@@ -174,7 +174,7 @@ public static class MoveGenerator
                         {
                             if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex - 8)) | moves)))
                             {
-                                legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, 7);
+                                legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, Move.EnPassant);
                             }
                         }
                     }
@@ -189,7 +189,7 @@ public static class MoveGenerator
                         if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
                     }
 
-                    while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, 6); }
+                    while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, Move.DoublePawnPush); }
 
                     moves = !isDiagPinned ? BitboardHelper.bPawnMoves[index] : 0;
                     moves &= ~blockers;
@@ -371,13 +371,13 @@ public static class MoveGenerator
         if (board.HasKingsideRight(board.colorTurn) && !board.gameStateHistory[board.fullMoveClock].isInCheck)
         {
             //No pieces/attacked squares between castling points
-            if (board.colorTurn == Piece.White && (piecesAndAttackedSquares & BitboardHelper.whiteKingsideCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 62, false, 5); }
-            else if (board.colorTurn == Piece.Black && (piecesAndAttackedSquares & BitboardHelper.blackKingsideCastleMask) == 0) { moves[currMoveIndex++] = new Move(index, 6, false, 5); }
+            if (board.colorTurn == Piece.White && (piecesAndAttackedSquares & BitboardHelper.whiteKingsideCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 62, false, Move.Castle); }
+            else if (board.colorTurn == Piece.Black && (piecesAndAttackedSquares & BitboardHelper.blackKingsideCastleMask) == 0) { moves[currMoveIndex++] = new Move(index, 6, false, Move.Castle); }
         }
         if (board.HasQueensideRight(board.colorTurn) && !board.gameStateHistory[board.fullMoveClock].isInCheck)
         {
-            if (board.colorTurn == Piece.White && (board.gameStateHistory[board.fullMoveClock].attackedSquares[board.oppositeColorIndex] & BitboardHelper.whiteQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.whiteQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 58, false, 5); }
-            else if (board.colorTurn == Piece.Black && (board.gameStateHistory[board.fullMoveClock].attackedSquares[board.oppositeColorIndex] & BitboardHelper.blackQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.blackQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 2, false, 5); }
+            if (board.colorTurn == Piece.White && (board.gameStateHistory[board.fullMoveClock].attackedSquares[board.oppositeColorIndex] & BitboardHelper.whiteQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.whiteQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 58, false, Move.Castle); }
+            else if (board.colorTurn == Piece.Black && (board.gameStateHistory[board.fullMoveClock].attackedSquares[board.oppositeColorIndex] & BitboardHelper.blackQueensideAttackCastleMask) == 0 && (board.allPiecesBitboard & BitboardHelper.blackQueensidePieceCastleMask) == 0) { moves[currMoveIndex++] =  new Move(index, 2, false, Move.Castle); }
         }
         return currMoveIndex;
     }

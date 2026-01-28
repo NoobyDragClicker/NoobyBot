@@ -52,9 +52,9 @@ public class MoveOrder
                 int movedPieceType;
                 int capturedPieceType;
                 //en passant
-                if (move.flag == 7) { capturedPieceType = Piece.Pawn; }
-                else { capturedPieceType = Piece.PieceType(board.board[moves[x].newIndex]); }
-                movedPieceType = Piece.PieceType(board.board[moves[x].oldIndex]);
+                if (move.flag == Move.EnPassant) { capturedPieceType = Piece.Pawn; }
+                else { capturedPieceType = board.PieceAt(moves[x].newIndex); }
+                movedPieceType = board.MovedPieceType(moves[x]);
 
                 //MVV LVA 
                 score = million + 10 + MVV[capturedPieceType] * 15 + captureHistory[board.currentColorIndex, move.newIndex, movedPieceType, capturedPieceType];
@@ -68,7 +68,7 @@ public class MoveOrder
                 score = history[board.currentColorIndex, move.oldIndex, move.newIndex];
                 if(board.fullMoveClock > 0)
                 {
-                    score += continuationHistory[FlattenConthistIndex(board.oppositeColorIndex, movesAndPieceTypes[board.fullMoveClock - 1].Item2, movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, Piece.PieceType(board.board[move.oldIndex]), move.newIndex)];
+                    score += continuationHistory[FlattenConthistIndex(board.oppositeColorIndex, movesAndPieceTypes[board.fullMoveClock - 1].Item2, movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(move), move.newIndex)];
                 }
             }
             else
@@ -189,7 +189,7 @@ public class MoveOrder
                 ApplyHistoryBonus(moves[i].oldIndex, moves[i].newIndex, -(300 * depth - 250), board.currentColorIndex);
                 if(board.fullMoveClock > 0)
                 {
-                    ApplyContHistBonus(movesAndPieceTypes[board.fullMoveClock - 1].Item1, movesAndPieceTypes[board.fullMoveClock - 1].Item2, moves[i], Piece.PieceType(board.board[moves[i].oldIndex]), board.currentColorIndex, -(300 * depth - 250));
+                    ApplyContHistBonus(movesAndPieceTypes[board.fullMoveClock - 1].Item1, movesAndPieceTypes[board.fullMoveClock - 1].Item2, moves[i], board.MovedPieceType(moves[i]), board.currentColorIndex, -(300 * depth - 250));
                 }
             }
         }
@@ -201,7 +201,7 @@ public class MoveOrder
         {
             if (moves[i].isCapture())
             {
-                ApplyCaptHistBonus(board.currentColorIndex, moves[i].newIndex, Piece.PieceType(board.board[moves[i].oldIndex]), Piece.PieceType(board.board[moves[i].newIndex]), -(300 * depth - 250));
+                ApplyCaptHistBonus(board.currentColorIndex, moves[i].newIndex, board.MovedPieceType(moves[i]), board.PieceAt(moves[i].newIndex), -(300 * depth - 250));
             }
         }
     }
@@ -216,15 +216,15 @@ public class MoveOrder
             int score;
             Move move = captures[x];
             //en passant
-            if (move.flag == 7)
+            if (move.flag == Move.EnPassant)
             {
                 capturedPieceType = Piece.Pawn;
             }
             else
             {
-                capturedPieceType = Piece.PieceType(board.board[captures[x].newIndex]);
+                capturedPieceType = board.PieceAt(captures[x].newIndex);
             }
-            movedPieceType = Piece.PieceType(board.board[captures[x].oldIndex]);
+            movedPieceType = board.MovedPieceType(captures[x]);
 
             score = MVV_LVA[(movedPieceType * 7) + capturedPieceType];
             moveScores[x] = score;

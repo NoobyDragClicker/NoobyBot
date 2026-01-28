@@ -50,7 +50,7 @@ public class Board
 
 
     //Moves the pieces
-    public void Move(Move move, bool isSearch)
+    public void MakeMove(Move move, bool isSearch)
     {
         fullMoveClock++;
         int oldCastlingRights = gameStateHistory[fullMoveClock - 1].castlingRights;
@@ -76,7 +76,7 @@ public class Board
         {
             halfMoveClock = 0;
             //Sets the new piece to be the same color but whatever the new piece type is
-            newPiece = Piece.Color(board[startPos]) | move.PromotedPieceType();
+            newPiece = ColorAt(startPos) | move.PromotedPieceType();
             pieceCounts[currentColorIndex, move.PromotedPieceType()] += 1;
             pieceCounts[currentColorIndex, Piece.Pawn] -= 1;
         }
@@ -89,7 +89,7 @@ public class Board
         int newPieceType = Piece.PieceType(newPiece);
 
         //castle
-        if (move.flag == 5)
+        if (move.flag == Move.Castle)
         {
             int oldRookIndex = 0;
             int newRookIndex = 0;
@@ -171,7 +171,7 @@ public class Board
             zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, newRookIndex];
         }
         //en passant
-        else if (move.flag == 7)
+        else if (move.flag == Move.EnPassant)
         {
             //Moving pawn
             BitboardHelper.ClearSquare(ref pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)], startPos);
@@ -209,7 +209,7 @@ public class Board
         else
         {
             //Double pawn push
-            if (move.flag == 6)
+            if (move.flag == Move.DoublePawnPush)
             {
                 //Set to the square behind the spot moved to
                 enPassantIndex = (colorTurn == Piece.White) ? (newPos + 8) : (newPos - 8);
@@ -404,14 +404,14 @@ public class Board
         if (move.isPromotion())
         {
             //Sets the new piece to be the same color but whatever the new piece type is
-            movedPiece = Piece.Color(board[newPos]) | Piece.Pawn;
+            movedPiece = ColorAt(newPos) | Piece.Pawn;
             pieceTypeBeforeMove = Piece.Pawn;
             pieceCounts[currentColorIndex, Piece.Pawn] += 1;
             pieceCounts[currentColorIndex, movedPieceType] -= 1;
         }
 
         //castle
-        if (move.flag == 5)
+        if (move.flag == Move.Castle)
         {
             //Undo the castles
             if (colorTurn == Piece.White)
@@ -487,7 +487,7 @@ public class Board
 
         }
         //en passant
-        else if (move.flag == 7)
+        else if (move.flag == Move.EnPassant)
         {
             //capture
             board[startPos] = movedPiece;
@@ -744,7 +744,7 @@ public class Board
                 //If empties need to be added, add them
                 if (emptyCounter != 0) { fen += emptyCounter.ToString(); emptyCounter = 0; }
                 int pieceType = Piece.PieceType(board[index]);
-                if (Piece.Color(board[index]) == Piece.White)
+                if (ColorAt(index) == Piece.White)
                 {
                     switch (pieceType)
                     {
@@ -828,7 +828,7 @@ public class Board
 
     public int MovedPieceType(Move move)
     {
-        return Piece.PieceType(board[move.oldIndex]);
+        return PieceAt(move.oldIndex);
     }
 
     public bool IsSearchDraw()
@@ -920,6 +920,16 @@ public class Board
             | (BitboardHelper.bPawnAttacks[square] & pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)])
             | (BitboardHelper.kingAttacks[square] & (pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)]))
             );
+    }
+
+    public int PieceAt(int index)
+    {
+        return Piece.PieceType(board[index]);
+    }
+
+    public int ColorAt(int index)
+    {
+        return Piece.Color(board[index]);
     }
 
     public int EnPassantFileToIndex(int pieceColor, int epFile)

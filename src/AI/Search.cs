@@ -217,7 +217,7 @@ public class Search
                 int nonPawnCount = board.pieceCounts[board.currentColorIndex, Piece.Knight] + board.pieceCounts[board.currentColorIndex, Piece.Bishop] + board.pieceCounts[board.currentColorIndex, Piece.Rook] + board.pieceCounts[board.currentColorIndex, Piece.Queen];
                 if (!board.gameStateHistory[board.fullMoveClock].isInCheck && nonPawnCount > 0 && ttAdjustedEval > beta)
                 {
-                    int r = 2;
+                    int r = (depth + 2) / 3;
 
                     board.MakeNullMove();
                     moveOrder.movesAndPieceTypes[board.fullMoveClock] = (nullMove, 0);

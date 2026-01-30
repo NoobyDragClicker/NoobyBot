@@ -217,6 +217,7 @@ public class Search
                 if (!board.gameStateHistory[board.fullMoveClock].isInCheck && nonPawnCount > 0 && ttAdjustedEval > beta)
                 {
                     int r = (depth + 2) / 3;
+                    r += Math.Min((ttAdjustedEval - beta) / 200, 3);
 
                     board.MakeNullMove();
                     history.movesAndPieceTypes[board.fullMoveClock] = (nullMove, 0);

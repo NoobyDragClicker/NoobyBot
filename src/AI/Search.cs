@@ -9,7 +9,7 @@ public class Search
     Board board;
     AISettings aiSettings;
     Evaluation evaluation;
-    MoveOrder moveOrder;
+    History history;
     public TranspositionTable tt;
     public static readonly Move nullMove = new Move(0, 0, false);
 
@@ -57,7 +57,7 @@ public class Search
         this.aiSettings = aiSettings;
         evaluation = new Evaluation(logger);
         tt = new TranspositionTable(board, aiSettings.ttSize);
-        moveOrder = new MoveOrder();
+        history = new History(board);
     }
 
     public void StartSearch(bool writeInfoLine)
@@ -219,7 +219,7 @@ public class Search
                     int r = (depth + 2) / 3;
 
                     board.MakeNullMove();
-                    moveOrder.movesAndPieceTypes[board.fullMoveClock] = (nullMove, 0);
+                    history.movesAndPieceTypes[board.fullMoveClock] = (nullMove, 0);
                     int eval = -SearchMoves(depth - r - 1, plyFromRoot + 1, -beta, -(beta - 1), numCheckExtensions);
                     board.UnmakeNullMove();
 
@@ -230,8 +230,8 @@ public class Search
             
         }
 
-
-        MoveOrder.Stage stage = MoveOrder.Stage.Other;
+        MovePicker movePicker = new MovePicker(history);
+        MovePicker.Stage stage = MovePicker.Stage.Other;
         Span<Move> legalMoves = stackalloc Move[218];
         int numLegalMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves);
         
@@ -244,27 +244,27 @@ public class Search
         }
 
         //Move ordering
-        int[] moveScores = moveOrder.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
+        int[] moveScores = movePicker.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
         int bestScore = NEGATIVE_INFINITY;
         int moveNum = -1;
 
-        while(stage != MoveOrder.Stage.Finished)
+        while(stage != MovePicker.Stage.Finished)
         {
             moveNum++;
-            Move currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, moveNum);
+            Move currentMove = movePicker.GetNextBestMove(moveScores, legalMoves, moveNum);
             if(moveNum == numLegalMoves - 1){ stage++; }
 
             //Store the move and piece type
-            moveOrder.movesAndPieceTypes[board.fullMoveClock] = (currentMove, board.MovedPieceType(currentMove));
+            history.movesAndPieceTypes[board.fullMoveClock] = (currentMove, board.MovedPieceType(currentMove));
 
 
             bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
 
-            int moveHistory = isTactical ? 0 : (moveOrder.history[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] 
-            + (plyFromRoot > 0 ? moveOrder.continuationHistory[moveOrder.FlattenConthistIndex(board.oppositeColorIndex, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item2, moveOrder.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(currentMove), currentMove.newIndex)] : 0));
+            int moveHistory = isTactical ? 0 : (history.quietHistory[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] 
+            + (plyFromRoot > 0 ? history.continuationHistory[history.FlattenConthistIndex(board.oppositeColorIndex, history.movesAndPieceTypes[board.fullMoveClock - 1].Item2, history.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(currentMove), currentMove.newIndex)] : 0));
 
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
@@ -343,21 +343,21 @@ public class Search
                 //Update capthist
                 if (currentMove.isCapture())
                 {
-                    moveOrder.ApplyCaptHistBonus(board.currentColorIndex, currentMove.newIndex, board.MovedPieceType(currentMove), board.PieceAt(currentMove.newIndex), 300 * depth - 250);
+                    history.ApplyCaptHistBonus(currentMove, 300 * depth - 250);
                 }
                 //Updating quiet histories
                 else
                 {
-                    moveOrder.UpdateMoveOrderTables(depth, board.fullMoveClock, board.currentColorIndex);
+                    history.UpdateQuietTables(currentMove, depth);
                     if (moveNum > 0)
                     {
-                        moveOrder.ApplyQuietPenalties(ref legalMoves, moveNum, depth, board);
+                        history.ApplyQuietPenalties(ref legalMoves, moveNum, depth);
                     }
                 }
                 
                 if(moveNum > 0)
                 {
-                    moveOrder.ApplyNoisyPenalties(ref legalMoves, moveNum, depth, board);
+                    history.ApplyNoisyPenalties(ref legalMoves, moveNum, depth);
                 }
                 return bestScore;
             }
@@ -391,18 +391,20 @@ public class Search
             alpha = bestEval;
         }
 
+
+        MovePicker movePicker = new MovePicker(history);
         Span<Move> legalMoves = stackalloc Move[218];
         int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, true);
-        int[] moveScores = moveOrder.ScoreCaptures(board, legalMoves);
+        int[] moveScores = movePicker.ScoreCaptures(board, legalMoves);
 
-        MoveOrder.Stage stage = MoveOrder.Stage.Other;
+        MovePicker.Stage stage = MovePicker.Stage.Other;
         if(numMoves == 0){ stage++; }
 
         int moveNum = -1;
-        while(stage !=  MoveOrder.Stage.Finished)
+        while(stage !=  MovePicker.Stage.Finished)
         {
             moveNum++;
-            Move currentMove = moveOrder.GetNextBestMove(moveScores, legalMoves, moveNum);
+            Move currentMove = movePicker.GetNextBestMove(moveScores, legalMoves, moveNum);
             if(moveNum == numMoves - 1){ stage++; }
 
             //Skip a move with a bad SEE

@@ -86,17 +86,6 @@ public class Engine
             case "test":
                 ProcessTestCommand(command);
                 break;
-            case "tune":
-                try
-                {
-                    ProcessTuneCommand(command);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-                
-                break;
             case "stop":
                 player.search.EndSearch();
                 break;
@@ -188,54 +177,6 @@ public class Engine
             }
             tester.RunSearchSuite(numPositions, targetDepth);
         }
-    }
-
-    void ProcessTuneCommand(string message)
-    {
-        string[] parameters = message.Split(" ");
-        string posFile = "";
-        string paramFile = "";
-        float kVal = 0.0f;
-
-        for (int paramNum = 0; paramNum < parameters.Length; paramNum++)
-        {
-            if (parameters[paramNum] == tuneLabels[0])
-            {
-                posFile = parameters[paramNum + 1];
-                paramNum++;
-            }
-            else if (parameters[paramNum] == tuneLabels[1])
-            {
-                float.TryParse(parameters[paramNum + 1], out float result);
-                kVal = result;
-                paramNum++;
-            }
-            else if (parameters[paramNum] == tuneLabels[2])
-            {
-                paramFile = parameters[paramNum + 1];
-                paramNum++;
-            }
-            
-
-        }
-
-        Console.WriteLine($"posfile {posFile}, kval  {kVal}, paramFile {paramFile}");
-        TexelTuner tuner = new TexelTuner(testingLogger);
-        if (kVal == 0.0f)
-        {
-            kVal = tuner.TuneKVal(tuningRoot + posFile);
-        }
-        if (paramFile == "")
-        {
-            paramFile =  "tunedParams.txt";
-        }
-        if (!File.Exists(tuningRoot + paramFile))
-        {
-            tuner.SaveParametersFromEval(tuningRoot + paramFile);
-        }
-        tuner.K = kVal;
-        tuner.TuneFromFile(tuningRoot + paramFile, tuningRoot + paramFile, tuningRoot +  posFile, 50000);
-        tuner.CreateCodeFromParams(tuningRoot + paramFile, tuningRoot + "code.txt");
     }
 
     //Synchronises the clock and tells the player to move

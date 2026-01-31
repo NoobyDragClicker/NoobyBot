@@ -58,7 +58,7 @@ public class MovePicker
             {
                 score = million + GetPieceValue(move.PromotedPieceType()) * 10;
             }
-            else if (history.quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex] != 0)
+            else
             {
                 score = history.quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex];
                 if(board.fullMoveClock > 0)
@@ -66,25 +66,7 @@ public class MovePicker
                     score += history.continuationHistory[history.FlattenConthistIndex(board.oppositeColorIndex, history.movesAndPieceTypes[board.fullMoveClock - 1].Item2, history.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(move), move.newIndex)];
                 }
             }
-            else
-            {
-                int attackedSquaresIndex = (Piece.Color(board.board[moves[x].oldIndex]) == Piece.White) ? Board.BlackIndex : Board.WhiteIndex;
-                //Penalty for moving to attacked square
-                if (BitboardHelper.ContainsSquare(board.gameStateHistory[board.fullMoveClock].attackedSquares[attackedSquaresIndex], move.newIndex))
-                {
-                    score -= 4;
-                }
-
-                //Bonus for developping
-                if (Coord.IndexToFile(move.newIndex) >= 3 && Coord.IndexToFile(move.newIndex) <= 6 && Coord.IndexToRank(move.newIndex) >= 3 && Coord.IndexToRank(move.newIndex) <= 6)
-                {
-                    score += 2;
-                }
-                else if (Coord.IndexToFile(move.newIndex) >= 2 && Coord.IndexToFile(move.newIndex) <= 7 && Coord.IndexToRank(move.newIndex) >= 2 && Coord.IndexToRank(move.newIndex) <= 7)
-                {
-                    score += 1;
-                }
-            }
+            
             moveScores[x] = score;
         }
         return moveScores;

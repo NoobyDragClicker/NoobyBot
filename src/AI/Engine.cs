@@ -30,6 +30,8 @@ public class Engine
         testingLogger = new SearchLogger(name + "test", SearchLogger.LoggingLevel.Diagnostics);
         player = new AIPlayer(name, logger);
         player.onMoveChosen += MakeMove;
+        /*Tuner tuner = new Tuner();
+        tuner.Tune("C:/Users/Spencer/Desktop/Chess/lichess-big3-resolved/lichess-big3-resolved.book", 1000, 250000);*/
     }
 
     public void ReceiveCommand(string command)

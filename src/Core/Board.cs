@@ -161,8 +161,8 @@ public class Board
             }
             else
             {
-                mgValDifference -= Evaluation.mg_PSQT[Piece.Rook, 63 - newRookIndex] + Evaluation.mg_PSQT[Piece.King, 63 - newPos] - Evaluation.mg_PSQT[Piece.Rook, 63 - oldRookIndex] - Evaluation.mg_PSQT[Piece.King, 63 - startPos];
-                egValDifference -= Evaluation.eg_PSQT[Piece.Rook, 63 - newRookIndex] + Evaluation.eg_PSQT[Piece.King, 63 - newPos] - Evaluation.eg_PSQT[Piece.Rook, 63 - oldRookIndex] - Evaluation.eg_PSQT[Piece.King, 63 - startPos];
+                mgValDifference -= Evaluation.mg_PSQT[Piece.Rook, newRookIndex ^ 56] + Evaluation.mg_PSQT[Piece.King, newPos ^ 56] - Evaluation.mg_PSQT[Piece.Rook, oldRookIndex ^ 56] - Evaluation.mg_PSQT[Piece.King, startPos ^ 56];
+                egValDifference -= Evaluation.eg_PSQT[Piece.Rook, newRookIndex ^ 56] + Evaluation.eg_PSQT[Piece.King, newPos ^ 56] - Evaluation.eg_PSQT[Piece.Rook, oldRookIndex ^ 56] - Evaluation.eg_PSQT[Piece.King, startPos ^ 56];
             }
             board[newPos] = movedPiece;
             board[startPos] = 0;
@@ -192,13 +192,13 @@ public class Board
 
             if(colorTurn == Piece.White)
             {
-                mgValDifference += Evaluation.mg_PSQT[Piece.Pawn, newPos] - Evaluation.mg_PSQT[Piece.Pawn, startPos] + Evaluation.mg_PSQT[Piece.Pawn, 63 - attackedPawnIndex];
-                egValDifference += Evaluation.eg_PSQT[Piece.Pawn, newPos] - Evaluation.eg_PSQT[Piece.Pawn, startPos] + Evaluation.eg_PSQT[Piece.Pawn, 63 - attackedPawnIndex];
+                mgValDifference += Evaluation.mg_PSQT[Piece.Pawn, newPos] - Evaluation.mg_PSQT[Piece.Pawn, startPos] + Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex ^ 56];
+                egValDifference += Evaluation.eg_PSQT[Piece.Pawn, newPos] - Evaluation.eg_PSQT[Piece.Pawn, startPos] + Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex ^ 56];
             }
             else
             {
-                mgValDifference -= Evaluation.mg_PSQT[Piece.Pawn, 63 - newPos] - Evaluation.mg_PSQT[Piece.Pawn, 63 - startPos] + Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex];
-                egValDifference -= Evaluation.eg_PSQT[Piece.Pawn, 63 - newPos] - Evaluation.eg_PSQT[Piece.Pawn, 63 - startPos] + Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex];
+                mgValDifference -= Evaluation.mg_PSQT[Piece.Pawn, newPos ^ 56] - Evaluation.mg_PSQT[Piece.Pawn, startPos ^ 56] + Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex];
+                egValDifference -= Evaluation.eg_PSQT[Piece.Pawn, newPos ^ 56] - Evaluation.eg_PSQT[Piece.Pawn, startPos ^ 56] + Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex];
             }
 
             zobristKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
@@ -276,13 +276,13 @@ public class Board
 
                 if(colorTurn == Piece.White)
                 {
-                    mgValDifference += Evaluation.mg_PSQT[newPieceType, newPos] - Evaluation.mg_PSQT[movedPieceType, startPos] + Evaluation.mg_PSQT[capturedPieceType, 63 - newPos];
-                    egValDifference += Evaluation.eg_PSQT[newPieceType, newPos] - Evaluation.eg_PSQT[movedPieceType, startPos] + Evaluation.eg_PSQT[capturedPieceType, 63 - newPos];
+                    mgValDifference += Evaluation.mg_PSQT[newPieceType, newPos] - Evaluation.mg_PSQT[movedPieceType, startPos] + Evaluation.mg_PSQT[capturedPieceType, newPos ^ 56];
+                    egValDifference += Evaluation.eg_PSQT[newPieceType, newPos] - Evaluation.eg_PSQT[movedPieceType, startPos] + Evaluation.eg_PSQT[capturedPieceType, newPos ^ 56];
                 }
                 else
                 {
-                    mgValDifference -= Evaluation.mg_PSQT[newPieceType, 63 - newPos] - Evaluation.mg_PSQT[movedPieceType, 63 - startPos] + Evaluation.mg_PSQT[capturedPieceType, newPos];
-                    egValDifference -= Evaluation.eg_PSQT[newPieceType, 63 - newPos] - Evaluation.eg_PSQT[movedPieceType, 63 - startPos] + Evaluation.eg_PSQT[capturedPieceType, newPos];
+                    mgValDifference -= Evaluation.mg_PSQT[newPieceType, newPos ^ 56] - Evaluation.mg_PSQT[movedPieceType, startPos ^ 56] + Evaluation.mg_PSQT[capturedPieceType, newPos];
+                    egValDifference -= Evaluation.eg_PSQT[newPieceType, newPos ^ 56] - Evaluation.eg_PSQT[movedPieceType, startPos ^ 56] + Evaluation.eg_PSQT[capturedPieceType, newPos];
                 }
 
 
@@ -315,8 +315,8 @@ public class Board
                 }
                 else
                 {
-                    mgValDifference -= Evaluation.mg_PSQT[newPieceType, 63 - newPos] - Evaluation.mg_PSQT[movedPieceType, 63 - startPos];
-                    egValDifference -= Evaluation.eg_PSQT[newPieceType, 63 - newPos] - Evaluation.eg_PSQT[movedPieceType, 63 - startPos];
+                    mgValDifference -= Evaluation.mg_PSQT[newPieceType, newPos ^ 56] - Evaluation.mg_PSQT[movedPieceType, startPos ^ 56];
+                    egValDifference -= Evaluation.eg_PSQT[newPieceType, newPos ^ 56] - Evaluation.eg_PSQT[movedPieceType, startPos ^ 56];
                 }
                 
                 board[newPos] = newPiece;
@@ -649,8 +649,8 @@ public class Board
                     }
                     else
                     {
-                        mgVal -= Evaluation.mg_PSQT[pieceType, 63 - index];
-                        egVal -= Evaluation.eg_PSQT[pieceType, 63 - index];
+                        mgVal -= Evaluation.mg_PSQT[pieceType, index ^ 56];
+                        egVal -= Evaluation.eg_PSQT[pieceType, index ^ 56];
                     }
 
                     index++;

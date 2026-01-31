@@ -68,7 +68,7 @@ public class Tuner
             int piece = board.board[index];
             if(piece != 0)
             {
-                int relativeIndex = Piece.Color(piece) == Piece.White ? index : 63 - index;
+                int relativeIndex = Piece.Color(piece) == Piece.White ? index : index ^ 56;
                 features[PSQTIndex(Piece.PieceType(piece), relativeIndex)] += Piece.Color(piece) == Piece.White ? 1 : -1;
             }
         } 

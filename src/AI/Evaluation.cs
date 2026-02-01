@@ -11,48 +11,35 @@ public class Evaluation
     int numBlackIsolatedPawns;
     SearchLogger logger;
 
+    //Unused in actual eval
     public static int pawnValue = 90;
     public static int knightValue = 336;
     public static int bishopValue = 366;
     public static int rookValue = 538;
     public static int queenValue = 1024;
-    public static int doubledPawnPenalty = 20;
-
+    
     public static int[,] mg_PSQT = {
-        //Piece.None
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        //Piece.Pawn
-        {90, 90, 90, 90, 90, 90, 90, 90, 125, 145, 120, 148, 142, 155, 124, 70, 42, 69, 113, 99, 104, 130, 99, 52, 60, 74, 87, 96, 99, 87, 87, 65, 42, 77, 78, 95, 96, 73, 79, 36, 58, 88, 75, 83, 87, 80, 97, 62, 61, 104, 88, 74, 77, 84, 107, 60, 90, 90, 90, 90, 90, 90, 90, 90},
-        //Knight
-        {150, 241, 269, 301, 359, 239, 301, 179, 286, 304, 425, 385, 396, 412, 345, 315, 333, 385, 397, 426, 433, 413, 391, 347, 360, 360, 367, 382, 385, 375, 360, 368, 329, 352, 369, 366, 364, 371, 342, 327, 329, 355, 366, 366, 370, 364, 352, 324, 339, 331, 343, 354, 353, 342, 330, 331, 253, 327, 326, 320, 320, 316, 325, 299},
-        //Piece.Bishop
-        {332, 349, 298, 315, 316, 340, 352, 319, 381, 399, 401, 381, 392, 379, 392, 377, 399, 404, 437, 426, 412, 427, 420, 408, 361, 388, 384, 413, 399, 402, 379, 377, 363, 394, 399, 419, 414, 392, 398, 365, 402, 395, 406, 402, 394, 401, 396, 397, 381, 419, 398, 387, 389, 396, 418, 395, 373, 377, 375, 368, 359, 377, 352, 383},
-        //Rook
-        {567, 584, 571, 586, 605, 580, 566, 586, 559, 562, 581, 590, 593, 606, 557, 568, 533, 557, 562, 588, 577, 551, 576, 564, 524, 532, 544, 539, 566, 554, 539, 540, 507, 514, 515, 534, 523, 514, 527, 514, 507, 524, 525, 531, 528, 516, 534, 512, 497, 516, 513, 515, 524, 521, 522, 480, 519, 521, 529, 542, 540, 530, 511, 517},
-        //Piece.Queen
-        {985, 1023, 1034, 1070, 1092, 1097, 1058, 1002, 1019, 1003, 1028, 1007, 994, 1042, 993, 1027, 1035, 1035, 1033, 1064, 1066, 1044, 1065, 1055, 1035, 1003, 1028, 1016, 1024, 1022, 1015, 1040, 1012, 1042, 1022, 1020, 1029, 1012, 1030, 1007, 1024, 1033, 1019, 1028, 1023, 1036, 1030, 999, 1016, 1043, 1037, 1025, 1023, 1038, 1039, 1013, 1040, 1012, 1005, 1031, 1032, 1016, 1007, 1016},
-        //Piece.King
-        {-32, 44, 29, 22, -36, -3, 20, 1, 23, 18, 18, -11, -7, 33, -13, -40, -15, 59, 32, -33, -21, -4, 36, -6, -32, -8, -17, -25, -20, -11, -20, -21, -73, 1, -32, -53, -55, -54, -34, -51, -8, 12, -45, -66, -73, -67, -17, 8, 14, 14, -34, -79, -77, -35, 19, 34, 10, 38, -23, 4, 6, -27, 41, 28}
+        {0, 0, 0, 0, 0, 0, 0, 0, 103, 124, 103, 121, 99, 86, 60, 21, 60, 76, 111, 107, 115, 140, 123, 68, 33, 56, 62, 71, 88, 76, 79, 53, 20, 45, 48, 67, 61, 56, 64, 35, 17, 44, 44, 45, 61, 48, 79, 44, 20, 44, 41, 31, 53, 60, 81, 36, 0, 0, 0, 0, 0, 0, 0, 0},
+        {134, 82, 138, 154, 150, 140, 78, 148, 183, 217, 233, 234, 225, 275, 189, 207, 184, 237, 268, 280, 304, 286, 262, 214, 202, 225, 248, 273, 262, 279, 238, 237, 190, 202, 222, 230, 240, 227, 225, 203, 175, 202, 214, 216, 226, 219, 221, 191, 157, 168, 188, 202, 207, 200, 183, 190, 103, 176, 142, 166, 175, 182, 177, 123},
+        {231, 166, 155, 159, 156, 180, 131, 185, 231, 257, 242, 223, 253, 248, 251, 234, 241, 260, 268, 288, 269, 298, 266, 272, 230, 249, 267, 280, 281, 267, 250, 235, 224, 239, 247, 266, 263, 253, 242, 234, 235, 248, 244, 250, 249, 244, 250, 249, 241, 243, 252, 233, 243, 249, 259, 244, 202, 240, 224, 204, 209, 219, 218, 216},
+        {269, 237, 253, 254, 269, 222, 201, 268, 289, 291, 301, 318, 308, 329, 295, 319, 270, 284, 299, 302, 324, 319, 310, 310, 253, 258, 271, 280, 293, 286, 272, 285, 238, 239, 243, 256, 268, 249, 264, 260, 230, 241, 245, 249, 257, 253, 286, 273, 230, 238, 254, 253, 258, 263, 280, 252, 258, 257, 263, 272, 276, 265, 276, 259},
+        {428, 410, 432, 449, 448, 433, 445, 454, 484, 470, 480, 473, 485, 514, 494, 522, 489, 481, 495, 503, 504, 542, 542, 535, 473, 470, 483, 485, 489, 498, 488, 501, 464, 468, 466, 478, 474, 471, 488, 486, 472, 465, 460, 462, 461, 474, 482, 490, 461, 467, 475, 470, 472, 481, 497, 497, 449, 443, 448, 471, 462, 448, 468, 451},
+        {-17, -21, -15, -19, -12, 0, 8, 1, -19, -2, -20, -5, -7, -1, 20, 12, -21, 14, -19, -27, -17, 10, 12, -1, -14, -17, -25, -68, -62, -35, -28, -33, -14, -20, -51, -76, -82, -52, -52, -56, 6, 11, -27, -40, -35, -37, 6, -9, 76, 49, 27, -0, -7, 16, 66, 69, 70, 109, 85, -17, 48, 0, 89, 83}
     };
 
     public static int[,] eg_PSQT = {
-        //Piece.None
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        //Piece.Pawn
-        {90, 90, 90, 90, 90, 90, 90, 90, 242, 232, 227, 185, 190, 194, 252, 255, 213, 209, 185, 175, 176, 172, 212, 221, 137, 134, 115, 103, 103, 114, 132, 134, 114, 108, 97, 96, 94, 99, 113, 117, 107, 108, 102, 106, 107, 101, 103, 104, 110, 110, 119, 109, 117, 121, 111, 109, 90, 90, 90, 90, 90, 90, 90, 90},
-        //Piece.Knight
-        {278, 276, 293, 301, 274, 321, 263, 245, 295, 314, 288, 300, 299, 295, 293, 268, 300, 304, 333, 321, 318, 315, 296, 290, 303, 332, 349, 350, 352, 334, 334, 299, 313, 318, 342, 347, 357, 338, 330, 307, 293, 313, 320, 331, 333, 319, 323, 286, 282, 311, 314, 321, 314, 312, 293, 278, 299, 288, 301, 308, 297, 300, 282, 268},
-        //Piece.Bishop
-        {341, 324, 342, 328, 330, 330, 315, 340, 307, 340, 337, 321, 336, 333, 335, 311, 334, 340, 341, 336, 336, 348, 335, 340, 341, 345, 354, 360, 360, 336, 355, 337, 331, 331, 353, 339, 352, 358, 339, 321, 322, 330, 338, 355, 356, 345, 328, 319, 323, 328, 323, 347, 348, 331, 326, 315, 323, 313, 318, 336, 342, 319, 315, 314},
-        //Piece.Rook
-        {560, 549, 562, 558, 547, 560, 554, 556, 553, 566, 557, 548, 548, 549, 557, 550, 557, 548, 553, 538, 537, 549, 544, 547, 554, 546, 552, 555, 545, 549, 547, 549, 550, 545, 548, 553, 551, 550, 543, 543, 534, 537, 536, 544, 544, 547, 538, 537, 541, 544, 555, 554, 543, 546, 539, 548, 520, 549, 548, 549, 552, 547, 559, 530},
-        //Piece.Queen
-        {1049, 1062, 1059, 1076, 1039, 1043, 1017, 1055, 1039, 1052, 1082, 1067, 1113, 1071, 1058, 1019, 1053, 1052, 1082, 1087, 1086, 1057, 1041, 1010, 1039, 1085, 1076, 1109, 1088, 1087, 1078, 1035, 1019, 1053, 1060, 1092, 1078, 1070, 1060, 1059, 1020, 1034, 1066, 1048, 1053, 1047, 1023, 1035, 1019, 1013, 1014, 1037, 1061, 1015, 1013, 1016, 1006, 1010, 1007, 1006, 994, 1017, 1018, 1031},
-        //Piece.King
-        {-47, 0, -14, -15, -2, -1, -17, -40, -9, 18, 21, 9, 3, 6, 18, 10, 4, 21, 21, 18, 19, 25, 23, 8, 1, 15, 28, 21, 18, 19, 17, -12, -1, 3, 21, 31, 31, 31, 13, -11, -14, 4, 22, 31, 33, 25, 6, -20, -21, -5, 19, 30, 27, 19, -4, -31, -53, -34, -13, -35, -36, -16, -34, -65}
+        {0, 0, 0, 0, 0, 0, 0, 0, 59, 17, 43, 13, 9, -2, 24, 46, 123, 119, 82, 55, 52, 61, 99, 106, 115, 97, 85, 67, 68, 74, 89, 91, 98, 93, 80, 75, 75, 78, 80, 78, 94, 84, 84, 80, 83, 81, 76, 77, 106, 92, 88, 81, 96, 88, 81, 84, 0, 0, 0, 0, 0, 0, 0, 0},
+        {146, 187, 219, 210, 216, 184, 176, 128, 196, 207, 220, 225, 214, 198, 199, 176, 214, 221, 234, 235, 220, 226, 207, 197, 205, 230, 250, 250, 249, 242, 229, 210, 219, 230, 249, 246, 251, 242, 224, 202, 200, 218, 237, 245, 241, 225, 213, 194, 190, 205, 215, 216, 219, 209, 192, 196, 151, 176, 198, 201, 192, 184, 184, 163},
+        {227, 239, 246, 251, 248, 232, 240, 217, 215, 238, 241, 247, 235, 233, 235, 211, 240, 242, 248, 239, 243, 245, 239, 230, 240, 257, 258, 261, 258, 249, 253, 238, 234, 257, 262, 261, 257, 255, 247, 220, 236, 243, 253, 256, 261, 251, 235, 227, 234, 233, 230, 238, 248, 227, 232, 202, 215, 226, 210, 232, 219, 228, 206, 185},
+        {430, 443, 454, 451, 439, 442, 441, 424, 428, 434, 443, 440, 436, 421, 425, 413, 429, 436, 432, 432, 421, 413, 416, 410, 432, 429, 437, 432, 419, 415, 414, 411, 423, 428, 432, 427, 419, 414, 401, 399, 417, 416, 416, 420, 411, 402, 376, 380, 410, 415, 410, 412, 402, 397, 380, 392, 416, 416, 422, 419, 417, 412, 406, 406},
+        {684, 690, 706, 698, 697, 668, 637, 658, 635, 663, 679, 682, 685, 662, 615, 618, 619, 636, 668, 677, 678, 672, 619, 623, 623, 649, 666, 688, 706, 684, 675, 648, 642, 640, 679, 687, 690, 678, 656, 632, 579, 652, 666, 680, 671, 668, 629, 577, 581, 612, 648, 648, 654, 597, 542, 471, 574, 597, 612, 656, 617, 581, 483, 459},
+        {-55, -37, -25, -12, -17, -1, 10, -35, -30, 6, 9, 6, 17, 22, 28, 8, -15, 15, 22, 32, 37, 38, 35, 7, -17, 12, 30, 37, 40, 41, 33, 8, -27, -1, 23, 43, 42, 32, 19, 2, -30, -5, 10, 22, 23, 15, 3, -8, -29, -16, -9, -3, 4, -1, -13, -30, -58, -50, -33, -25, -43, -18, -38, -63}
     };
-    public static int[] passedPawnBonuses = {0, 15, 23, 39, 63, 98, 53, 0};
-    public static int[] isolatedPawnPenalty = {5, -19, -27, -52, -75, -75, -75, -75, -75};
+    public static int[] passedPawnBonuses = {0, 7, 16, 31, 54, 102, 198, 0};
+    public static int[] isolatedPawnPenalty = {35, 20, 6, -11, -21, -39, -45, -7, 0};
+    public static int doubledPawnPenalty = -27;
 
     int playerTurnMultiplier;
     public Evaluation(SearchLogger logger)
@@ -104,137 +91,6 @@ public class Evaluation
         return (mgMaterialCount * phase + egScore * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
     }
 
-
-    int CountMaterial(Board board)
-    {
-        const int totalPhase = 24;
-        int phase = 0;
-
-        int mgMaterialCount = 0;
-        int egMaterialCount = 0;
-
-        int pawnEval = 0;
-
-        ulong whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
-        ulong blackPawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)];
-
-        ulong whiteKnights = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Knight)];
-        ulong blackKnights = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Knight)];
-
-        ulong whiteBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)];
-        ulong blackBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)];
-
-        ulong whiteRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)];
-        ulong blackRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)];
-
-        ulong whiteQueens = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)];
-        ulong blackQueens = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
-
-        ulong whiteKing = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)];
-        ulong blackKing = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)];
-
-        while (whitePawns != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whitePawns);
-            mgMaterialCount += pawnValue + mg_PSQT[Piece.Pawn, index];
-            egMaterialCount += pawnValue + eg_PSQT[Piece.Pawn, index];
-            pawnEval += EvaluatePawnStrength(board, index, Piece.White);
-        }
-        
-
-        while (blackPawns != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackPawns);
-            mgMaterialCount -= pawnValue + mg_PSQT[Piece.Pawn, 63 - index];
-            egMaterialCount -= pawnValue + eg_PSQT[Piece.Pawn, 63 - index];
-            pawnEval -= EvaluatePawnStrength(board, index, Piece.Black);
-        }
-
-
-        while (whiteKnights != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteKnights);
-            mgMaterialCount += knightValue + mg_PSQT[Piece.Knight, index];
-            egMaterialCount += knightValue + eg_PSQT[Piece.Knight, index];
-            phase += 1;
-        }
-        while (blackKnights != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackKnights);
-            mgMaterialCount -= knightValue + mg_PSQT[Piece.Knight, 63 - index];
-            egMaterialCount -= knightValue + eg_PSQT[Piece.Knight, 63 - index];
-            phase += 1;
-        }
-
-        while (whiteBishops != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteBishops);
-            mgMaterialCount += bishopValue + mg_PSQT[Piece.Bishop, index];
-            egMaterialCount += bishopValue + eg_PSQT[Piece.Bishop, index];
-            phase += 1;
-        }
-        while (blackBishops != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackBishops);
-            mgMaterialCount -= bishopValue + mg_PSQT[Piece.Bishop, 63 - index];
-            egMaterialCount -= bishopValue + eg_PSQT[Piece.Bishop, 63 - index];
-            phase += 1;
-        }
-
-        while (whiteRooks != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteRooks);
-            mgMaterialCount += rookValue + mg_PSQT[Piece.Rook, index];
-            egMaterialCount += rookValue + eg_PSQT[Piece.Rook, index];
-            phase += 2;
-        }
-
-        while (blackRooks != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackRooks);
-            mgMaterialCount -= rookValue + mg_PSQT[Piece.Rook, 63 - index];
-            egMaterialCount -= rookValue + eg_PSQT[Piece.Rook, 63 - index];
-            phase += 2;
-        }
-
-        while (whiteQueens != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteQueens);
-            mgMaterialCount += queenValue + mg_PSQT[Piece.Queen, index];
-            egMaterialCount += queenValue + eg_PSQT[Piece.Queen, index];
-            phase += 4;
-        }
-        
-        while (blackQueens != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackQueens);
-            mgMaterialCount -= queenValue + mg_PSQT[Piece.Queen, 63 - index];
-            egMaterialCount -= queenValue + eg_PSQT[Piece.Queen, 63 - index];
-            phase += 4;
-        }
-
-
-        while (whiteKing != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteKing);
-            mgMaterialCount += mg_PSQT[Piece.King, index];
-            egMaterialCount += eg_PSQT[Piece.King, index];
-        }
-        while (blackKing != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackKing);
-            mgMaterialCount -= mg_PSQT[Piece.King, 63 - index];
-            egMaterialCount -= eg_PSQT[Piece.King, 63 - index];
-        }
-
-        pawnEval += isolatedPawnPenalty[numWhiteIsolatedPawns];
-        pawnEval -= isolatedPawnPenalty[numBlackIsolatedPawns];
-
-        int egScore = egMaterialCount + pawnEval;
-
-        if (phase > 24) { phase = 24; }
-        return (mgMaterialCount * phase + egScore * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
-    }
 
     int EvaluateKingSafety(Board board, int kingIndex, int kingColor)
     {
@@ -296,7 +152,7 @@ public class Evaluation
             //Passed pawn
             if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
-            if (board.PieceAt(pawnIndex - 8) == Piece.Pawn && board.ColorAt(pawnIndex - 8) == Piece.White) { bonus -= doubledPawnPenalty; }
+            if (board.PieceAt(pawnIndex - 8) == Piece.Pawn && board.ColorAt(pawnIndex - 8) == Piece.White) { bonus += doubledPawnPenalty; }
             if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { numWhiteIsolatedPawns++; }
         }
         else
@@ -305,7 +161,7 @@ public class Evaluation
             //Passed pawn
             if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
             //Doubled pawn penalty
-            if (board.PieceAt(pawnIndex + 8) == Piece.Pawn && board.ColorAt(pawnIndex + 8) == Piece.Black) { bonus -= doubledPawnPenalty; }
+            if (board.PieceAt(pawnIndex + 8) == Piece.Pawn && board.ColorAt(pawnIndex + 8) == Piece.Black) { bonus += doubledPawnPenalty; }
             if((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)]) == 0){ numBlackIsolatedPawns++; }
         }
 

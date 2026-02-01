@@ -8,7 +8,7 @@ public class Tuner
     const int isolatedPawnOffset = 9;
     const int numParams = psqtOffset + passedPawnOffset + isolatedPawnOffset + 1;
     
-    const int K = 400;
+    int K = 142;
     const int MAX_PHASE = 24;
     const int maxGrad = 10;
     const float lambda = 1e-3f;
@@ -84,6 +84,33 @@ public class Tuner
         PrintSpan(psqtOffset + passedPawnOffset + isolatedPawnOffset, 1);
     }
 
+    public void TuneKValue(string path)
+    {
+        LoadData(path);
+        int dataSize = data.Length;
+        Console.WriteLine($"Data loaded: {dataSize} positions found");
+        ConvertEntries();
+        LoadWeights();
+        Console.WriteLine("Entries loaded, starting tuning");
+        int delta = 1;
+
+        double lastLoss = CalculateLoss();
+        K += delta;
+        double currentLoss = CalculateLoss();
+        if(currentLoss > lastLoss){ 
+            delta *= -1; 
+            K += delta * 2;
+        }
+        currentLoss = CalculateLoss();
+        while(lastLoss > currentLoss)
+        {
+            K += delta;
+            lastLoss = currentLoss;
+            currentLoss = CalculateLoss();
+            Console.WriteLine(K);
+        }
+        Console.WriteLine("Final K:" + (K - delta));
+    }
     Entry[] GetBatch(int batchSize)
     {
         Entry[] batch = new Entry[batchSize];
@@ -286,6 +313,33 @@ public class Tuner
 
         //Doubled pawn penalty
         weights[currentOffset] = new Param(0, false);
+    }
+
+    void LoadWeights()
+    {
+        try{
+        for(int pieceIndex = 1; pieceIndex < 7; pieceIndex++)
+        {
+            for(int index = 0; index < 64; index++)
+            {
+                weights[PSQTIndex(pieceIndex, index, true)] = new Param(Evaluation.mg_PSQT[pieceIndex, index], true);
+                weights[PSQTIndex(pieceIndex, index, false)] = new Param(Evaluation.eg_PSQT[pieceIndex, index], false);
+            }
+        }
+        for(int index = 0; index < passedPawnOffset; index++)
+        {
+            weights[psqtOffset + index] = new Param(Evaluation.passedPawnBonuses[index], false);
+        }
+        for(int index = 0; index < isolatedPawnOffset; index++)
+        {
+            weights[psqtOffset + passedPawnOffset + index] = new Param(Evaluation.isolatedPawnPenalty[index], false);
+        }
+        weights[psqtOffset + passedPawnOffset + isolatedPawnOffset] = new Param(Evaluation.doubledPawnPenalty, false);
+        }
+        catch(Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 
     double CalculateLoss()

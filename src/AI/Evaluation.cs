@@ -16,7 +16,6 @@ public class Evaluation
     public static int bishopValue = 366;
     public static int rookValue = 538;
     public static int queenValue = 1024;
-    public static int protectedPawnBonus = 5;
     public static int doubledPawnPenalty = 20;
 
     public static int[,] mg_PSQT = {
@@ -93,7 +92,6 @@ public class Evaluation
             int index = BitboardHelper.PopLSB(ref blackPawns);
             pawnEval -= EvaluatePawnStrength(board, index, Piece.Black);
         }
-
 
         pawnEval += isolatedPawnPenalty[numWhiteIsolatedPawns];
         pawnEval -= isolatedPawnPenalty[numBlackIsolatedPawns];

@@ -11,6 +11,7 @@ public class Evaluation
     int numBlackIsolatedPawns;
     SearchLogger logger;
 
+    //Unused in actual eval
     public static int pawnValue = 90;
     public static int knightValue = 336;
     public static int bishopValue = 366;
@@ -18,7 +19,6 @@ public class Evaluation
     public static int queenValue = 1024;
     
     public static int[,] mg_PSQT = {
-        //Piece.None
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 103, 124, 103, 121, 99, 86, 60, 21, 60, 76, 111, 107, 115, 140, 123, 68, 33, 56, 62, 71, 88, 76, 79, 53, 20, 45, 48, 67, 61, 56, 64, 35, 17, 44, 44, 45, 61, 48, 79, 44, 20, 44, 41, 31, 53, 60, 81, 36, 0, 0, 0, 0, 0, 0, 0, 0},
         {134, 82, 138, 154, 150, 140, 78, 148, 183, 217, 233, 234, 225, 275, 189, 207, 184, 237, 268, 280, 304, 286, 262, 214, 202, 225, 248, 273, 262, 279, 238, 237, 190, 202, 222, 230, 240, 227, 225, 203, 175, 202, 214, 216, 226, 219, 221, 191, 157, 168, 188, 202, 207, 200, 183, 190, 103, 176, 142, 166, 175, 182, 177, 123},
@@ -29,7 +29,6 @@ public class Evaluation
     };
 
     public static int[,] eg_PSQT = {
-        //Piece.Non
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 59, 17, 43, 13, 9, -2, 24, 46, 123, 119, 82, 55, 52, 61, 99, 106, 115, 97, 85, 67, 68, 74, 89, 91, 98, 93, 80, 75, 75, 78, 80, 78, 94, 84, 84, 80, 83, 81, 76, 77, 106, 92, 88, 81, 96, 88, 81, 84, 0, 0, 0, 0, 0, 0, 0, 0},
         {146, 187, 219, 210, 216, 184, 176, 128, 196, 207, 220, 225, 214, 198, 199, 176, 214, 221, 234, 235, 220, 226, 207, 197, 205, 230, 250, 250, 249, 242, 229, 210, 219, 230, 249, 246, 251, 242, 224, 202, 200, 218, 237, 245, 241, 225, 213, 194, 190, 205, 215, 216, 219, 209, 192, 196, 151, 176, 198, 201, 192, 184, 184, 163},
@@ -92,137 +91,6 @@ public class Evaluation
         return (mgMaterialCount * phase + egScore * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
     }
 
-
-    int CountMaterial(Board board)
-    {
-        const int totalPhase = 24;
-        int phase = 0;
-
-        int mgMaterialCount = 0;
-        int egMaterialCount = 0;
-
-        int pawnEval = 0;
-
-        ulong whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
-        ulong blackPawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)];
-
-        ulong whiteKnights = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Knight)];
-        ulong blackKnights = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Knight)];
-
-        ulong whiteBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)];
-        ulong blackBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)];
-
-        ulong whiteRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)];
-        ulong blackRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)];
-
-        ulong whiteQueens = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)];
-        ulong blackQueens = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
-
-        ulong whiteKing = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)];
-        ulong blackKing = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)];
-
-        while (whitePawns != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whitePawns);
-            mgMaterialCount += pawnValue + mg_PSQT[Piece.Pawn, index];
-            egMaterialCount += pawnValue + eg_PSQT[Piece.Pawn, index];
-            pawnEval += EvaluatePawnStrength(board, index, Piece.White);
-        }
-        
-
-        while (blackPawns != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackPawns);
-            mgMaterialCount -= pawnValue + mg_PSQT[Piece.Pawn, 63 - index];
-            egMaterialCount -= pawnValue + eg_PSQT[Piece.Pawn, 63 - index];
-            pawnEval -= EvaluatePawnStrength(board, index, Piece.Black);
-        }
-
-
-        while (whiteKnights != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteKnights);
-            mgMaterialCount += knightValue + mg_PSQT[Piece.Knight, index];
-            egMaterialCount += knightValue + eg_PSQT[Piece.Knight, index];
-            phase += 1;
-        }
-        while (blackKnights != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackKnights);
-            mgMaterialCount -= knightValue + mg_PSQT[Piece.Knight, 63 - index];
-            egMaterialCount -= knightValue + eg_PSQT[Piece.Knight, 63 - index];
-            phase += 1;
-        }
-
-        while (whiteBishops != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteBishops);
-            mgMaterialCount += bishopValue + mg_PSQT[Piece.Bishop, index];
-            egMaterialCount += bishopValue + eg_PSQT[Piece.Bishop, index];
-            phase += 1;
-        }
-        while (blackBishops != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackBishops);
-            mgMaterialCount -= bishopValue + mg_PSQT[Piece.Bishop, 63 - index];
-            egMaterialCount -= bishopValue + eg_PSQT[Piece.Bishop, 63 - index];
-            phase += 1;
-        }
-
-        while (whiteRooks != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteRooks);
-            mgMaterialCount += rookValue + mg_PSQT[Piece.Rook, index];
-            egMaterialCount += rookValue + eg_PSQT[Piece.Rook, index];
-            phase += 2;
-        }
-
-        while (blackRooks != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackRooks);
-            mgMaterialCount -= rookValue + mg_PSQT[Piece.Rook, 63 - index];
-            egMaterialCount -= rookValue + eg_PSQT[Piece.Rook, 63 - index];
-            phase += 2;
-        }
-
-        while (whiteQueens != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteQueens);
-            mgMaterialCount += queenValue + mg_PSQT[Piece.Queen, index];
-            egMaterialCount += queenValue + eg_PSQT[Piece.Queen, index];
-            phase += 4;
-        }
-        
-        while (blackQueens != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackQueens);
-            mgMaterialCount -= queenValue + mg_PSQT[Piece.Queen, 63 - index];
-            egMaterialCount -= queenValue + eg_PSQT[Piece.Queen, 63 - index];
-            phase += 4;
-        }
-
-
-        while (whiteKing != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref whiteKing);
-            mgMaterialCount += mg_PSQT[Piece.King, index];
-            egMaterialCount += eg_PSQT[Piece.King, index];
-        }
-        while (blackKing != 0)
-        {
-            int index = BitboardHelper.PopLSB(ref blackKing);
-            mgMaterialCount -= mg_PSQT[Piece.King, 63 - index];
-            egMaterialCount -= eg_PSQT[Piece.King, 63 - index];
-        }
-
-        pawnEval += isolatedPawnPenalty[numWhiteIsolatedPawns];
-        pawnEval -= isolatedPawnPenalty[numBlackIsolatedPawns];
-
-        int egScore = egMaterialCount + pawnEval;
-
-        if (phase > 24) { phase = 24; }
-        return (mgMaterialCount * phase + egScore * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
-    }
 
     int EvaluateKingSafety(Board board, int kingIndex, int kingColor)
     {

@@ -6,7 +6,7 @@ public class Tuner
     const int psqtOffset = 2*6*64;
     const int passedPawnOffset = 2*64;
     const int isolatedPawnOffset = 9;
-    const int numParams = psqtOffset + passedPawnOffset + isolatedPawnOffset + 1;
+    const int numParams = psqtOffset + passedPawnOffset + isolatedPawnOffset + 3;
     
     int K = 142;
     const int MAX_PHASE = 24;
@@ -82,8 +82,8 @@ public class Tuner
         PrintSpan(psqtOffset + 64, 64);
         Console.WriteLine("Isolated pawn bonuses");
         PrintSpan(psqtOffset + passedPawnOffset, 9);
-        Console.WriteLine("Doubled pawn penalty");
-        PrintSpan(psqtOffset + passedPawnOffset + isolatedPawnOffset, 1);
+        Console.WriteLine($"Doubled pawn penalty {Math.Round(weights[psqtOffset + passedPawnOffset + isolatedPawnOffset].weight)}");
+        Console.WriteLine($"Bishop pair: mg: {Math.Round(weights[psqtOffset + passedPawnOffset + isolatedPawnOffset + 1].weight)} eg: {Math.Round(weights[psqtOffset + passedPawnOffset + isolatedPawnOffset + 2].weight)}");
     }
 
     public void TuneKValue(string path)
@@ -232,6 +232,19 @@ public class Tuner
             AddFeature(psqtOffset + passedPawnOffset + numBlackIsolatedPawns, Piece.Black, features);
             AddFeature(psqtOffset + passedPawnOffset + numWhiteIsolatedPawns, Piece.White, features);
 
+            //Bishop Pair
+            if(board.pieceCounts[Board.WhiteIndex, Piece.Bishop] >= 2)
+            {
+                AddFeature(psqtOffset + passedPawnOffset + isolatedPawnOffset + 1, Piece.White, features);
+                AddFeature(psqtOffset + passedPawnOffset + isolatedPawnOffset + 2, Piece.White, features);
+            }
+            //Bishop Pair
+            if(board.pieceCounts[Board.BlackIndex, Piece.Bishop] >= 2)
+            {
+                AddFeature(psqtOffset + passedPawnOffset + isolatedPawnOffset + 1, Piece.Black, features);
+                AddFeature(psqtOffset + passedPawnOffset + isolatedPawnOffset + 2, Piece.Black, features);
+            }
+
             //Remove zeroed features
             foreach (KeyValuePair<int, int> pair in features)
             {
@@ -274,7 +287,7 @@ public class Tuner
             msg += Math.Round(weights[index].weight);
             if(startIndex + numItems - index != 1) {msg += ", ";}
         }
-        msg += "}";
+        msg += "},";
         Console.WriteLine(msg);
     }
 
@@ -323,7 +336,10 @@ public class Tuner
         currentOffset += isolatedPawnOffset;
 
         //Doubled pawn penalty
-        weights[currentOffset] = new Param(0, false);
+        weights[currentOffset++] = new Param(0, false);
+        //Bishop pair
+        weights[currentOffset++] = new Param(0, true);
+        weights[currentOffset++] = new Param(0, false);
     }
 
     void LoadWeights()
@@ -352,6 +368,9 @@ public class Tuner
             weights[psqtOffset + passedPawnOffset + index] = new Param(Evaluation.isolatedPawnPenalty[index], false);
         }
         weights[psqtOffset + passedPawnOffset + isolatedPawnOffset] = new Param(Evaluation.doubledPawnPenalty, false);
+        weights[psqtOffset + passedPawnOffset + isolatedPawnOffset + 1] = new Param(Evaluation.bishopPairBonusMG, true);
+        weights[psqtOffset + passedPawnOffset + isolatedPawnOffset + 2] = new Param(Evaluation.bishopPairBonusEG, false);
+
         }
         catch(Exception e)
         {

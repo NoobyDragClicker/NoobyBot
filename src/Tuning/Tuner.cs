@@ -4,7 +4,7 @@ using Microsoft.VisualBasic;
 public class Tuner
 {
     const int psqtOffset = 2*6*64;
-    const int passedPawnOffset = 8;
+    const int passedPawnOffset = 2*64;
     const int isolatedPawnOffset = 9;
     const int numParams = psqtOffset + passedPawnOffset + isolatedPawnOffset + 1;
     
@@ -76,8 +76,10 @@ public class Tuner
         PrintSpan(576, 64);
         PrintSpan(640, 64);
         PrintSpan(704, 64);
-        Console.WriteLine("Passed pawn bonuses");
-        PrintSpan(psqtOffset, 8);
+        Console.WriteLine("Passed pawn bonuses mg:");
+        PrintSpan(psqtOffset, 64);
+        Console.WriteLine("Passed pawn bonuses eg:");
+        PrintSpan(psqtOffset + 64, 64);
         Console.WriteLine("Isolated pawn bonuses");
         PrintSpan(psqtOffset + passedPawnOffset, 9);
         Console.WriteLine("Doubled pawn penalty");
@@ -202,18 +204,22 @@ public class Tuner
                     {
                         if (Piece.Color(piece) == Piece.White)
                         {
-                            int ppBonusIndex = Coord.IndexToRank(index) - 1;
                             //Passed pawn
-                            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[index]) == 0) { AddFeature(psqtOffset + ppBonusIndex, Piece.White, features); }
+                            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[index]) == 0) { 
+                                AddFeature(psqtOffset + index, Piece.White, features); 
+                                AddFeature(psqtOffset + 64 + index, Piece.White, features); //EG
+                            }
                             //Doubled pawn penalty
                             if (board.PieceAt(index - 8) == Piece.Pawn && board.ColorAt(index - 8) == Piece.White) { AddFeature(psqtOffset + isolatedPawnOffset + passedPawnOffset, Piece.White, features); }
                             if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { numWhiteIsolatedPawns++; }
                         }
                         else
                         {
-                            int ppBonusIndex = 8 - Coord.IndexToRank(index);
                             //Passed pawn
-                            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[index]) == 0) { AddFeature(psqtOffset + ppBonusIndex, Piece.Black, features); }
+                            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[index]) == 0) { 
+                                AddFeature(psqtOffset + (index ^ 56), Piece.Black, features); 
+                                AddFeature(psqtOffset + 64 + (index ^ 56), Piece.Black, features); //EG
+                            }
                             //Doubled pawn penalty
                             if (board.PieceAt(index + 8) == Piece.Pawn && board.ColorAt(index + 8) == Piece.Black) { AddFeature(psqtOffset + isolatedPawnOffset + passedPawnOffset, Piece.Black, features); }
                             if((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)]) == 0){ numBlackIsolatedPawns++; }
@@ -259,6 +265,7 @@ public class Tuner
         return (pieceType * 64) + index + (mg ? 0 : 6*64);
     }
 
+
     void PrintSpan(int startIndex, int numItems)
     {
         string msg = "{";
@@ -298,7 +305,11 @@ public class Tuner
         int currentOffset = psqtOffset;
         
         //passed pawn
-        for(int index = psqtOffset; index < currentOffset + passedPawnOffset; index++)
+        for(int index = psqtOffset; index < psqtOffset + 64; index++)
+        {
+            weights[index] = new Param(0, true);
+        }
+        for(int index = psqtOffset + 64; index < psqtOffset + passedPawnOffset; index++)
         {
             weights[index] = new Param(0, false);
         }
@@ -326,10 +337,16 @@ public class Tuner
                 weights[PSQTIndex(pieceIndex, index, false)] = new Param(Evaluation.eg_PSQT[pieceIndex, index], false);
             }
         }
-        for(int index = 0; index < passedPawnOffset; index++)
+        //passed pawn
+        for(int index = 0; index < 64; index++)
         {
-            weights[psqtOffset + index] = new Param(Evaluation.passedPawnBonuses[index], false);
+            weights[psqtOffset + index] = new Param(Evaluation.passedPawnBonuses[0, index], true);
         }
+        for(int index = 0; index < 64; index++)
+        {
+            weights[psqtOffset + 64 + index] = new Param(Evaluation.passedPawnBonuses[1, index], false);
+        }
+
         for(int index = 0; index < isolatedPawnOffset; index++)
         {
             weights[psqtOffset + passedPawnOffset + index] = new Param(Evaluation.isolatedPawnPenalty[index], false);

@@ -20,26 +20,29 @@ public class Evaluation
     
     public static int[,] mg_PSQT = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 103, 124, 103, 121, 99, 86, 60, 21, 60, 76, 111, 107, 115, 140, 123, 68, 33, 56, 62, 71, 88, 76, 79, 53, 20, 45, 48, 67, 61, 56, 64, 35, 17, 44, 44, 45, 61, 48, 79, 44, 20, 44, 41, 31, 53, 60, 81, 36, 0, 0, 0, 0, 0, 0, 0, 0},
-        {134, 82, 138, 154, 150, 140, 78, 148, 183, 217, 233, 234, 225, 275, 189, 207, 184, 237, 268, 280, 304, 286, 262, 214, 202, 225, 248, 273, 262, 279, 238, 237, 190, 202, 222, 230, 240, 227, 225, 203, 175, 202, 214, 216, 226, 219, 221, 191, 157, 168, 188, 202, 207, 200, 183, 190, 103, 176, 142, 166, 175, 182, 177, 123},
-        {231, 166, 155, 159, 156, 180, 131, 185, 231, 257, 242, 223, 253, 248, 251, 234, 241, 260, 268, 288, 269, 298, 266, 272, 230, 249, 267, 280, 281, 267, 250, 235, 224, 239, 247, 266, 263, 253, 242, 234, 235, 248, 244, 250, 249, 244, 250, 249, 241, 243, 252, 233, 243, 249, 259, 244, 202, 240, 224, 204, 209, 219, 218, 216},
-        {269, 237, 253, 254, 269, 222, 201, 268, 289, 291, 301, 318, 308, 329, 295, 319, 270, 284, 299, 302, 324, 319, 310, 310, 253, 258, 271, 280, 293, 286, 272, 285, 238, 239, 243, 256, 268, 249, 264, 260, 230, 241, 245, 249, 257, 253, 286, 273, 230, 238, 254, 253, 258, 263, 280, 252, 258, 257, 263, 272, 276, 265, 276, 259},
-        {428, 410, 432, 449, 448, 433, 445, 454, 484, 470, 480, 473, 485, 514, 494, 522, 489, 481, 495, 503, 504, 542, 542, 535, 473, 470, 483, 485, 489, 498, 488, 501, 464, 468, 466, 478, 474, 471, 488, 486, 472, 465, 460, 462, 461, 474, 482, 490, 461, 467, 475, 470, 472, 481, 497, 497, 449, 443, 448, 471, 462, 448, 468, 451},
-        {-17, -21, -15, -19, -12, 0, 8, 1, -19, -2, -20, -5, -7, -1, 20, 12, -21, 14, -19, -27, -17, 10, 12, -1, -14, -17, -25, -68, -62, -35, -28, -33, -14, -20, -51, -76, -82, -52, -52, -56, 6, 11, -27, -40, -35, -37, 6, -9, 76, 49, 27, -0, -7, 16, 66, 69, 70, 109, 85, -17, 48, 0, 89, 83}
+        {0, 0, 0, 0, 0, 0, 0, 0, 60, 69, 61, 71, 63, 52, 35, 16, 52, 72, 97, 96, 101, 142, 128, 80, 37, 65, 60, 64, 87, 83, 78, 61, 25, 53, 55, 71, 67, 57, 63, 42, 24, 49, 49, 47, 66, 49, 79, 50, 23, 51, 43, 32, 53, 67, 85, 41, 0, 0, 0, 0, 0, 0, 0, 0},
+        {133, 83, 133, 154, 150, 137, 76, 148, 181, 212, 232, 237, 224, 279, 188, 206, 187, 242, 271, 275, 300, 286, 261, 220, 205, 221, 249, 272, 260, 278, 239, 241, 194, 207, 227, 232, 244, 232, 229, 207, 172, 202, 217, 212, 229, 218, 222, 193, 155, 165, 187, 204, 208, 206, 183, 189, 106, 176, 143, 164, 176, 190, 182, 127},
+        {225, 170, 157, 161, 154, 178, 130, 186, 233, 258, 244, 221, 253, 253, 249, 232, 239, 261, 272, 290, 263, 302, 269, 275, 235, 248, 270, 281, 278, 272, 247, 237, 222, 241, 250, 270, 267, 254, 247, 234, 236, 249, 242, 257, 256, 244, 246, 246, 239, 244, 255, 231, 242, 249, 261, 243, 205, 235, 224, 204, 214, 220, 218, 217},
+        {270, 240, 248, 249, 268, 219, 202, 265, 293, 290, 303, 323, 310, 327, 297, 318, 267, 284, 292, 299, 319, 318, 313, 310, 256, 262, 267, 278, 293, 284, 278, 289, 234, 237, 242, 259, 263, 253, 267, 261, 235, 237, 249, 247, 251, 257, 291, 269, 230, 239, 256, 252, 255, 262, 281, 248, 255, 256, 266, 272, 274, 271, 273, 258},
+        {432, 412, 432, 448, 451, 432, 446, 457, 488, 468, 482, 471, 485, 511, 493, 524, 490, 479, 495, 501, 504, 543, 543, 533, 475, 472, 478, 484, 491, 498, 487, 497, 467, 470, 460, 476, 478, 474, 488, 487, 467, 466, 463, 460, 465, 474, 488, 487, 464, 468, 476, 474, 473, 482, 497, 502, 456, 446, 451, 470, 461, 446, 471, 451},
+        {-16, -20, -15, -18, -12, 1, 9, 2, -19, -2, -20, -4, -8, -2, 21, 15, -21, 15, -20, -27, -17, 11, 13, -1, -12, -19, -26, -69, -61, -34, -27, -32, -17, -17, -53, -76, -81, -53, -50, -53, 4, 9, -28, -38, -30, -39, 5, -9, 76, 45, 26, 1, -1, 21, 66, 73, 72, 108, 81, -18, 45, 3, 90, 86}
     };
 
     public static int[,] eg_PSQT = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 59, 17, 43, 13, 9, -2, 24, 46, 123, 119, 82, 55, 52, 61, 99, 106, 115, 97, 85, 67, 68, 74, 89, 91, 98, 93, 80, 75, 75, 78, 80, 78, 94, 84, 84, 80, 83, 81, 76, 77, 106, 92, 88, 81, 96, 88, 81, 84, 0, 0, 0, 0, 0, 0, 0, 0},
-        {146, 187, 219, 210, 216, 184, 176, 128, 196, 207, 220, 225, 214, 198, 199, 176, 214, 221, 234, 235, 220, 226, 207, 197, 205, 230, 250, 250, 249, 242, 229, 210, 219, 230, 249, 246, 251, 242, 224, 202, 200, 218, 237, 245, 241, 225, 213, 194, 190, 205, 215, 216, 219, 209, 192, 196, 151, 176, 198, 201, 192, 184, 184, 163},
-        {227, 239, 246, 251, 248, 232, 240, 217, 215, 238, 241, 247, 235, 233, 235, 211, 240, 242, 248, 239, 243, 245, 239, 230, 240, 257, 258, 261, 258, 249, 253, 238, 234, 257, 262, 261, 257, 255, 247, 220, 236, 243, 253, 256, 261, 251, 235, 227, 234, 233, 230, 238, 248, 227, 232, 202, 215, 226, 210, 232, 219, 228, 206, 185},
-        {430, 443, 454, 451, 439, 442, 441, 424, 428, 434, 443, 440, 436, 421, 425, 413, 429, 436, 432, 432, 421, 413, 416, 410, 432, 429, 437, 432, 419, 415, 414, 411, 423, 428, 432, 427, 419, 414, 401, 399, 417, 416, 416, 420, 411, 402, 376, 380, 410, 415, 410, 412, 402, 397, 380, 392, 416, 416, 422, 419, 417, 412, 406, 406},
-        {684, 690, 706, 698, 697, 668, 637, 658, 635, 663, 679, 682, 685, 662, 615, 618, 619, 636, 668, 677, 678, 672, 619, 623, 623, 649, 666, 688, 706, 684, 675, 648, 642, 640, 679, 687, 690, 678, 656, 632, 579, 652, 666, 680, 671, 668, 629, 577, 581, 612, 648, 648, 654, 597, 542, 471, 574, 597, 612, 656, 617, 581, 483, 459},
-        {-55, -37, -25, -12, -17, -1, 10, -35, -30, 6, 9, 6, 17, 22, 28, 8, -15, 15, 22, 32, 37, 38, 35, 7, -17, 12, 30, 37, 40, 41, 33, 8, -27, -1, 23, 43, 42, 32, 19, 2, -30, -5, 10, 22, 23, 15, 3, -8, -29, -16, -9, -3, 4, -1, -13, -30, -58, -50, -33, -25, -43, -18, -38, -63}
+        {0, 0, 0, 0, 0, 0, 0, 0, 125, 105, 116, 96, 99, 94, 104, 120, 107, 110, 97, 93, 81, 78, 108, 102, 97, 87, 88, 76, 76, 78, 78, 83, 83, 79, 80, 81, 82, 79, 70, 66, 85, 76, 83, 88, 90, 86, 71, 70, 95, 85, 93, 89, 105, 90, 75, 78, 0, 0, 0, 0, 0, 0, 0, 0},
+        {146, 186, 215, 204, 215, 186, 175, 127, 198, 205, 221, 226, 215, 200, 200, 179, 211, 223, 234, 238, 220, 229, 208, 195, 201, 233, 249, 250, 249, 241, 234, 204, 217, 232, 249, 249, 247, 241, 222, 204, 201, 218, 232, 245, 241, 225, 215, 196, 191, 208, 216, 219, 217, 210, 193, 199, 154, 176, 197, 201, 195, 182, 182, 162},
+        {224, 243, 245, 250, 246, 234, 236, 218, 218, 230, 242, 241, 235, 237, 232, 211, 244, 239, 249, 240, 241, 247, 240, 231, 240, 252, 253, 261, 256, 249, 250, 237, 231, 257, 262, 256, 257, 255, 244, 221, 233, 239, 254, 254, 253, 249, 234, 225, 231, 233, 225, 239, 247, 225, 235, 203, 216, 226, 209, 229, 217, 229, 204, 184},
+        {431, 442, 452, 449, 437, 438, 437, 422, 431, 434, 446, 439, 434, 424, 425, 414, 428, 434, 430, 433, 419, 411, 417, 402, 433, 430, 435, 429, 419, 416, 415, 407, 424, 427, 432, 426, 420, 415, 399, 396, 417, 412, 418, 421, 411, 402, 374, 379, 414, 415, 412, 415, 400, 397, 382, 385, 409, 416, 419, 421, 415, 410, 405, 408},
+        {685, 697, 704, 695, 696, 667, 633, 656, 637, 665, 676, 682, 685, 662, 617, 615, 619, 635, 666, 676, 681, 668, 620, 621, 622, 652, 666, 691, 702, 685, 673, 650, 642, 640, 677, 685, 689, 674, 660, 629, 578, 655, 669, 682, 671, 668, 625, 576, 582, 615, 644, 645, 652, 598, 539, 468, 575, 599, 613, 657, 614, 578, 480, 456},
+        {-56, -30, -22, -11, -16, -3, 13, -32, -26, 8, 10, 7, 20, 22, 28, 13, -13, 12, 24, 30, 39, 39, 39, 4, -21, 10, 31, 43, 47, 43, 31, 2, -26, 2, 23, 42, 42, 31, 19, -2, -28, -8, 11, 24, 21, 17, 0, -8, -34, -15, -9, -1, 5, 4, -13, -34, -57, -52, -34, -26, -43, -20, -38, -61}
     };
-    public static int[] passedPawnBonuses = {0, 7, 16, 31, 54, 102, 198, 0};
-    public static int[] isolatedPawnPenalty = {35, 20, 6, -11, -21, -39, -45, -7, 0};
-    public static int doubledPawnPenalty = -27;
+    public static int[,] passedPawnBonuses = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 60, 69, 61, 71, 63, 52, 35, 16, 28, 28, 19, 21, 17, 0, -18, -34, 14, 8, 16, 21, -2, 9, -20, -15, -3, -10, -21, -15, -21, -8, -18, -17, -8, -24, -28, -20, -25, -13, -24, -3, -17, -13, -21, -17, -10, -14, -5, -4, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 125, 105, 116, 96, 99, 94, 104, 120, 120, 117, 85, 65, 66, 72, 88, 105, 68, 70, 41, 32, 37, 38, 69, 71, 55, 45, 29, 20, 21, 30, 49, 55, 18, 31, 17, 7, 10, 9, 37, 16, 18, 22, 10, 2, -13, 1, 25, 19, 0, 0, 0, 0, 0, 0, 0, 0}
+    };
+    public static int[] isolatedPawnPenalty = {39, 18, 6, -9, -22, -41, -41, -6, 0};
+    public static int doubledPawnPenalty = -29;
 
     int playerTurnMultiplier;
     public Evaluation(SearchLogger logger)
@@ -63,7 +66,8 @@ public class Evaluation
         int mgMaterialCount = board.gameStateHistory[board.fullMoveClock].mgPSQTVal;
         int egMaterialCount = board.gameStateHistory[board.fullMoveClock].egPSQTVal;
 
-        int pawnEval = 0;
+        int pawnMGEval = 0;
+        int pawnEGEval = 0;
 
         ulong whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
         ulong blackPawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)];
@@ -71,24 +75,29 @@ public class Evaluation
         while (whitePawns != 0)
         {
             int index = BitboardHelper.PopLSB(ref whitePawns);
-            pawnEval += EvaluatePawnStrength(board, index, Piece.White);
+            (int, int) pawnBonus = EvaluatePawnStrength(board, index, Piece.White);
+            pawnMGEval += pawnBonus.Item1;
+            pawnEGEval += pawnBonus.Item2;
         }
 
         while (blackPawns != 0)
         {
             int index = BitboardHelper.PopLSB(ref blackPawns);
-            pawnEval -= EvaluatePawnStrength(board, index, Piece.Black);
+            (int, int) pawnBonus = EvaluatePawnStrength(board, index, Piece.Black);
+            pawnMGEval -= pawnBonus.Item1;
+            pawnEGEval -= pawnBonus.Item2;
         }
 
-        pawnEval += isolatedPawnPenalty[numWhiteIsolatedPawns];
-        pawnEval -= isolatedPawnPenalty[numBlackIsolatedPawns];
+        pawnEGEval += isolatedPawnPenalty[numWhiteIsolatedPawns];
+        pawnEGEval -= isolatedPawnPenalty[numBlackIsolatedPawns];
 
         int phase = (4 * (board.pieceCounts[Board.WhiteIndex, Piece.Queen] + board.pieceCounts[Board.BlackIndex, Piece.Queen])) + (2 * (board.pieceCounts[Board.WhiteIndex, Piece.Rook] + board.pieceCounts[Board.BlackIndex, Piece.Rook]));
         phase += board.pieceCounts[Board.WhiteIndex, Piece.Knight] + board.pieceCounts[Board.BlackIndex, Piece.Knight] + board.pieceCounts[Board.WhiteIndex, Piece.Bishop] + board.pieceCounts[Board.BlackIndex, Piece.Bishop];
 
-        int egScore = egMaterialCount + pawnEval;
+        int egScore = egMaterialCount + pawnEGEval;
+        int mgScore = mgMaterialCount + pawnMGEval;
         if (phase > 24) { phase = 24; }
-        return (mgMaterialCount * phase + egScore * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
+        return (mgScore * phase + egScore * (totalPhase - phase)) / totalPhase * playerTurnMultiplier;
     }
 
 
@@ -143,29 +152,34 @@ public class Evaluation
         return numPenalties * -5 * penaltyMultiplier;
     }
 
-    int EvaluatePawnStrength(Board board, int pawnIndex, int pawnColor)
+    (int, int) EvaluatePawnStrength(Board board, int pawnIndex, int pawnColor)
     {
-        int bonus = 0;
+        int mgBonus = 0;
+        int egBonus = 0;
         if (pawnColor == Piece.White)
         {
-            int ppBonusIndex = Coord.IndexToRank(pawnIndex) - 1;
             //Passed pawn
-            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
+            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { 
+                mgBonus += passedPawnBonuses[0, pawnIndex]; 
+                egBonus += passedPawnBonuses[1, pawnIndex]; 
+            }
             //Doubled pawn penalty
-            if (board.PieceAt(pawnIndex - 8) == Piece.Pawn && board.ColorAt(pawnIndex - 8) == Piece.White) { bonus += doubledPawnPenalty; }
+            if (board.PieceAt(pawnIndex - 8) == Piece.Pawn && board.ColorAt(pawnIndex - 8) == Piece.White) { egBonus += doubledPawnPenalty; }
             if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { numWhiteIsolatedPawns++; }
         }
         else
         {
-            int ppBonusIndex = 8 - Coord.IndexToRank(pawnIndex);
             //Passed pawn
-            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { bonus += passedPawnBonuses[ppBonusIndex]; }
+            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { 
+                mgBonus += passedPawnBonuses[0, pawnIndex ^ 56]; 
+                egBonus += passedPawnBonuses[1, pawnIndex ^ 56]; 
+            }
             //Doubled pawn penalty
-            if (board.PieceAt(pawnIndex + 8) == Piece.Pawn && board.ColorAt(pawnIndex + 8) == Piece.Black) { bonus += doubledPawnPenalty; }
+            if (board.PieceAt(pawnIndex + 8) == Piece.Pawn && board.ColorAt(pawnIndex + 8) == Piece.Black) { egBonus += doubledPawnPenalty; }
             if((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)]) == 0){ numBlackIsolatedPawns++; }
         }
 
-        return bonus;
+        return (mgBonus, egBonus);
     }
 
     int EvaluateBishopMobility(Board board, int pieceIndex, int pieceColor)

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using Microsoft.VisualBasic;
 public class Tuner
 {
@@ -167,8 +168,7 @@ public class Tuner
             board.setPosition(pos.Item1, logger);
             int phase = 0;
             Dictionary<int, int> features = new Dictionary<int, int>();
-            int numBlackIsolatedPawns = 0;
-            int numWhiteIsolatedPawns = 0;
+            int[] isolatedPawnCount = new int[2];
 
             for(int index = 0; index < 64; index++)
             {
@@ -202,35 +202,26 @@ public class Tuner
 
                     if(pieceType == Piece.Pawn)
                     {
-                        if (Piece.Color(piece) == Piece.White)
-                        {
-                            //Passed pawn
-                            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[index]) == 0) { 
-                                AddFeature(psqtOffset + index, Piece.White, features); 
-                                AddFeature(psqtOffset + 64 + index, Piece.White, features); //EG
-                            }
-                            //Doubled pawn penalty
-                            if (board.PieceAt(index - 8) == Piece.Pawn && board.ColorAt(index - 8) == Piece.White) { AddFeature(psqtOffset + isolatedPawnOffset + passedPawnOffset, Piece.White, features); }
-                            if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { numWhiteIsolatedPawns++; }
+                        int currentColor = Piece.Color(piece);
+                        int currentColorIndex = currentColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex;
+                        int oppositeColorIndex = 1 - currentColorIndex;
+                        int pushSquare = index + (currentColorIndex == Board.WhiteIndex ? -8 : 8);
+
+                        //Passed pawn
+                        if ((board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)] & BitboardHelper.pawnPassedMask[currentColorIndex, index]) == 0) { 
+                            AddFeature(psqtOffset + relativeIndex, currentColor, features); 
+                            AddFeature(psqtOffset + 64 + relativeIndex, currentColor, features); //EG
                         }
-                        else
-                        {
-                            //Passed pawn
-                            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[index]) == 0) { 
-                                AddFeature(psqtOffset + (index ^ 56), Piece.Black, features); 
-                                AddFeature(psqtOffset + 64 + (index ^ 56), Piece.Black, features); //EG
-                            }
-                            //Doubled pawn penalty
-                            if (board.PieceAt(index + 8) == Piece.Pawn && board.ColorAt(index + 8) == Piece.Black) { AddFeature(psqtOffset + isolatedPawnOffset + passedPawnOffset, Piece.Black, features); }
-                            if((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)]) == 0){ numBlackIsolatedPawns++; }
-                        }
+                        //Doubled pawn penalty
+                        if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(psqtOffset + isolatedPawnOffset + passedPawnOffset, currentColor, features); }
+                        if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
                     }
                 }
             }
 
             //Isolated pawns
-            AddFeature(psqtOffset + passedPawnOffset + numBlackIsolatedPawns, Piece.Black, features);
-            AddFeature(psqtOffset + passedPawnOffset + numWhiteIsolatedPawns, Piece.White, features);
+            AddFeature(psqtOffset + passedPawnOffset + isolatedPawnCount[Board.BlackIndex], Piece.Black, features);
+            AddFeature(psqtOffset + passedPawnOffset + isolatedPawnCount[Board.WhiteIndex], Piece.White, features);
 
             //Bishop Pair
             if(board.pieceCounts[Board.WhiteIndex, Piece.Bishop] >= 2)

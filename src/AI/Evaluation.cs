@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Linq.Expressions;
 using System.Net.Security;
 
@@ -7,8 +8,7 @@ public class Evaluation
 
     int colorTurn;
 
-    int numWhiteIsolatedPawns;
-    int numBlackIsolatedPawns;
+    int[] isolatedPawnCount;
     SearchLogger logger;
 
     //Unused in actual eval
@@ -50,14 +50,15 @@ public class Evaluation
     public Evaluation(SearchLogger logger)
     {
         this.logger = logger;
+        isolatedPawnCount = new int[2];
     }
     public int EvaluatePosition(Board board)
     {
         colorTurn = board.colorTurn;
         playerTurnMultiplier = (colorTurn == Piece.White) ? 1 : -1;
 
-        numWhiteIsolatedPawns = 0;
-        numBlackIsolatedPawns = 0;
+        isolatedPawnCount[0] = 0;
+        isolatedPawnCount[1] = 0;
         int boardVal = IncrementalCount(board);
         return boardVal;
     }
@@ -68,8 +69,6 @@ public class Evaluation
         int mgScore = board.gameStateHistory[board.fullMoveClock].mgPSQTVal;
         int egScore = board.gameStateHistory[board.fullMoveClock].egPSQTVal;
 
-        int pawnMGEval = 0;
-        int pawnEGEval = 0;
 
         ulong whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
         ulong blackPawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)];
@@ -77,7 +76,7 @@ public class Evaluation
         while (whitePawns != 0)
         {
             int index = BitboardHelper.PopLSB(ref whitePawns);
-            (int, int) pawnBonus = EvaluatePawnStrength(board, index, Piece.White);
+            (int, int) pawnBonus = EvaluatePawnStrength(board, index, Board.WhiteIndex);
             mgScore += pawnBonus.Item1;
             egScore += pawnBonus.Item2;
         }
@@ -85,13 +84,13 @@ public class Evaluation
         while (blackPawns != 0)
         {
             int index = BitboardHelper.PopLSB(ref blackPawns);
-            (int, int) pawnBonus = EvaluatePawnStrength(board, index, Piece.Black);
+            (int, int) pawnBonus = EvaluatePawnStrength(board, index, Board.BlackIndex);
             mgScore -= pawnBonus.Item1;
             egScore -= pawnBonus.Item2;
         }
 
-        egScore += isolatedPawnPenalty[numWhiteIsolatedPawns];
-        egScore -= isolatedPawnPenalty[numBlackIsolatedPawns];
+        egScore += isolatedPawnPenalty[isolatedPawnCount[Board.WhiteIndex]];
+        egScore -= isolatedPawnPenalty[isolatedPawnCount[Board.BlackIndex]];
 
 
         if(board.pieceCounts[Board.WhiteIndex, Piece.Bishop] >= 2)
@@ -165,32 +164,26 @@ public class Evaluation
         return numPenalties * -5 * penaltyMultiplier;
     }
 
-    (int, int) EvaluatePawnStrength(Board board, int pawnIndex, int pawnColor)
+    (int, int) EvaluatePawnStrength(Board board, int pawnIndex, int currentColorIndex)
     {
         int mgBonus = 0;
         int egBonus = 0;
-        if (pawnColor == Piece.White)
-        {
-            //Passed pawn
-            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)] & BitboardHelper.wPawnPassedMask[pawnIndex]) == 0) { 
-                mgBonus += passedPawnBonuses[0, pawnIndex]; 
-                egBonus += passedPawnBonuses[1, pawnIndex]; 
-            }
-            //Doubled pawn penalty
-            if (board.PieceAt(pawnIndex - 8) == Piece.Pawn && board.ColorAt(pawnIndex - 8) == Piece.White) { egBonus += doubledPawnPenalty; }
-            if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { numWhiteIsolatedPawns++; }
+
+        int oppositeColorIndex = 1 - currentColorIndex;
+        int currentColor = currentColorIndex == Board.WhiteIndex ? Piece.White : Piece.Black;
+
+        bool passer = (board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)] & BitboardHelper.pawnPassedMask[currentColorIndex, pawnIndex]) == 0;
+        int pushSquare = pawnIndex + (currentColorIndex == Board.WhiteIndex ? -8 : 8);
+        //Passed pawn
+        if (passer) { 
+            int psqtIndex = currentColorIndex == Board.WhiteIndex ? pawnIndex : pawnIndex ^ 56;
+            mgBonus += passedPawnBonuses[0, psqtIndex]; 
+            egBonus += passedPawnBonuses[1, psqtIndex]; 
         }
-        else
-        {
-            //Passed pawn
-            if ((board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)] & BitboardHelper.bPawnPassedMask[pawnIndex]) == 0) { 
-                mgBonus += passedPawnBonuses[0, pawnIndex ^ 56]; 
-                egBonus += passedPawnBonuses[1, pawnIndex ^ 56]; 
-            }
-            //Doubled pawn penalty
-            if (board.PieceAt(pawnIndex + 8) == Piece.Pawn && board.ColorAt(pawnIndex + 8) == Piece.Black) { egBonus += doubledPawnPenalty; }
-            if((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)]) == 0){ numBlackIsolatedPawns++; }
-        }
+
+        //Doubled pawn penalty
+        if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { egBonus += doubledPawnPenalty; }
+        if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
 
         return (mgBonus, egBonus);
     }

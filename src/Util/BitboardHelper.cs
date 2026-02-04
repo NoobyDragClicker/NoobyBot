@@ -28,13 +28,12 @@ public static class BitboardHelper
     public static readonly ulong[] wPawnMoves;
     public static readonly ulong[] wPawnDouble;
     public static readonly ulong[] wPawnDoubleMask;
-    public static readonly ulong[] wPawnPassedMask;
+    public static readonly ulong[,] pawnPassedMask;
 
     public static readonly ulong[] bPawnAttacks;
     public static readonly ulong[] bPawnMoves;
     public static readonly ulong[] bPawnDouble;
     public static readonly ulong[] bPawnDoubleMask;
-    public static readonly ulong[] bPawnPassedMask;
     public static readonly ulong[] isolatedPawnMask;
 
     public static readonly (int x, int y)[] knightJumps = { (-2, -1), (2, -1), (2, 1), (-2, 1), (-1, -2), (-1, 2), (1, 2), (1, -2) };
@@ -204,8 +203,7 @@ public static class BitboardHelper
         bPawnDouble = new ulong[64];
         wPawnDoubleMask = new ulong[64];
         bPawnDoubleMask = new ulong[64];
-        wPawnPassedMask = new ulong[64];
-        bPawnPassedMask = new ulong[64];
+        pawnPassedMask = new ulong[2, 64];
         isolatedPawnMask = new ulong[64];
 
         //Filling in the attack bitboards
@@ -284,12 +282,12 @@ public static class BitboardHelper
                     wPawnDoubleMask[startIndex] = wPawnMoves[startIndex] | wPawnDouble[startIndex];
                 }
                 ulong singleWhiteFile = FILE_1 >> (64 - startIndex);
-                wPawnPassedMask[startIndex] = singleWhiteFile;
-                if (x != 0) { wPawnPassedMask[startIndex] |= singleWhiteFile >> 1; }
+                pawnPassedMask[Board.WhiteIndex, startIndex] = singleWhiteFile;
+                if (x != 0) { pawnPassedMask[Board.WhiteIndex, startIndex] |= singleWhiteFile >> 1; }
                 ;
-                if (x != 7) { wPawnPassedMask[startIndex] |= singleWhiteFile << 1; }
+                if (x != 7) { pawnPassedMask[Board.WhiteIndex, startIndex] |= singleWhiteFile << 1; }
                 ;
-                if (startIndex < 8) { wPawnPassedMask[startIndex] = 0; }
+                if (startIndex < 8) { pawnPassedMask[Board.WhiteIndex, startIndex] = 0; }
 
                 //Black Pawn
                 if (ValidSquareIndex(x + 1, y + 1, out attackIndex))
@@ -310,10 +308,10 @@ public static class BitboardHelper
                     bPawnDoubleMask[startIndex] = bPawnMoves[startIndex] | bPawnDouble[startIndex];
                 }
 
-                bPawnPassedMask[startIndex] = FILE_1 << (startIndex + 8);
-                if (x != 0) { bPawnPassedMask[startIndex] |= FILE_1 << (startIndex + 7); }
-                if (x != 7) { bPawnPassedMask[startIndex] |= FILE_1 << (startIndex + 9); }
-                if (startIndex > 55) { bPawnPassedMask[startIndex] = 0; }
+                pawnPassedMask[Board.BlackIndex, startIndex] = FILE_1 << (startIndex + 8);
+                if (x != 0) { pawnPassedMask[Board.BlackIndex, startIndex] |= FILE_1 << (startIndex + 7); }
+                if (x != 7) { pawnPassedMask[Board.BlackIndex, startIndex] |= FILE_1 << (startIndex + 9); }
+                if (startIndex > 55) { pawnPassedMask[Board.BlackIndex, startIndex] = 0; }
 
 
                 if (x != 0) { isolatedPawnMask[startIndex] |= FILE_1 << x - 1; }

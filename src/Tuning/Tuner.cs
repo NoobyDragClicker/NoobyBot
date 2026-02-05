@@ -54,7 +54,7 @@ public class Tuner
         Console.WriteLine($"Data loaded: {dataSize} positions found");
         ConvertEntries();
         Console.WriteLine("Entries loaded, starting tuning");
-        float learningRate = 0.05f;
+        float learningRate = 0.01f;
         for (int epoch = 0; epoch < numEpoches; epoch++)
         {
             //Full cycle through the data

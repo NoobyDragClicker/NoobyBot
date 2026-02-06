@@ -8,7 +8,8 @@ public class Tuner
     const int MAX_PHASE = 24;
     const int maxGrad = 10;
     const float lambda = 1e-3f;
-    Random rng = new Random();
+    Random rng = new Random(4834598);
+    
 
     enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP};
 
@@ -77,7 +78,7 @@ public class Tuner
                         }
                         if (weights[weightIndex].eg.tune)
                         {
-                            weights[weightIndex].eg.gradient += 2 * error * entry.features[featureIndex].Item2 * ((float)(MAX_PHASE-entry.phase))/MAX_PHASE;
+                            weights[weightIndex].eg.gradient += 2 * error * entry.features[featureIndex].Item2 * ((float)MAX_PHASE-entry.phase)/MAX_PHASE;
                         }
                     }
 
@@ -206,7 +207,7 @@ public class Tuner
                         int currentColor = Piece.Color(piece);
                         int currentColorIndex = currentColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex;
                         int oppositeColorIndex = 1 - currentColorIndex;
-                        int pushSquare = index + (currentColorIndex == Board.WhiteIndex ? -8 : 8);
+                        int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;
 
                         //Passed pawn
                         if ((board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)] & BitboardHelper.pawnPassedMask[currentColorIndex, index]) == 0) { 
@@ -214,7 +215,7 @@ public class Tuner
                         }
                         //Doubled pawn penalty
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
-                        if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
+                        if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
                     }
                 }
             }

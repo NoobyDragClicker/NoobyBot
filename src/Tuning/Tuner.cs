@@ -6,8 +6,6 @@ public class Tuner
 {
     int K = 142;
     const int MAX_PHASE = 24;
-    const int maxGrad = 10;
-    const float lambda = 1e-3f;
     Random rng = new Random(123123123);
     
 
@@ -55,7 +53,13 @@ public class Tuner
         Console.WriteLine($"Data loaded: {dataSize} positions found");
         ConvertEntries();
         Console.WriteLine("Entries loaded, starting tuning");
-        float learningRate = 0.05f;
+        float learningRate = 0.015f;
+        float beta1 = 0.9f;
+        float beta2 = 0.99f;
+        float weightDecay = 3e-4f;
+        int maxGrad = 50;
+        float eps = 1e-8f;
+        int t = 0;
         for (int epoch = 0; epoch < numEpoches; epoch++)
         {
             //Full cycle through the data
@@ -83,24 +87,48 @@ public class Tuner
                     }
 
                 } 
+                
                 for (int paramIndex = 0; paramIndex < weights.Length; paramIndex++)
                 {
-                    if (Math.Abs(weights[paramIndex].mg.gradient) > maxGrad)
+                    t++;
+                    //MG
+                    if (weights[paramIndex].mg.tune)
                     {
-                        weights[paramIndex].mg.gradient = Math.Sign(weights[paramIndex].mg.gradient) * maxGrad;
+                        float g = weights[paramIndex].mg.gradient;
+                        if (Math.Abs(g) > maxGrad) { g = Math.Sign(g) * maxGrad; }
+
+                        weights[paramIndex].mg.m = beta1 * weights[paramIndex].mg.m + (1 - beta1) * g;
+
+                        weights[paramIndex].mg.v = beta2 * weights[paramIndex].mg.v + (1 - beta2) * g * g;
+
+                        float mHat = weights[paramIndex].mg.m / (1 - MathF.Pow(beta1, t));
+                        float vHat = weights[paramIndex].mg.v / (1 - MathF.Pow(beta2, t));
+
+                        // Adam update
+                        weights[paramIndex].mg.weight -= learningRate * mHat / (MathF.Sqrt(vHat) + eps);
+                        //weight decay
+                        weights[paramIndex].mg.weight -= learningRate * weightDecay * weights[paramIndex].mg.weight;
                     }
-                    weights[paramIndex].mg.gradient += lambda * weights[paramIndex].mg.weight;
-                    weights[paramIndex].mg.weight -= learningRate * weights[paramIndex].mg.gradient;
                     weights[paramIndex].mg.gradient = 0;
 
-                    if (Math.Abs(weights[paramIndex].eg.gradient) > maxGrad)
+                    //EG
+                    if (weights[paramIndex].eg.tune)
                     {
-                        weights[paramIndex].eg.gradient = Math.Sign(weights[paramIndex].eg.gradient) * maxGrad;
+                        float g = weights[paramIndex].eg.gradient;
+
+                        if (Math.Abs(g) > maxGrad) { g = Math.Sign(g) * maxGrad; };
+
+                        weights[paramIndex].eg.m = beta1 * weights[paramIndex].eg.m + (1 - beta1) * g;
+                        weights[paramIndex].eg.v = beta2 * weights[paramIndex].eg.v + (1 - beta2) * g * g;
+
+                        float mHat = weights[paramIndex].eg.m / (1 - MathF.Pow(beta1, t));
+                        float vHat = weights[paramIndex].eg.v / (1 - MathF.Pow(beta2, t));
+
+                        weights[paramIndex].eg.weight -= learningRate * mHat / (MathF.Sqrt(vHat) + eps);
+                        weights[paramIndex].eg.weight -= learningRate * weightDecay * weights[paramIndex].eg.weight;
                     }
-                    weights[paramIndex].eg.gradient += lambda * weights[paramIndex].eg.weight;
-                    weights[paramIndex].eg.weight -= learningRate * weights[paramIndex].eg.gradient;
+
                     weights[paramIndex].eg.gradient = 0;
-                    
                 }
             }
             Console.WriteLine($"Epoch {epoch} complete: Training loss: {CalculateLoss()} Test loss: {CalculateTestLoss()}");
@@ -380,6 +408,8 @@ struct Param
 {
     public float weight;
     public float gradient;
+    public float m;
+    public float v;
     public bool tune;
     public Param(float weight, bool tune)
     {

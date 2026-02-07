@@ -236,9 +236,12 @@ public class Tuner
             }
 
             //Remove zeroed features
-            foreach (KeyValuePair<int, int> pair in features)
+            foreach (var key in features.Keys.ToArray())
             {
-                if(pair.Value == 0){features.Remove(pair.Key);}
+                if (features[key] == 0)
+                {
+                    features.Remove(key);
+                }
             }
 
             //Finally convert to the array

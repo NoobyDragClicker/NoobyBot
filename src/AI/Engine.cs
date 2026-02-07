@@ -88,7 +88,7 @@ public class Engine
                 break;
             case "tune":
                 Tuner tuner = new Tuner();
-                tuner.Tune("C:/Users/Spencer/Desktop/Chess/lichess-big3-resolved/lichess-big3-resolved.book", 150, 16384);
+                tuner.Tune("C:/Users/Spencer/Desktop/Chess/lichess-big3-resolved/lichess-big3-resolved.book", 300, 16384);
                 break;
             case "stop":
                 player.search.EndSearch();

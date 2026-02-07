@@ -53,7 +53,7 @@ public class Tuner
         Console.WriteLine($"Data loaded: {dataSize} positions found");
         ConvertEntries();
         Console.WriteLine("Entries loaded, starting tuning");
-        float learningRate = 0.01f;
+        float learningRate = 0.015f;
         float beta1 = 0.9f;
         float beta2 = 0.99f;
         float weightDecay = 3e-4f;

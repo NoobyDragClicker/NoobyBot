@@ -85,10 +85,18 @@ public class Tuner
                 } 
                 for (int paramIndex = 0; paramIndex < weights.Length; paramIndex++)
                 {
+                    if (Math.Abs(weights[paramIndex].mg.gradient) > maxGrad)
+                    {
+                        weights[paramIndex].mg.gradient = Math.Sign(weights[paramIndex].mg.gradient) * maxGrad;
+                    }
                     weights[paramIndex].mg.gradient += lambda * weights[paramIndex].mg.weight;
                     weights[paramIndex].mg.weight -= learningRate * weights[paramIndex].mg.gradient;
                     weights[paramIndex].mg.gradient = 0;
 
+                    if (Math.Abs(weights[paramIndex].eg.gradient) > maxGrad)
+                    {
+                        weights[paramIndex].eg.gradient = Math.Sign(weights[paramIndex].eg.gradient) * maxGrad;
+                    }
                     weights[paramIndex].eg.gradient += lambda * weights[paramIndex].eg.weight;
                     weights[paramIndex].eg.weight -= learningRate * weights[paramIndex].eg.gradient;
                     weights[paramIndex].eg.gradient = 0;

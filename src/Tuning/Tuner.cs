@@ -4,21 +4,49 @@ using System.Security.Principal;
 using Microsoft.VisualBasic;
 public class Tuner
 {
-    const int psqtOffset = 2*6*64;
-    const int passedPawnOffset = 2*64;
-    const int isolatedPawnOffset = 9;
-    const int numParams = psqtOffset + passedPawnOffset + isolatedPawnOffset + 3;
-    
     int K = 142;
     const int MAX_PHASE = 24;
     const int maxGrad = 10;
     const float lambda = 1e-3f;
-    Random rng = new Random();
+    Random rng = new Random(123123123);
     
-    Param[] weights = new Param[numParams];
+
+    enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP};
+
+    TuningInfo[] infos =
+    {
+        new TuningInfo(64*6, true, true),
+        new TuningInfo(64, true, true),
+        new TuningInfo(9, false, true),
+        new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true)
+    };
+    
+    TPair[] weights;
     Entry[] entries;
     Entry[] test;
     (string, double)[] data;
+
+    public Tuner()
+    {
+        int currentStartIndex = 0;
+        for (int infoIndex = 0; infoIndex < infos.Length; infoIndex++)
+        {
+            infos[infoIndex].startIndex = currentStartIndex;
+            currentStartIndex += infos[infoIndex].length;
+        }
+        weights = new TPair[currentStartIndex];
+
+        //Initialise with a weight of 0
+        for (int infoIndex = 0; infoIndex < infos.Length; infoIndex++)
+        {
+            for(int index = infos[infoIndex].startIndex; index < infos[infoIndex].startIndex + infos[infoIndex].length; index++)
+            {
+                weights[index].mg = new Param(0f, infos[infoIndex].tuneMG);
+                weights[index].eg = new Param(0f, infos[infoIndex].tuneEG);
+            }
+        }
+    }
 
     public void Tune(string path, int numEpoches, int batchSize)
     {
@@ -26,7 +54,6 @@ public class Tuner
         int dataSize = data.Length;
         Console.WriteLine($"Data loaded: {dataSize} positions found");
         ConvertEntries();
-        InitWeights();
         Console.WriteLine("Entries loaded, starting tuning");
         float learningRate = 0.05f;
         for (int epoch = 0; epoch < numEpoches; epoch++)
@@ -45,75 +72,50 @@ public class Tuner
                     for(int featureIndex = 0; featureIndex < entry.features.Length; featureIndex++)
                     {
                         int weightIndex = entry.features[featureIndex].Item1;
-                        weights[weightIndex].gradient += 2 * error * entry.features[featureIndex].Item2 
-                        * (weights[weightIndex].mg ? ((float)entry.phase)/MAX_PHASE : (float)(MAX_PHASE-entry.phase)/MAX_PHASE); //Middlegame/endgame adjusted
+                        if (weights[weightIndex].mg.tune)
+                        {
+                            weights[weightIndex].mg.gradient += 2 * error * entry.features[featureIndex].Item2 * ((float)entry.phase)/MAX_PHASE;
+                        }
+                        if (weights[weightIndex].eg.tune)
+                        {
+                            weights[weightIndex].eg.gradient += 2 * error * entry.features[featureIndex].Item2 * ((float)MAX_PHASE-entry.phase)/MAX_PHASE;
+                        }
                     }
 
                 } 
-                for (int paramIndex = 0; paramIndex < numParams; paramIndex++)
+                for (int paramIndex = 0; paramIndex < weights.Length; paramIndex++)
                 {
-                    if (Math.Abs(weights[paramIndex].gradient) > maxGrad)
+                    if (Math.Abs(weights[paramIndex].mg.gradient) > maxGrad)
                     {
-                        weights[paramIndex].gradient = Math.Sign(weights[paramIndex].gradient) * maxGrad;
+                        weights[paramIndex].mg.gradient = Math.Sign(weights[paramIndex].mg.gradient) * maxGrad;
                     }
-                    weights[paramIndex].gradient += lambda * weights[paramIndex].weight;
-                    weights[paramIndex].weight -= learningRate * weights[paramIndex].gradient;
-                    weights[paramIndex].gradient = 0;
+                    weights[paramIndex].mg.gradient += lambda * weights[paramIndex].mg.weight;
+                    weights[paramIndex].mg.weight -= learningRate * weights[paramIndex].mg.gradient;
+                    weights[paramIndex].mg.gradient = 0;
+
+                    if (Math.Abs(weights[paramIndex].eg.gradient) > maxGrad)
+                    {
+                        weights[paramIndex].eg.gradient = Math.Sign(weights[paramIndex].eg.gradient) * maxGrad;
+                    }
+                    weights[paramIndex].eg.gradient += lambda * weights[paramIndex].eg.weight;
+                    weights[paramIndex].eg.weight -= learningRate * weights[paramIndex].eg.gradient;
+                    weights[paramIndex].eg.gradient = 0;
+                    
                 }
             }
             Console.WriteLine($"Epoch {epoch} complete: Training loss: {CalculateLoss()} Test loss: {CalculateTestLoss()}");
         }
-        Console.WriteLine("mg:");
-        PrintSpan(0, 64);
-        PrintSpan(64, 64);
-        PrintSpan(128, 64);
-        PrintSpan(192, 64);
-        PrintSpan(256, 64);
-        PrintSpan(320, 64);
-        Console.WriteLine("eg");
-        PrintSpan(384, 64);
-        PrintSpan(448, 64);
-        PrintSpan(512, 64);
-        PrintSpan(576, 64);
-        PrintSpan(640, 64);
-        PrintSpan(704, 64);
-        Console.WriteLine("Passed pawn bonuses mg:");
-        PrintSpan(psqtOffset, 64);
-        Console.WriteLine("Passed pawn bonuses eg:");
-        PrintSpan(psqtOffset + 64, 64);
-        Console.WriteLine("Isolated pawn bonuses");
-        PrintSpan(psqtOffset + passedPawnOffset, 9);
-        Console.WriteLine($"Doubled pawn penalty {Math.Round(weights[psqtOffset + passedPawnOffset + isolatedPawnOffset].weight)}");
-        Console.WriteLine($"Bishop pair: mg: {Math.Round(weights[psqtOffset + passedPawnOffset + isolatedPawnOffset + 1].weight)} eg: {Math.Round(weights[psqtOffset + passedPawnOffset + isolatedPawnOffset + 2].weight)}");
+        PrintPSQT();
+        Console.WriteLine("Passed pawn");
+        PrintSpan(infos[(int)Tunables.PASSER]);
+        Console.WriteLine("Isolated pawn");
+        PrintSpan(infos[(int)Tunables.ISOLATED]);
+        Console.WriteLine("Doubled pawn");
+        PrintSpan(infos[(int)Tunables.DOUBLED]);
+        Console.WriteLine("Bishop pair");
+        PrintSpan(infos[(int)Tunables.BISHOP]);
     }
 
-    public void TuneKValue(string path)
-    {
-        LoadData(path);
-        int dataSize = data.Length;
-        Console.WriteLine($"Data loaded: {dataSize} positions found");
-        ConvertEntries();
-        LoadWeights();
-        Console.WriteLine("Entries loaded, starting tuning");
-        int delta = 1;
-
-        double lastLoss = CalculateLoss();
-        K += delta;
-        double currentLoss = CalculateLoss();
-        if(currentLoss > lastLoss){ 
-            delta *= -1; 
-            K += delta * 2;
-        }
-        currentLoss = CalculateLoss();
-        while(lastLoss > currentLoss)
-        {
-            K += delta;
-            lastLoss = currentLoss;
-            currentLoss = CalculateLoss();
-            Console.WriteLine(K);
-        }
-        Console.WriteLine("Final K:" + (K - delta));
-    }
     Entry[] GetBatch(int batchSize)
     {
         Entry[] batch = new Entry[batchSize];
@@ -131,7 +133,8 @@ public class Tuner
         for(int index = 0; index < entry.features.Length; index++)
         {
             int weightIndex = entry.features[index].Item1;
-            eval += weights[weightIndex].weight * entry.features[index].Item2 * (weights[weightIndex].mg ? (float)entry.phase/MAX_PHASE : ((float)MAX_PHASE-entry.phase)/MAX_PHASE);
+            eval += weights[weightIndex].mg.weight * entry.features[index].Item2 * ((float)entry.phase)/MAX_PHASE ;
+            eval += weights[weightIndex].eg.weight * entry.features[index].Item2 * ((float)MAX_PHASE-entry.phase)/MAX_PHASE;
         }
         return eval;
     }
@@ -197,49 +200,48 @@ public class Tuner
 
                     int relativeIndex = Piece.Color(piece) == Piece.White ? index : index ^ 56;
                     //Add middlegame and endgame psqt weight
-                    AddFeature(PSQTIndex(Piece.PieceType(piece), relativeIndex, true), Piece.Color(piece), features);
-                    AddFeature(PSQTIndex(Piece.PieceType(piece), relativeIndex, false), Piece.Color(piece), features);
+                    AddFeature(PSQTIndex(Piece.PieceType(piece), relativeIndex), Piece.Color(piece), features);
 
                     if(pieceType == Piece.Pawn)
                     {
                         int currentColor = Piece.Color(piece);
                         int currentColorIndex = currentColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex;
                         int oppositeColorIndex = 1 - currentColorIndex;
-                        int pushSquare = index + (currentColorIndex == Board.WhiteIndex ? -8 : 8);
+                        int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;
 
                         //Passed pawn
                         if ((board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)] & BitboardHelper.pawnPassedMask[currentColorIndex, index]) == 0) { 
-                            AddFeature(psqtOffset + relativeIndex, currentColor, features); 
-                            AddFeature(psqtOffset + 64 + relativeIndex, currentColor, features); //EG
+                            AddFeature(infos[(int)Tunables.PASSER].startIndex + relativeIndex, currentColor, features); 
                         }
                         //Doubled pawn penalty
-                        if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(psqtOffset + isolatedPawnOffset + passedPawnOffset, currentColor, features); }
-                        if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
+                        if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
+                        if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
                     }
                 }
             }
 
             //Isolated pawns
-            AddFeature(psqtOffset + passedPawnOffset + isolatedPawnCount[Board.BlackIndex], Piece.Black, features);
-            AddFeature(psqtOffset + passedPawnOffset + isolatedPawnCount[Board.WhiteIndex], Piece.White, features);
+            AddFeature(infos[(int)Tunables.ISOLATED].startIndex + isolatedPawnCount[Board.BlackIndex], Piece.Black, features);
+            AddFeature(infos[(int)Tunables.ISOLATED].startIndex + isolatedPawnCount[Board.WhiteIndex], Piece.White, features);
 
             //Bishop Pair
             if(board.pieceCounts[Board.WhiteIndex, Piece.Bishop] >= 2)
             {
-                AddFeature(psqtOffset + passedPawnOffset + isolatedPawnOffset + 1, Piece.White, features);
-                AddFeature(psqtOffset + passedPawnOffset + isolatedPawnOffset + 2, Piece.White, features);
+                AddFeature(infos[(int)Tunables.BISHOP].startIndex, Piece.White, features);
             }
             //Bishop Pair
             if(board.pieceCounts[Board.BlackIndex, Piece.Bishop] >= 2)
             {
-                AddFeature(psqtOffset + passedPawnOffset + isolatedPawnOffset + 1, Piece.Black, features);
-                AddFeature(psqtOffset + passedPawnOffset + isolatedPawnOffset + 2, Piece.Black, features);
+                AddFeature(infos[(int)Tunables.BISHOP].startIndex, Piece.Black, features);
             }
 
             //Remove zeroed features
-            foreach (KeyValuePair<int, int> pair in features)
+            foreach (var key in features.Keys.ToArray())
             {
-                if(pair.Value == 0){features.Remove(pair.Key);}
+                if (features[key] == 0)
+                {
+                    features.Remove(key);
+                }
             }
 
             //Finally convert to the array
@@ -263,23 +265,49 @@ public class Tuner
         }
     }
 
-    int PSQTIndex(int pieceType, int index, bool mg)
+    int PSQTIndex(int pieceType, int index)
     {
         pieceType--;
-        return (pieceType * 64) + index + (mg ? 0 : 6*64);
+        return (pieceType * 64) + index;
     }
 
 
-    void PrintSpan(int startIndex, int numItems)
+    void PrintPSQT()
     {
-        string msg = "{";
-        for(int index = startIndex; index < startIndex + numItems; index++)
+        string mg = "mg: {";
+        string eg = "eg: {";
+        int index = 0;
+        for(int pieceNum = 0; pieceNum < 6; pieceNum++)
         {
-            msg += Math.Round(weights[index].weight);
-            if(startIndex + numItems - index != 1) {msg += ", ";}
+            for(int i = 0; i < 64; i++)
+            {
+                mg += Math.Round(weights[index].mg.weight);
+                eg += Math.Round(weights[index].eg.weight);
+                index++;
+                if(i != 63) {mg += ", "; eg += ", ";}
+            }
+            mg += "}";
+            eg += "}";
+            if(pieceNum != 5){ mg += ", \n{"; eg += ", \n{"; }
         }
-        msg += "},";
-        Console.WriteLine(msg);
+        Console.WriteLine(mg);
+        Console.WriteLine(eg);
+    }
+
+    void PrintSpan(TuningInfo info)
+    {
+        string mg = "{";
+        string eg = "{";
+        for(int index = info.startIndex; index < info.startIndex + info.length; index++)
+        {
+            mg += Math.Round(weights[index].mg.weight);
+            eg += Math.Round(weights[index].eg.weight);
+            if(index != info.startIndex + info.length - 1){ mg += ", "; eg += ", "; }
+        }
+        mg += "}, ";
+        eg += "}";
+        Console.WriteLine(mg);
+        Console.WriteLine(eg);
     }
 
     void AddFeature(int key, int color, Dictionary<int, int> features)
@@ -295,79 +323,6 @@ public class Tuner
         }
     }
 
-    void InitWeights()
-    {
-        //PSQT
-        for(int index = 0; index < 6*64; index++)
-        {
-            weights[index] = new Param(0, true);
-        }
-        for(int index = 6*64; index < psqtOffset; index++)
-        {
-            weights[index] = new Param(0, false);
-        }
-        int currentOffset = psqtOffset;
-        
-        //passed pawn
-        for(int index = psqtOffset; index < psqtOffset + 64; index++)
-        {
-            weights[index] = new Param(0, true);
-        }
-        for(int index = psqtOffset + 64; index < psqtOffset + passedPawnOffset; index++)
-        {
-            weights[index] = new Param(0, false);
-        }
-        currentOffset += passedPawnOffset;
-
-        //Isolated pawn
-        for(int index = psqtOffset + passedPawnOffset; index < currentOffset + isolatedPawnOffset ; index++)
-        {
-            weights[index] = new Param(0, false);
-        }
-        currentOffset += isolatedPawnOffset;
-
-        //Doubled pawn penalty
-        weights[currentOffset++] = new Param(0, false);
-        //Bishop pair
-        weights[currentOffset++] = new Param(0, true);
-        weights[currentOffset++] = new Param(0, false);
-    }
-
-    void LoadWeights()
-    {
-        try{
-        for(int pieceIndex = 1; pieceIndex < 7; pieceIndex++)
-        {
-            for(int index = 0; index < 64; index++)
-            {
-                weights[PSQTIndex(pieceIndex, index, true)] = new Param(Evaluation.mg_PSQT[pieceIndex, index], true);
-                weights[PSQTIndex(pieceIndex, index, false)] = new Param(Evaluation.eg_PSQT[pieceIndex, index], false);
-            }
-        }
-        //passed pawn
-        for(int index = 0; index < 64; index++)
-        {
-            weights[psqtOffset + index] = new Param(Evaluation.passedPawnBonuses[0, index], true);
-        }
-        for(int index = 0; index < 64; index++)
-        {
-            weights[psqtOffset + 64 + index] = new Param(Evaluation.passedPawnBonuses[1, index], false);
-        }
-
-        for(int index = 0; index < isolatedPawnOffset; index++)
-        {
-            weights[psqtOffset + passedPawnOffset + index] = new Param(Evaluation.isolatedPawnPenalty[index], false);
-        }
-        weights[psqtOffset + passedPawnOffset + isolatedPawnOffset] = new Param(Evaluation.doubledPawnPenalty, false);
-        weights[psqtOffset + passedPawnOffset + isolatedPawnOffset + 1] = new Param(Evaluation.bishopPairBonusMG, true);
-        weights[psqtOffset + passedPawnOffset + isolatedPawnOffset + 2] = new Param(Evaluation.bishopPairBonusEG, false);
-
-        }
-        catch(Exception e)
-        {
-            Console.WriteLine(e);
-        }
-    }
 
     double CalculateLoss()
     {
@@ -415,17 +370,24 @@ public class Tuner
     }
 }
 
+struct TPair
+{
+    public Param mg;
+    public Param eg;
+}
+
 struct Param
 {
     public float weight;
     public float gradient;
-    public bool mg;
-    public Param(int weight, bool mg)
+    public bool tune;
+    public Param(float weight, bool tune)
     {
         this.weight = weight;
-        this.mg = mg;
+        this.tune = tune;
     }
 }
+
 
 struct Entry
 {
@@ -437,5 +399,19 @@ struct Entry
         this.phase = phase;
         this.features = features;
         this.result = result;
+    }
+}
+
+struct TuningInfo
+{
+    public int startIndex;
+    public int length;
+    public bool tuneMG;
+    public bool tuneEG;
+    public TuningInfo(int length, bool tuneMG, bool tuneEG)
+    {
+        this.length = length;
+        this.tuneMG = tuneMG;
+        this.tuneEG = tuneEG;
     }
 }

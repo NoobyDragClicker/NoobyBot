@@ -8,7 +8,7 @@ public class Tuner
     const int MAX_PHASE = 24;
     const int maxGrad = 10;
     const float lambda = 1e-3f;
-    Random rng = new Random(4834598);
+    Random rng = new Random(123123123);
     
 
     enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP};

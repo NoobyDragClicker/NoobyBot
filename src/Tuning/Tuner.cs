@@ -9,7 +9,11 @@ public class Tuner
     Random rng = new Random(123123123);
     
 
-    enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP, ROOK_OPEN, KING_OPEN, KING_SHIELD};
+    enum Tunables {
+        PSQT, PASSER, ISOLATED, DOUBLED, 
+        BISHOP_PAIR, BISHOP_MOBILITY, ROOK_OPEN, 
+        KING_OPEN, KING_SHIELD
+    };
 
     TuningInfo[] infos =
     {
@@ -17,6 +21,7 @@ public class Tuner
         new TuningInfo(64, true, true),
         new TuningInfo(9, false, true),
         new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -144,7 +149,9 @@ public class Tuner
         Console.WriteLine("Doubled pawn");
         PrintSpan(infos[(int)Tunables.DOUBLED]);
         Console.WriteLine("Bishop pair");
-        PrintSpan(infos[(int)Tunables.BISHOP]);
+        PrintSpan(infos[(int)Tunables.BISHOP_PAIR]);
+        Console.WriteLine("Bishop mobility");
+        PrintSpan(infos[(int)Tunables.BISHOP_MOBILITY]);
         Console.WriteLine("Rook open file");
         PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
         Console.WriteLine("King open file");
@@ -200,7 +207,6 @@ public class Tuner
         int numTrainingData = (int) (data.Length * 0.9);
         entries = new Entry[numTrainingData];
         test = new Entry[data.Length - numTrainingData];
-
 
         for(int posIndex = 0; posIndex < data.Length; posIndex++)
         {
@@ -260,7 +266,15 @@ public class Tuner
                         {
                             AddFeature(infos[(int)Tunables.ROOK_OPEN].startIndex, currentColor, features); 
                         }
-                    } else if (pieceType == Piece.King)
+                    }
+                    else if (pieceType == Piece.Bishop)
+                    {
+                        int numMoves = 0;
+                        ulong simpleBishopMoves = BitboardHelper.GetBishopAttacks(index, board.allPiecesBitboard);
+                        while (simpleBishopMoves != 0) { numMoves++; BitboardHelper.PopLSB(ref simpleBishopMoves); }
+                        AddMultipleFeatures(infos[(int)Tunables.BISHOP_MOBILITY].startIndex, currentColor, features, numMoves);
+                    }
+                    else if (pieceType == Piece.King)
                     {
                         if(((board.sideBitboard[currentColorIndex] ^ 1ul << index) & BitboardHelper.files[index % 8]) == 0)
                         {
@@ -288,12 +302,12 @@ public class Tuner
             //Bishop Pair
             if(board.pieceCounts[Board.WhiteIndex, Piece.Bishop] >= 2)
             {
-                AddFeature(infos[(int)Tunables.BISHOP].startIndex, Piece.White, features);
+                AddFeature(infos[(int)Tunables.BISHOP_PAIR].startIndex, Piece.White, features);
             }
             //Bishop Pair
             if(board.pieceCounts[Board.BlackIndex, Piece.Bishop] >= 2)
             {
-                AddFeature(infos[(int)Tunables.BISHOP].startIndex, Piece.Black, features);
+                AddFeature(infos[(int)Tunables.BISHOP_PAIR].startIndex, Piece.Black, features);
             }
 
             //Remove zeroed features
@@ -357,6 +371,7 @@ public class Tuner
 
     void PrintSpan(TuningInfo info)
     {
+        if(info.length == 1){ Console.WriteLine($"({Math.Round(weights[info.startIndex].mg.weight)}, {Math.Round(weights[info.startIndex].eg.weight)})"); return;}
         string mg = "{";
         string eg = "{";
         for(int index = info.startIndex; index < info.startIndex + info.length; index++)
@@ -381,6 +396,19 @@ public class Tuner
         else
         {
             features[key] = color == Piece.White ? 1 : -1;
+        }
+    }
+
+    void AddMultipleFeatures(int key, int color, Dictionary<int, int> features, int count)
+    {
+        //Store the feature
+        if (features.TryGetValue(key, out int existing))
+        {
+            features[key] = existing + (color == Piece.White ? count : -count);
+        }
+        else
+        {
+            features[key] = color == Piece.White ? count : -count;
         }
     }
 

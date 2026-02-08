@@ -9,7 +9,7 @@ public class Tuner
     Random rng = new Random(123123123);
     
 
-    enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP, ROOK_OPEN, KING_OPEN};
+    enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP, ROOK_OPEN, KING_OPEN, KING_SHIELD};
 
     TuningInfo[] infos =
     {
@@ -20,6 +20,7 @@ public class Tuner
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
+        new TuningInfo(1, true, true)
     };
     
     TPair[] weights;
@@ -148,6 +149,8 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
         Console.WriteLine("King open file");
         PrintSpan(infos[(int)Tunables.KING_OPEN]);
+        Console.WriteLine("King pawn shield");
+        PrintSpan(infos[(int)Tunables.KING_SHIELD]);
     }
 
     Entry[] GetBatch(int batchSize)
@@ -262,6 +265,16 @@ public class Tuner
                         if(((board.sideBitboard[currentColorIndex] ^ 1ul << index) & BitboardHelper.files[index % 8]) == 0)
                         {
                             AddFeature(infos[(int)Tunables.KING_OPEN].startIndex, currentColor, features);
+                        }
+                        int direction = currentColor == Piece.White ? -1 : 1;
+                        int frontSquare = index + (direction * 8);
+
+                        if(frontSquare >= 0 && frontSquare <= 63)
+                        {
+                            if(BitboardHelper.ContainsSquare(board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)], frontSquare))
+                            {
+                                AddFeature(infos[(int)Tunables.KING_SHIELD].startIndex, currentColor, features);
+                            }
                         }
                     }
 

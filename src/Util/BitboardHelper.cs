@@ -13,6 +13,7 @@ public static class BitboardHelper
     public const ulong whiteQueensidePieceCastleMask = whiteQueensideAttackCastleMask | 1ul << 57;
     public const ulong blackQueensideAttackCastleMask = 1ul << 2 | 1ul << 3;
     public const ulong blackQueensidePieceCastleMask = blackQueensideAttackCastleMask | 1ul << 1;
+    public static readonly ulong[] files;
     public static readonly ulong[] knightAttacks;
 
     //For magic bitboards, don't include edgess
@@ -205,6 +206,12 @@ public static class BitboardHelper
         bPawnDoubleMask = new ulong[64];
         pawnPassedMask = new ulong[2, 64];
         isolatedPawnMask = new ulong[64];
+        files = new ulong[8];
+        
+        for (int i = 0; i < 8; i++)
+        {
+            files[i] = FILE_1 << i;
+        }
 
         //Filling in the attack bitboards
         for (int x = 0; x < 8; x++)

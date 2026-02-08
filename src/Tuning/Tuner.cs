@@ -9,7 +9,7 @@ public class Tuner
     Random rng = new Random(123123123);
     
 
-    enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP};
+    enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP, ROOK_OPEN};
 
     TuningInfo[] infos =
     {
@@ -17,6 +17,7 @@ public class Tuner
         new TuningInfo(64, true, true),
         new TuningInfo(9, false, true),
         new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true)
     };
     
@@ -142,6 +143,8 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.DOUBLED]);
         Console.WriteLine("Bishop pair");
         PrintSpan(infos[(int)Tunables.BISHOP]);
+        Console.WriteLine("Rook open file");
+        PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
     }
 
     Entry[] GetBatch(int batchSize)
@@ -229,10 +232,10 @@ public class Tuner
                     int relativeIndex = Piece.Color(piece) == Piece.White ? index : index ^ 56;
                     //Add middlegame and endgame psqt weight
                     AddFeature(PSQTIndex(Piece.PieceType(piece), relativeIndex), Piece.Color(piece), features);
+                    int currentColor = Piece.Color(piece);
 
                     if(pieceType == Piece.Pawn)
                     {
-                        int currentColor = Piece.Color(piece);
                         int currentColorIndex = currentColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex;
                         int oppositeColorIndex = 1 - currentColorIndex;
                         int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;
@@ -244,7 +247,15 @@ public class Tuner
                         //Doubled pawn penalty
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
                         if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
+                    } 
+                    else if(pieceType == Piece.Rook)
+                    {
+                        if((BitboardHelper.files[index % 8] & (board.allPiecesBitboard ^ 1ul << index)) == 0)
+                        {
+                            AddFeature(infos[(int)Tunables.ROOK_OPEN].startIndex, currentColor, features); 
+                        }
                     }
+
                 }
             }
 

@@ -9,7 +9,7 @@ public class Tuner
     Random rng = new Random(123123123);
     
 
-    enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP, ROOK_OPEN};
+    enum Tunables {PSQT, PASSER, ISOLATED, DOUBLED, BISHOP, ROOK_OPEN, KING_OPEN};
 
     TuningInfo[] infos =
     {
@@ -18,7 +18,8 @@ public class Tuner
         new TuningInfo(9, false, true),
         new TuningInfo(1, false, true),
         new TuningInfo(1, true, true),
-        new TuningInfo(1, true, true)
+        new TuningInfo(1, true, true),
+        new TuningInfo(1, true, true),
     };
     
     TPair[] weights;
@@ -145,6 +146,8 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.BISHOP]);
         Console.WriteLine("Rook open file");
         PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
+        Console.WriteLine("King open file");
+        PrintSpan(infos[(int)Tunables.KING_OPEN]);
     }
 
     Entry[] GetBatch(int batchSize)
@@ -233,11 +236,11 @@ public class Tuner
                     //Add middlegame and endgame psqt weight
                     AddFeature(PSQTIndex(Piece.PieceType(piece), relativeIndex), Piece.Color(piece), features);
                     int currentColor = Piece.Color(piece);
+                    int currentColorIndex = currentColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex;
+                    int oppositeColorIndex = 1 - currentColorIndex;
 
                     if(pieceType == Piece.Pawn)
                     {
-                        int currentColorIndex = currentColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex;
-                        int oppositeColorIndex = 1 - currentColorIndex;
                         int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;
 
                         //Passed pawn
@@ -253,6 +256,12 @@ public class Tuner
                         if((BitboardHelper.files[index % 8] & (board.allPiecesBitboard ^ 1ul << index)) == 0)
                         {
                             AddFeature(infos[(int)Tunables.ROOK_OPEN].startIndex, currentColor, features); 
+                        }
+                    } else if (pieceType == Piece.King)
+                    {
+                        if(((board.sideBitboard[currentColorIndex] ^ 1ul << index) & BitboardHelper.files[index % 8]) == 0)
+                        {
+                            AddFeature(infos[(int)Tunables.KING_OPEN].startIndex, currentColor, features);
                         }
                     }
 

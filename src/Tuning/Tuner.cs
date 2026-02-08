@@ -11,7 +11,7 @@ public class Tuner
 
     enum Tunables {
         PSQT, PASSER, ISOLATED, DOUBLED, 
-        BISHOP_PAIR, BISHOP_MOBILITY, ROOK_OPEN, 
+        BISHOP_PAIR, BISHOP_MOBILITY, ROOK_OPEN, ROOK_MOBILITY, 
         KING_OPEN, KING_SHIELD
     };
 
@@ -21,6 +21,7 @@ public class Tuner
         new TuningInfo(64, true, true),
         new TuningInfo(9, false, true),
         new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -154,6 +155,8 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.BISHOP_MOBILITY]);
         Console.WriteLine("Rook open file");
         PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
+        Console.WriteLine("Rook mobility");
+        PrintSpan(infos[(int)Tunables.ROOK_MOBILITY]);
         Console.WriteLine("King open file");
         PrintSpan(infos[(int)Tunables.KING_OPEN]);
         Console.WriteLine("King pawn shield");
@@ -266,6 +269,10 @@ public class Tuner
                         {
                             AddFeature(infos[(int)Tunables.ROOK_OPEN].startIndex, currentColor, features); 
                         }
+                        int numMoves = 0;
+                        ulong simpleRookMoves = BitboardHelper.GetRookAttacks(index, board.allPiecesBitboard);
+                        while (simpleRookMoves != 0) { numMoves++; BitboardHelper.PopLSB(ref simpleRookMoves); }
+                        AddMultipleFeatures(infos[(int)Tunables.ROOK_MOBILITY].startIndex, currentColor, features, numMoves);
                     }
                     else if (pieceType == Piece.Bishop)
                     {

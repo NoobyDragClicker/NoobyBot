@@ -36,6 +36,7 @@ public static class BitboardHelper
     public static readonly ulong[] bPawnDouble;
     public static readonly ulong[] bPawnDoubleMask;
     public static readonly ulong[] isolatedPawnMask;
+    public static readonly ulong[,] kingRing;
 
     public static readonly (int x, int y)[] knightJumps = { (-2, -1), (2, -1), (2, 1), (-2, 1), (-1, -2), (-1, 2), (1, 2), (1, -2) };
     public static readonly (int x, int y)[] kingDirections = { (1, 0), (1, -1), (1, 1), (-1, 0), (-1, -1), (-1, 1), (0, -1), (0, 1) };
@@ -58,6 +59,11 @@ public static class BitboardHelper
     {
         int i = BitOperations.TrailingZeroCount(b);
         b &= b - 1;
+        return i;
+    }
+    public static int GetLSB(ulong b)
+    {
+        int i = BitOperations.TrailingZeroCount(b);
         return i;
     }
 
@@ -205,6 +211,7 @@ public static class BitboardHelper
         wPawnDoubleMask = new ulong[64];
         bPawnDoubleMask = new ulong[64];
         pawnPassedMask = new ulong[2, 64];
+        kingRing = new ulong[2, 64];
         isolatedPawnMask = new ulong[64];
         files = new ulong[8];
         
@@ -229,6 +236,8 @@ public static class BitboardHelper
                         kingAttacks[startIndex] |= 1ul << attackIndex;
                     }
                 }
+                kingRing[Board.WhiteIndex, startIndex] = kingAttacks[startIndex] | (kingAttacks[startIndex] >> 8);
+                kingRing[Board.BlackIndex, startIndex] = kingAttacks[startIndex] | (kingAttacks[startIndex] << 8);
 
                 //Knights
                 for (int knightIndex = 0; knightIndex < knightJumps.Length; knightIndex++)

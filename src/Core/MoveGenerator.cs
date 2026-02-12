@@ -29,38 +29,37 @@ public static class MoveGenerator
         int colorIndex = (attackingPieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;
 
-        ulong attacks = BitboardHelper.GetAllPawnAttacks(board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Pawn)], attackingPieceColor);
-        ulong king = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)];
-        attacks |= BitboardHelper.kingAttacks[BitboardHelper.PopLSB(ref king)];
+        Bitboard attacks = BitboardHelper.GetAllPawnAttacks(board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Pawn)], attackingPieceColor);
+        attacks |= BitboardHelper.kingAttacks[board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)].GetLSB()];
         
 
-        ulong piecesExceptEnemyKing = board.allPiecesBitboard ^ board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.King)];
-        ulong queens = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
-        ulong rooks = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Rook)];
-        ulong bishops = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Bishop)];
-        ulong knights = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Knight)];
+        Bitboard piecesExceptEnemyKing = board.allPiecesBitboard ^ board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.King)];
+        Bitboard queens = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
+        Bitboard rooks = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Rook)];
+        Bitboard bishops = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Bishop)];
+        Bitboard knights = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Knight)];
 
         while (queens != 0)
         {
-            int index = BitboardHelper.PopLSB(ref queens);
+            int index = queens.PopLSB();
             attacks |= BitboardHelper.GetBishopAttacks(index, piecesExceptEnemyKing);
             attacks |= BitboardHelper.GetRookAttacks(index, piecesExceptEnemyKing);
         }
 
         while (rooks != 0)
         {
-            int index = BitboardHelper.PopLSB(ref rooks);
+            int index = rooks.PopLSB();
             attacks |= BitboardHelper.GetRookAttacks(index, piecesExceptEnemyKing);
         }
 
         while (bishops != 0)
         {
-            int index = BitboardHelper.PopLSB(ref bishops);
+            int index = bishops.PopLSB();
             attacks |= BitboardHelper.GetBishopAttacks(index, piecesExceptEnemyKing);
         }
         while (knights != 0)
         {
-            int index = BitboardHelper.PopLSB(ref knights);
+            int index = knights.PopLSB();
             attacks |= BitboardHelper.knightAttacks[index];
         }
         return attacks;

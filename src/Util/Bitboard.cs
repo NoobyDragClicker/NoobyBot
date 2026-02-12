@@ -56,6 +56,10 @@ public struct Bitboard : IEquatable<Bitboard>
         _value &= ~(1ul << sq);
     }
     
+    public bool ContainsSquare(int square)
+    {
+        return ((_value >> square) & 1) != 0;
+    }
 
     public static implicit operator ulong(Bitboard b) => b._value;
     public static implicit operator Bitboard(ulong v) => new Bitboard(v);

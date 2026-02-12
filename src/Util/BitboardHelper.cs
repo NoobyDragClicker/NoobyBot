@@ -55,22 +55,6 @@ public static class BitboardHelper
         }
         return boardRepresentation;
     }
-    public static int PopLSB(ref ulong b)
-    {
-        int i = BitOperations.TrailingZeroCount(b);
-        b &= b - 1;
-        return i;
-    }
-    public static int GetLSB(ulong b)
-    {
-        int i = BitOperations.TrailingZeroCount(b);
-        return i;
-    }
-
-    public static bool ContainsSquare(ulong bitboard, int square)
-    {
-        return ((bitboard >> square) & 1) != 0;
-    }
 
     //Creates a list of all the possible blocker combinations
     public static Bitboard[] GenerateAllBlockerBitboards(Bitboard pieceMask)
@@ -125,7 +109,7 @@ public static class BitboardHelper
                 {
                     bitboard.SetSquare(squareIndex);
                     //If we've hit a blocker, break after adding them to the bitboard
-                    if (ContainsSquare(blockerBitboard, squareIndex))
+                    if (blockerBitboard.ContainsSquare(squareIndex))
                     {
                         break;
                     }

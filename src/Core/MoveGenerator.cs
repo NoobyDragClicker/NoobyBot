@@ -105,7 +105,7 @@ public static class MoveGenerator
                     {
                         moves = BitboardHelper.wPawnAttacks[index] & (1ul << board.enPassantIndex);
                         if(isDiagPinned) { moves &= diagPins; }
-                        if (board.gameStateHistory[board.fullMoveClock].isInCheck & !BitboardHelper.ContainsSquare(checkIndexes, board.enPassantIndex + 8)) { moves &= checkIndexes; }
+                        if (board.gameStateHistory[board.fullMoveClock].isInCheck & !checkIndexes.ContainsSquare(board.enPassantIndex + 8)) { moves &= checkIndexes; }
                         if (moves != 0)
                         {
                             if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex + 8)) | moves)))
@@ -130,7 +130,7 @@ public static class MoveGenerator
                     moves = !isDiagPinned ? BitboardHelper.wPawnMoves[index] : 0;
                     moves &= ~blockers;
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                    if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                    if(straightPins.ContainsSquare(index)){moves &= straightPins;}
 
                     while (!moves.Empty())
                     {
@@ -147,7 +147,7 @@ public static class MoveGenerator
             {
                 bool isMovePromotion = rank == 2;
                 //Captures
-                if (!BitboardHelper.ContainsSquare(straightPins, index))
+                if (!straightPins.ContainsSquare(index))
                 {
                     moves = BitboardHelper.bPawnAttacks[index] & board.sideBitboard[board.oppositeColorIndex];
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
@@ -193,7 +193,7 @@ public static class MoveGenerator
                     moves = !isDiagPinned ? BitboardHelper.bPawnMoves[index] : 0;
                     moves &= ~blockers;
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                    if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                    if(straightPins.ContainsSquare(index)){moves &= straightPins;}
 
                     while (!moves.Empty())
                     {

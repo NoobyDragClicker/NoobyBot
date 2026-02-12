@@ -16,19 +16,19 @@ public static class SEE
         balance -= SEEPieceVals[nextVictim];
         if(balance >= 0){ return true; }
 
-        ulong bishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
-        ulong rooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
+        Bitboard bishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
+        Bitboard rooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
 
         //Update occupancy
-        ulong allPieces = board.allPiecesBitboard;
+        Bitboard allPieces = board.allPiecesBitboard;
         allPieces = (allPieces ^ (1ul<<move.oldIndex)) | (1ul<<move.newIndex);
         if(move.flag == Move.EnPassant){ allPieces ^= 1ul<<board.enPassantIndex; }
 
-        ulong attackers = board.GetAttackersToSquare(move.newIndex, allPieces, rooks, bishops) & allPieces;
+        Bitboard attackers = board.GetAttackersToSquare(move.newIndex, allPieces, rooks, bishops) & allPieces;
 
         int currentColorIndex = board.oppositeColorIndex;
 
-        ulong myAttackers;
+        Bitboard myAttackers;
         while (true)
         {
             myAttackers = attackers & board.sideBitboard[currentColorIndex];
@@ -40,7 +40,7 @@ public static class SEE
 
 
             //Update occupancy
-            allPieces ^= (1ul << BitOperations.TrailingZeroCount(myAttackers & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, nextVictim)]));
+            allPieces ^= 1ul << (myAttackers & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, nextVictim)]).GetLSB();
 
             //A diagonal move can reveal a bishop or a queen attacker
             if(nextVictim == Piece.Pawn || nextVictim == Piece.Bishop || nextVictim == Piece.Queen)

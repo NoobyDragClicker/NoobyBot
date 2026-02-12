@@ -24,7 +24,7 @@ public static class MoveGenerator
         
     }
     
-    public static ulong GenerateAttackedSquares(Board board, int attackingPieceColor)
+    public static Bitboard GenerateAttackedSquares(Board board, int attackingPieceColor)
     {
         int colorIndex = (attackingPieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;

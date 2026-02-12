@@ -77,60 +77,54 @@ public class Evaluation
         EvalPair score = new EvalPair(mgScore, egScore);
 
 
-        ulong whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
-        ulong blackPawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)];
+        Bitboard whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
+        Bitboard blackPawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)];
 
-        ulong whiteBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)];
-        ulong blackBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)];
+        Bitboard whiteBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)];
+        Bitboard blackBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)];
 
-        ulong whiteRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)];
-        ulong blackRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)];
+        Bitboard whiteRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)];
+        Bitboard blackRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)];
 
-        ulong whiteKing = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)];
-        ulong blackKing = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)];
-
-
-        while (whitePawns != 0)
+        while (!whitePawns.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref whitePawns);
+            int index = whitePawns.PopLSB();
             score += EvaluatePawnStrength(board, index, Board.WhiteIndex);
         }
 
-        while (blackPawns != 0)
+        while (!blackPawns.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref blackPawns);
+            int index = blackPawns.PopLSB();
             score -= EvaluatePawnStrength(board, index, Board.BlackIndex);
 
         }
 
-        while (whiteRooks != 0)
+        while (!whiteRooks.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref whiteRooks);
-            if((BitboardHelper.files[index % 8] & (board.allPiecesBitboard ^ 1ul << index)) == 0){ score += rookOpenFile; }
+            int index = whiteRooks.PopLSB();
             score += EvaluateRookMobility(board, index, Board.WhiteIndex);
         }
 
-        while (blackRooks != 0)
+        while (!blackRooks.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref blackRooks);
-            if((BitboardHelper.files[index % 8] & (board.allPiecesBitboard ^ 1ul << index)) == 0){ score -= rookOpenFile; }
+            int index = blackRooks.PopLSB();
             score -= EvaluateRookMobility(board, index, Board.BlackIndex);
         }
 
-        while (whiteBishops != 0)
+        while (!whiteBishops.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref whiteBishops);
+            int index = whiteBishops.PopLSB();
             score += EvaluateBishopMobility(board, index);
         }
-        while (blackBishops != 0)
+        while (!blackBishops.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref blackBishops);
+            int index = blackBishops.PopLSB();
             score -= EvaluateBishopMobility(board, index);
         }
 
 
-        int whiteKingIndex = BitboardHelper.PopLSB(ref whiteKing);
-        int blackKingIndex = BitboardHelper.PopLSB(ref blackKing);
+        int whiteKingIndex = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)].GetLSB();
+        int blackKingIndex = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)].GetLSB();
         score += EvaluateKingSafety(board, whiteKingIndex, Piece.White);
         score -= EvaluateKingSafety(board, blackKingIndex, Piece.Black);
 
@@ -156,7 +150,7 @@ public class Evaluation
         EvalPair score = new EvalPair();
 
         int currentColorIndex = kingColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex;
-        if(((board.sideBitboard[currentColorIndex] ^ 1ul << kingIndex) & BitboardHelper.files[kingIndex % 8]) == 0)
+        if(((board.sideBitboard[currentColorIndex] ^ 1ul << kingIndex) & BitboardHelper.files[kingIndex % 8]).Empty())
         {
             score += kingOpenFile;
         }
@@ -166,7 +160,7 @@ public class Evaluation
 
         if(frontSquare >= 0 && frontSquare <= 63)
         {
-            if(BitboardHelper.ContainsSquare(board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)], frontSquare))
+            if(board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)].ContainsSquare(frontSquare))
             {
                 score += kingPawnShield;
             }
@@ -183,7 +177,7 @@ public class Evaluation
         int oppositeColorIndex = 1 - currentColorIndex;
         int currentColor = currentColorIndex == Board.WhiteIndex ? Piece.White : Piece.Black;
 
-        bool passer = (board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)] & BitboardHelper.pawnPassedMask[currentColorIndex, pawnIndex]) == 0;
+        bool passer = (board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)] & BitboardHelper.pawnPassedMask[currentColorIndex, pawnIndex]).Empty();
         int pushSquare = pawnIndex + (currentColorIndex == Board.WhiteIndex ? -8 : 8);
         //Passed pawn
         if (passer) { 
@@ -194,30 +188,31 @@ public class Evaluation
 
         //Doubled pawn penalty
         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { egBonus += doubledPawnPenalty.eg; }
-        if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
+        if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)]).Empty()) { isolatedPawnCount[currentColorIndex]++; }
 
         return new EvalPair(mgBonus, egBonus);
     }
 
     EvalPair EvaluateBishopMobility(Board board, int pieceIndex)
     {
-        int numMoves = 0;
-        ulong simpleBishopMoves = BitboardHelper.GetBishopAttacks(pieceIndex, board.allPiecesBitboard);
-        while (simpleBishopMoves != 0) { numMoves++; BitboardHelper.PopLSB(ref simpleBishopMoves); }
+        
+        Bitboard simpleBishopMoves = BitboardHelper.GetBishopAttacks(pieceIndex, board.allPiecesBitboard);
+        int numMoves = simpleBishopMoves.PopCount();
         return new EvalPair(numMoves * bishopMobility.mg, numMoves * bishopMobility.eg);
     }
 
     EvalPair EvaluateRookMobility(Board board, int pieceIndex, int colorIndex)
     {
         EvalPair score = new EvalPair();
-        int numMoves = 0;
-        ulong simpleRookMoves = BitboardHelper.GetRookAttacks(pieceIndex, board.allPiecesBitboard);
-        int numAttacks = 0;
-        ulong rookAttacks = simpleRookMoves & BitboardHelper.kingRing[1 - colorIndex, BitboardHelper.GetLSB(board.pieceBitboards[Board.PieceBitboardIndex(1 - colorIndex, Piece.King)])];
-        while (simpleRookMoves != 0) { numMoves++; BitboardHelper.PopLSB(ref simpleRookMoves); }
-        while (rookAttacks != 0) { numAttacks++; BitboardHelper.PopLSB(ref rookAttacks); }
-        score.mg = numMoves * rookMobility.mg + numAttacks * rookKingRingAttack.mg;
-        score.eg = numMoves * rookMobility.eg + numAttacks * rookKingRingAttack.eg;
+        if((BitboardHelper.files[pieceIndex % 8] & (board.allPiecesBitboard ^ 1ul << pieceIndex)) == 0){ score += rookOpenFile; }
+
+        Bitboard simpleRookMoves = BitboardHelper.GetRookAttacks(pieceIndex, board.allPiecesBitboard);
+        Bitboard rookAttacks = simpleRookMoves & BitboardHelper.kingRing[1 - colorIndex, board.pieceBitboards[Board.PieceBitboardIndex(1 - colorIndex, Piece.King)].GetLSB()];
+        int numMoves = simpleRookMoves.PopCount();
+        int numAttacks = rookAttacks.PopCount();
+
+        score.mg += numMoves * rookMobility.mg + numAttacks * rookKingRingAttack.mg;
+        score.eg += numMoves * rookMobility.eg + numAttacks * rookKingRingAttack.eg;
         return score;
     }
 

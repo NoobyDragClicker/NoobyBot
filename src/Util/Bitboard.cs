@@ -41,6 +41,7 @@ public struct Bitboard : IEquatable<Bitboard>
         _value &= _value - 1;
         return i;
     }
+    
     public int GetLSB()
     {
         return BitOperations.TrailingZeroCount(_value);

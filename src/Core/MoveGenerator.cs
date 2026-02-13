@@ -24,43 +24,42 @@ public static class MoveGenerator
         
     }
     
-    public static ulong GenerateAttackedSquares(Board board, int attackingPieceColor)
+    public static Bitboard GenerateAttackedSquares(Board board, int attackingPieceColor)
     {
         int colorIndex = (attackingPieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;
 
-        ulong attacks = BitboardHelper.GetAllPawnAttacks(board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Pawn)], attackingPieceColor);
-        ulong king = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)];
-        attacks |= BitboardHelper.kingAttacks[BitboardHelper.PopLSB(ref king)];
+        Bitboard attacks = BitboardHelper.GetAllPawnAttacks(board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Pawn)], attackingPieceColor);
+        attacks |= BitboardHelper.kingAttacks[board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)].GetLSB()];
         
 
-        ulong piecesExceptEnemyKing = board.allPiecesBitboard ^ board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.King)];
-        ulong queens = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
-        ulong rooks = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Rook)];
-        ulong bishops = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Bishop)];
-        ulong knights = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Knight)];
+        Bitboard piecesExceptEnemyKing = board.allPiecesBitboard ^ board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.King)];
+        Bitboard queens = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
+        Bitboard rooks = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Rook)];
+        Bitboard bishops = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Bishop)];
+        Bitboard knights = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Knight)];
 
         while (queens != 0)
         {
-            int index = BitboardHelper.PopLSB(ref queens);
+            int index = queens.PopLSB();
             attacks |= BitboardHelper.GetBishopAttacks(index, piecesExceptEnemyKing);
             attacks |= BitboardHelper.GetRookAttacks(index, piecesExceptEnemyKing);
         }
 
         while (rooks != 0)
         {
-            int index = BitboardHelper.PopLSB(ref rooks);
+            int index = rooks.PopLSB();
             attacks |= BitboardHelper.GetRookAttacks(index, piecesExceptEnemyKing);
         }
 
         while (bishops != 0)
         {
-            int index = BitboardHelper.PopLSB(ref bishops);
+            int index = bishops.PopLSB();
             attacks |= BitboardHelper.GetBishopAttacks(index, piecesExceptEnemyKing);
         }
         while (knights != 0)
         {
-            int index = BitboardHelper.PopLSB(ref knights);
+            int index = knights.PopLSB();
             attacks |= BitboardHelper.knightAttacks[index];
         }
         return attacks;
@@ -68,34 +67,34 @@ public static class MoveGenerator
 
     public static int GeneratePawnMoves(Span<Move> legalMoves, int currMoveIndex,  Board board, bool isCapturesOnly = false)
     {
-        ulong pawns = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Pawn)];
-        ulong blockers = board.allPiecesBitboard;
-        ulong diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
-        ulong checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
-        ulong straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
+        Bitboard pawns = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Pawn)];
+        Bitboard blockers = board.allPiecesBitboard;
+        Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
+        Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
 
-        while (pawns != 0)
+        while (!pawns.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref pawns);
+            int index = pawns.PopLSB();
             int rank = Coord.IndexToRank(index);
-            ulong moves = 0;
-            bool isDiagPinned = BitboardHelper.ContainsSquare(diagPins, index);
+            Bitboard moves = 0;
+            bool isDiagPinned = diagPins.ContainsSquare(index);
 
             if (board.colorTurn == Piece.White)
             {
                 bool isMovePromotion = rank == 7;
                 //Captures
-                if (!BitboardHelper.ContainsSquare(straightPins, index))
+                if (!straightPins.ContainsSquare(index))
                 {
                     moves = BitboardHelper.wPawnAttacks[index] & board.sideBitboard[board.oppositeColorIndex];
                     if(isDiagPinned) { moves &= diagPins; }
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                    while (moves != 0)
+                    while (!moves.Empty())
                     {
-                        if (!isMovePromotion){ legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true); }
+                        if (!isMovePromotion){ legalMoves[currMoveIndex++] = new Move(index, moves.PopLSB(), true); }
                         else
                         {
-                            int newIndex = BitboardHelper.PopLSB(ref moves);
+                            int newIndex = moves.PopLSB();
                             for (int flag = 1; flag < 5; flag++){ legalMoves[currMoveIndex++] = new Move(index, newIndex, true, flag); }
                         }
                         
@@ -106,12 +105,12 @@ public static class MoveGenerator
                     {
                         moves = BitboardHelper.wPawnAttacks[index] & (1ul << board.enPassantIndex);
                         if(isDiagPinned) { moves &= diagPins; }
-                        if (board.gameStateHistory[board.fullMoveClock].isInCheck & !BitboardHelper.ContainsSquare(checkIndexes, board.enPassantIndex + 8)) { moves &= checkIndexes; }
+                        if (board.gameStateHistory[board.fullMoveClock].isInCheck & !checkIndexes.ContainsSquare(board.enPassantIndex + 8)) { moves &= checkIndexes; }
                         if (moves != 0)
                         {
                             if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex + 8)) | moves)))
                             {
-                                legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, Move.EnPassant);
+                                legalMoves[currMoveIndex++] = new Move(index, moves.PopLSB(), true, Move.EnPassant);
                             }
                         }
                     }
@@ -119,26 +118,26 @@ public static class MoveGenerator
                 if (!isCapturesOnly)
                 {
                     //Double pawn push
-                    if ((BitboardHelper.wPawnDoubleMask[index] & blockers) == 0 && !isDiagPinned)
+                    if ((BitboardHelper.wPawnDoubleMask[index] & blockers).Empty() && !isDiagPinned)
                     {
                         moves = BitboardHelper.wPawnDouble[index];
                         if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                        if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                        if(straightPins.ContainsSquare(index)){moves &= straightPins;}
                     }
 
-                    while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, Move.DoublePawnPush); }
+                    while (!moves.Empty()) { legalMoves[currMoveIndex++] = new Move(index, moves.PopLSB(), false, Move.DoublePawnPush); }
 
                     moves = !isDiagPinned ? BitboardHelper.wPawnMoves[index] : 0;
                     moves &= ~blockers;
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                    if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                    if(straightPins.ContainsSquare(index)){moves &= straightPins;}
 
-                    while (moves != 0)
+                    while (!moves.Empty())
                     {
-                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false); }
+                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, moves.PopLSB(), false); }
                         else
                         {
-                            int newIndex = BitboardHelper.PopLSB(ref moves);
+                            int newIndex = moves.PopLSB();
                             for (int flag = 1; flag < 5; flag++) { legalMoves[currMoveIndex++] = new Move(index, newIndex, false, flag); }
                         }
                     }
@@ -148,17 +147,17 @@ public static class MoveGenerator
             {
                 bool isMovePromotion = rank == 2;
                 //Captures
-                if (!BitboardHelper.ContainsSquare(straightPins, index))
+                if (!straightPins.ContainsSquare(index))
                 {
                     moves = BitboardHelper.bPawnAttacks[index] & board.sideBitboard[board.oppositeColorIndex];
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
                     if(isDiagPinned) { moves &= diagPins; }
-                    while (moves != 0)
+                    while (!moves.Empty())
                     {
-                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true); }
+                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, moves.PopLSB(), true); }
                         else
                         {
-                            int newIndex = BitboardHelper.PopLSB(ref moves);
+                            int newIndex = moves.PopLSB();
                             for (int flag = 1; flag < 5; flag++) { legalMoves[currMoveIndex++] = new Move(index, newIndex, true, flag); }
                         }
 
@@ -169,12 +168,12 @@ public static class MoveGenerator
                     {
                         moves = BitboardHelper.bPawnAttacks[index] & (1ul << board.enPassantIndex);
                         if(isDiagPinned) { moves &= diagPins; }
-                        if (board.gameStateHistory[board.fullMoveClock].isInCheck & ! BitboardHelper.ContainsSquare(checkIndexes, board.enPassantIndex - 8)) { moves &= checkIndexes; }
-                        if (moves != 0)
+                        if (board.gameStateHistory[board.fullMoveClock].isInCheck & !checkIndexes.ContainsSquare(board.enPassantIndex - 8)) { moves &= checkIndexes; }
+                        if (!moves.Empty())
                         {
                             if (isLegalEP(board.allPiecesBitboard ^ ((1ul << index) | (1ul << (board.enPassantIndex - 8)) | moves)))
                             {
-                                legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), true, Move.EnPassant);
+                                legalMoves[currMoveIndex++] = new Move(index, moves.PopLSB(), true, Move.EnPassant);
                             }
                         }
                     }
@@ -186,22 +185,22 @@ public static class MoveGenerator
                     {
                         moves = BitboardHelper.bPawnDouble[index];
                         if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                        if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                        if(straightPins.ContainsSquare(index)){moves &= straightPins;}
                     }
 
-                    while (moves != 0) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false, Move.DoublePawnPush); }
+                    while (!moves.Empty()) { legalMoves[currMoveIndex++] = new Move(index, moves.PopLSB(), false, Move.DoublePawnPush); }
 
                     moves = !isDiagPinned ? BitboardHelper.bPawnMoves[index] : 0;
                     moves &= ~blockers;
                     if (board.gameStateHistory[board.fullMoveClock].isInCheck) { moves &= checkIndexes; }
-                    if(BitboardHelper.ContainsSquare(straightPins, index)){moves &= straightPins;}
+                    if(straightPins.ContainsSquare(index)){moves &= straightPins;}
 
-                    while (moves != 0)
+                    while (!moves.Empty())
                     {
-                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref moves), false); }
+                        if (!isMovePromotion) { legalMoves[currMoveIndex++] = new Move(index, moves.PopLSB(), false); }
                         else
                         {
-                            int newIndex = BitboardHelper.PopLSB(ref moves);
+                            int newIndex = moves.PopLSB();
                             for (int flag = 1; flag < 5; flag++) { legalMoves[currMoveIndex++] = new Move(index, newIndex, false, flag); }
                         }
                     }
@@ -211,45 +210,42 @@ public static class MoveGenerator
         }
         return currMoveIndex;
 
-        bool isLegalEP(ulong boardMinusPawnsInvolved)
+        bool isLegalEP(Bitboard boardMinusPawnsInvolved)
         {
             int kingIndex = GetKingIndex(board.colorTurn, board);
-            ulong attackingPiecesMask = BitboardHelper.GetRookAttacks(kingIndex, boardMinusPawnsInvolved);
-            return (attackingPiecesMask & (board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)])) == 0;
+            Bitboard attackingPiecesMask = BitboardHelper.GetRookAttacks(kingIndex, boardMinusPawnsInvolved);
+            return (attackingPiecesMask & (board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)])).Empty();
         }
     }
     public static int GenerateKnightMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
+        Bitboard knights = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Knight)];
 
-        ulong knights = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Knight)];
+        Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
+        Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
 
-        ulong diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
-        ulong straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
-        ulong checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
-        while (knights != 0)
+        while (!knights.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref knights);
-            ulong attackedSquares = BitboardHelper.knightAttacks[index] & ~board.sideBitboard[board.currentColorIndex];
-
-            if (BitboardHelper.ContainsSquare(diagPins, index) | BitboardHelper.ContainsSquare(straightPins, index))
-            {
-                attackedSquares &= 0;
-            }
+            int index = knights.PopLSB();
+            if (diagPins.ContainsSquare(index) | straightPins.ContainsSquare(index)){ continue; }
+            Bitboard attackedSquares = BitboardHelper.knightAttacks[index] & ~board.sideBitboard[board.currentColorIndex];
+            
             if (board.gameStateHistory[board.fullMoveClock].isInCheck) { attackedSquares &= checkIndexes; }
-            ulong captures = attackedSquares & board.sideBitboard[board.oppositeColorIndex];
+            Bitboard captures = attackedSquares & board.sideBitboard[board.oppositeColorIndex];
             attackedSquares &= ~board.sideBitboard[board.oppositeColorIndex];
 
-            while (captures != 0)
+            while (!captures.Empty())
             {
-                int newIndex = BitboardHelper.PopLSB(ref captures);
+                int newIndex = captures.PopLSB();
                 legalMoves[currMoveIndex++] =  new Move(index, newIndex, true);
             }
 
             if (!isCapturesOnly)
             {
-                while (attackedSquares != 0)
+                while (!attackedSquares.Empty())
                 {
-                    int newIndex = BitboardHelper.PopLSB(ref attackedSquares);
+                    int newIndex = attackedSquares.PopLSB();
                     legalMoves[currMoveIndex++] =  new Move(index, newIndex, false);
                 }
             }
@@ -258,39 +254,34 @@ public static class MoveGenerator
     }
     public static int GenerateBishopMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
-        ulong bishops = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Queen)];
-        ulong diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
-        ulong straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
-        ulong checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
+        Bitboard bishops = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Queen)];
+        Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
+        Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
 
-        while (bishops != 0)
+        while (!bishops.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref bishops);
-            ulong attackedSquares = BitboardHelper.GetBishopAttacks(index, board.allPiecesBitboard) & ~board.sideBitboard[board.currentColorIndex];
-            if (BitboardHelper.ContainsSquare(diagPins, index))
-            {
-                attackedSquares &= diagPins;
-            }
-            else if (BitboardHelper.ContainsSquare(straightPins, index)) { attackedSquares &= 0; }
-            if (board.gameStateHistory[board.fullMoveClock].isInCheck)
-            {
-                attackedSquares &= checkIndexes;
-            }
+            int index = bishops.PopLSB();
+            Bitboard attackedSquares = BitboardHelper.GetBishopAttacks(index, board.allPiecesBitboard) & ~board.sideBitboard[board.currentColorIndex];
+            if (straightPins.ContainsSquare(index)) { continue; }
+            else if (diagPins.ContainsSquare(index)){ attackedSquares &= diagPins; }
 
-            ulong captures = attackedSquares & board.sideBitboard[board.oppositeColorIndex];
+            if (board.gameStateHistory[board.fullMoveClock].isInCheck) { attackedSquares &= checkIndexes; }
+
+            Bitboard captures = attackedSquares & board.sideBitboard[board.oppositeColorIndex];
             attackedSquares &= ~board.sideBitboard[board.oppositeColorIndex];
 
-            while (captures != 0)
+            while (!captures.Empty())
             {
-                int newIndex = BitboardHelper.PopLSB(ref captures);
+                int newIndex = captures.PopLSB();
                 legalMoves[currMoveIndex++] =  new Move(index, newIndex, true);
             }
 
             if (!isCapturesOnly)
             {
-                while (attackedSquares != 0)
+                while (!attackedSquares.Empty())
                 {
-                    int newIndex = BitboardHelper.PopLSB(ref attackedSquares);
+                    int newIndex = attackedSquares.PopLSB();
                     legalMoves[currMoveIndex++] =  new Move(index, newIndex, false);
                 }
             }
@@ -298,39 +289,33 @@ public static class MoveGenerator
         return currMoveIndex;
     }
     public static int GenerateRookMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly=false){
-        ulong rooks = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Queen)];
-        ulong diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
-        ulong straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
-        ulong checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
+        Bitboard rooks = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Queen)];
+        Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
+        Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
 
-        while (rooks != 0)
+        while (!rooks.Empty())
         {
-            int index = BitboardHelper.PopLSB(ref rooks);
-            ulong attackedSquares = BitboardHelper.GetRookAttacks(index, board.allPiecesBitboard) & ~board.sideBitboard[board.currentColorIndex];
-            if (BitboardHelper.ContainsSquare(straightPins, index))
-            {
-                attackedSquares &= straightPins;
-            }
-            else if (BitboardHelper.ContainsSquare(diagPins, index)) { attackedSquares &= 0; }
-            if (board.gameStateHistory[board.fullMoveClock].isInCheck)
-            {
-                attackedSquares &= checkIndexes;
-            }
+            int index = rooks.PopLSB();
+            Bitboard attackedSquares = BitboardHelper.GetRookAttacks(index, board.allPiecesBitboard) & ~board.sideBitboard[board.currentColorIndex];
+            if (diagPins.ContainsSquare(index)) { continue; }
+            else if (straightPins.ContainsSquare(index)){ attackedSquares &= straightPins; }
+            if (board.gameStateHistory[board.fullMoveClock].isInCheck){ attackedSquares &= checkIndexes; }
 
-            ulong captures = attackedSquares & board.sideBitboard[board.oppositeColorIndex];
+            Bitboard captures = attackedSquares & board.sideBitboard[board.oppositeColorIndex];
             attackedSquares &= ~board.sideBitboard[board.oppositeColorIndex];
 
-            while (captures != 0)
+            while (!captures.Empty())
             {
-                int newIndex = BitboardHelper.PopLSB(ref captures);
+                int newIndex = captures.PopLSB();
                 legalMoves[currMoveIndex++] =  new Move(index, newIndex, true);
             }
 
             if (!isCapturesOnly)
             {
-                while (attackedSquares != 0)
+                while (!attackedSquares.Empty())
                 {
-                    int newIndex = BitboardHelper.PopLSB(ref attackedSquares);
+                    int newIndex = attackedSquares.PopLSB();
                     legalMoves[currMoveIndex++] =  new Move(index, newIndex, false);
                 }
             }
@@ -339,35 +324,32 @@ public static class MoveGenerator
     }
     public static int GenerateKingMoves(Span<Move> moves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
-        //Getting king index
-        ulong kingIndexes = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.King)];
-
-        int index = BitboardHelper.PopLSB(ref kingIndexes);
+        int index = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.King)].GetLSB();
 
         //Removing squares attacked by the enemy
-        ulong kingMoves = BitboardHelper.kingAttacks[index];
+        Bitboard kingMoves = BitboardHelper.kingAttacks[index];
         kingMoves &= ~board.gameStateHistory[board.fullMoveClock].attackedSquares[board.oppositeColorIndex];
         kingMoves &= ~board.sideBitboard[board.currentColorIndex];
 
-        ulong kingCaptures = kingMoves & board.sideBitboard[board.oppositeColorIndex];
+        Bitboard kingCaptures = kingMoves & board.sideBitboard[board.oppositeColorIndex];
         kingMoves &= ~board.sideBitboard[board.oppositeColorIndex];
 
-        while (kingCaptures != 0)
+        while (!kingCaptures.Empty())
         {
-            moves[currMoveIndex++] =  new Move(index, BitboardHelper.PopLSB(ref kingCaptures), true);
+            moves[currMoveIndex++] =  new Move(index, kingCaptures.PopLSB(), true);
         }
         if (isCapturesOnly)
         {
             return currMoveIndex;
         }
 
-        while (kingMoves != 0)
+        while (!kingMoves.Empty())
         {
-            moves[currMoveIndex++] = new Move(index, BitboardHelper.PopLSB(ref kingMoves), false);
+            moves[currMoveIndex++] = new Move(index, kingMoves.PopLSB(), false);
         }
 
         //Add castling
-        ulong piecesAndAttackedSquares = board.gameStateHistory[board.fullMoveClock].attackedSquares[board.oppositeColorIndex] | board.allPiecesBitboard;
+        Bitboard piecesAndAttackedSquares = board.gameStateHistory[board.fullMoveClock].attackedSquares[board.oppositeColorIndex] | board.allPiecesBitboard;
         if (board.HasKingsideRight(board.colorTurn) && !board.gameStateHistory[board.fullMoveClock].isInCheck)
         {
             //No pieces/attacked squares between castling points
@@ -387,16 +369,16 @@ public static class MoveGenerator
         int colorTurn = board.colorTurn;
         int kingIndex = GetKingIndex(colorTurn, board);
 
-        ulong checkRays = 0;
-        ulong straightPins = 0;
-        ulong diagPins = 0;
+        Bitboard checkRays = 0;
+        Bitboard straightPins = 0;
+        Bitboard diagPins = 0;
 
-        ulong straightAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
-        ulong diagAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
+        Bitboard straightAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
+        Bitboard diagAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
 
-        ulong friendlyPieces = board.sideBitboard[board.currentColorIndex];
-        ulong straightBlockers = board.sideBitboard[board.oppositeColorIndex] & ~straightAttackers;
-        ulong diagBlockers = board.sideBitboard[board.oppositeColorIndex] & ~diagAttackers;
+        Bitboard friendlyPieces = board.sideBitboard[board.currentColorIndex];
+        Bitboard straightBlockers = board.sideBitboard[board.oppositeColorIndex] & ~straightAttackers;
+        Bitboard diagBlockers = board.sideBitboard[board.oppositeColorIndex] & ~diagAttackers;
 
         int x = Coord.IndexToFile(kingIndex) - 1;
         int y = 8 - Coord.IndexToRank(kingIndex);
@@ -405,15 +387,15 @@ public static class MoveGenerator
         SlidersDetection(true, straightBlockers, friendlyPieces, straightAttackers, ref checkRays, ref straightPins);
         SlidersDetection(false, diagBlockers, friendlyPieces, diagAttackers, ref checkRays, ref diagPins);
 
-        ulong knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Knight)];
+        Bitboard knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Knight)];
         //Knight checks
         checkRays |= knightCheck;
-        if(knightCheck != 0) { numCheckingPieces++; }
+        if(!knightCheck.Empty()) { numCheckingPieces++; }
 
-        ulong pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Pawn)];
+        Bitboard pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Pawn)];
         //Pawn checks
         checkRays |= pawnCheck;
-        if(pawnCheck != 0) { numCheckingPieces++; }
+        if(!pawnCheck.Empty()) { numCheckingPieces++; }
 
         board.gameStateHistory[board.fullMoveClock].checkIndexes = checkRays;
         board.gameStateHistory[board.fullMoveClock].diagPins = diagPins;
@@ -421,11 +403,11 @@ public static class MoveGenerator
         board.gameStateHistory[board.fullMoveClock].isCurrentPlayerInDoubleCheck  = numCheckingPieces > 1;
         
 
-        void SlidersDetection(bool rook, ulong blocker, ulong friendly, ulong enemy, ref ulong checkRays, ref ulong pins)
+        void SlidersDetection(bool rook, Bitboard blocker, Bitboard friendly, Bitboard enemy, ref Bitboard checkRays, ref Bitboard pins)
         {
             foreach ((int x, int y) direction in rook ? BitboardHelper.rookDirections: BitboardHelper.bishopDirections)
             {
-                ulong currentRay = 0;
+                Bitboard currentRay = 0;
                 bool hasHitFriendly = false;
 
                 for (int dst = 1; dst < 8; dst++)
@@ -433,22 +415,22 @@ public static class MoveGenerator
                     int index;
                     if (BitboardHelper.ValidSquareIndex(x + (direction.x * dst), y + (direction.y * dst), out index))
                     {
-                        currentRay |= 1ul << index;
-                        if (BitboardHelper.ContainsSquare(enemy, index))
+                        currentRay.SetSquare(index);
+                        if (enemy.ContainsSquare(index))
                         {
                             //Pin
                             if (hasHitFriendly) { pins |= currentRay; break; }
                             //Check
                             else { checkRays |= currentRay; numCheckingPieces++; break; }
                         }
-                        else if (BitboardHelper.ContainsSquare(friendly, index))
+                        else if (friendly.ContainsSquare(index))
                         {
                             //Two friendly pieces, no pin possible
                             if (hasHitFriendly) { break; }
                             else { hasHitFriendly = true; }
                         }
                         //Non attacking enemy piece
-                        else if (BitboardHelper.ContainsSquare(blocker, index)){break;}
+                        else if (blocker.ContainsSquare(index)){break;}
                     }
                     else
                     {
@@ -465,36 +447,32 @@ public static class MoveGenerator
         int colorTurn = board.colorTurn;
         int kingIndex = GetKingIndex(colorTurn, board);
 
-
-
-        ulong straightAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
-        ulong diagAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
+        Bitboard straightAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
+        Bitboard diagAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
 
         //Any piece that can block that check, excludes the sliding pieces that would be checking
-        ulong straightBlockers = (board.sideBitboard[board.oppositeColorIndex] | board.sideBitboard[board.currentColorIndex]) & ~straightAttackers;
-        ulong diagBlockers = (board.sideBitboard[board.oppositeColorIndex] | board.sideBitboard[board.currentColorIndex]) & ~diagAttackers;
+        Bitboard straightBlockers = (board.sideBitboard[board.oppositeColorIndex] | board.sideBitboard[board.currentColorIndex]) & ~straightAttackers;
+        Bitboard diagBlockers = (board.sideBitboard[board.oppositeColorIndex] | board.sideBitboard[board.currentColorIndex]) & ~diagAttackers;
 
-        ulong straightCheckers = straightAttackers & BitboardHelper.GetRookAttacks(kingIndex, straightBlockers);
-        if (straightCheckers != 0) { return true; }
+        Bitboard straightCheckers = straightAttackers & BitboardHelper.GetRookAttacks(kingIndex, straightBlockers);
+        if (!straightCheckers.Empty()) { return true; }
 
-        ulong diagonalCheckers = diagAttackers & BitboardHelper.GetBishopAttacks(kingIndex, diagBlockers);
-
-        if (diagonalCheckers != 0) { return true; }
+        Bitboard diagonalCheckers = diagAttackers & BitboardHelper.GetBishopAttacks(kingIndex, diagBlockers);
+        if (!diagonalCheckers.Empty()) { return true; }
 
 
         //Knight checks
-        ulong knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Knight)];
-        if (knightCheck != 0) { return true; }
+        Bitboard knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Knight)];
+        if (!knightCheck.Empty()) { return true; }
 
         //Pawn checks
-        ulong pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Pawn)];
-        if (pawnCheck != 0) { return true; }
+        Bitboard pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Pawn)];
+        if (!pawnCheck.Empty()) { return true; }
         return false;
     }
     public static int GetKingIndex(int kingColor, Board board)
     {
         int colorIndex = (kingColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
-        ulong kingBitboard = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)];
-        return (kingBitboard != 0) ? BitboardHelper.PopLSB(ref kingBitboard) : 0;
+        return board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)].GetLSB();
     }
 }

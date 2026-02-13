@@ -222,8 +222,8 @@ public class Tuner
             Dictionary<int, int> features = new Dictionary<int, int>();
             int[] isolatedPawnCount = new int[2];
             int[] kingIndex = new int[2];
-            kingIndex[Board.WhiteIndex] = BitboardHelper.GetLSB(board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)]);
-            kingIndex[Board.BlackIndex] = BitboardHelper.GetLSB(board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)]);
+            kingIndex[Board.WhiteIndex] = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)].GetLSB();
+            kingIndex[Board.BlackIndex] = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)].GetLSB();
 
             for(int index = 0; index < 64; index++)
             {
@@ -275,20 +275,19 @@ public class Tuner
                         {
                             AddFeature(infos[(int)Tunables.ROOK_OPEN].startIndex, currentColor, features); 
                         }
-                        int numMoves = 0;
-                        int numAttacks = 0;
-                        ulong simpleRookMoves = BitboardHelper.GetRookAttacks(index, board.allPiecesBitboard);
-                        ulong rookAttacks = simpleRookMoves & BitboardHelper.kingRing[oppositeColorIndex, kingIndex[oppositeColorIndex]];
-                        while (simpleRookMoves != 0) { numMoves++; BitboardHelper.PopLSB(ref simpleRookMoves); }
-                        while (rookAttacks != 0) { numAttacks++; BitboardHelper.PopLSB(ref rookAttacks); }
+                        
+                        Bitboard simpleRookMoves = BitboardHelper.GetRookAttacks(index, board.allPiecesBitboard);
+                        Bitboard rookAttacks = simpleRookMoves & BitboardHelper.kingRing[oppositeColorIndex, kingIndex[oppositeColorIndex]];
+                        int numMoves = simpleRookMoves.PopCount();
+                        int numAttacks = rookAttacks.PopCount();
                         AddMultipleFeatures(infos[(int)Tunables.ROOK_MOBILITY].startIndex, currentColor, features, numMoves);
                         AddMultipleFeatures(infos[(int)Tunables.ROOK_ATTACK].startIndex, currentColor, features, numAttacks);
                     }
                     else if (pieceType == Piece.Bishop)
                     {
-                        int numMoves = 0;
-                        ulong simpleBishopMoves = BitboardHelper.GetBishopAttacks(index, board.allPiecesBitboard);
-                        while (simpleBishopMoves != 0) { numMoves++; BitboardHelper.PopLSB(ref simpleBishopMoves); }
+                        
+                        Bitboard simpleBishopMoves = BitboardHelper.GetBishopAttacks(index, board.allPiecesBitboard);
+                        int numMoves = simpleBishopMoves.PopCount();
                         AddMultipleFeatures(infos[(int)Tunables.BISHOP_MOBILITY].startIndex, currentColor, features, numMoves);
                     }
                     else if (pieceType == Piece.King)
@@ -302,7 +301,7 @@ public class Tuner
 
                         if(frontSquare >= 0 && frontSquare <= 63)
                         {
-                            if(BitboardHelper.ContainsSquare(board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)], frontSquare))
+                            if(board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)].ContainsSquare(frontSquare))
                             {
                                 AddFeature(infos[(int)Tunables.KING_SHIELD].startIndex, currentColor, features);
                             }

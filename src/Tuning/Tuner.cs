@@ -267,11 +267,11 @@ public class Tuner
                         }
                         //Doubled pawn penalty
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
-                        if ((BitboardHelper.isolatedPawnMask[index] & board.GetPieces(currentColorIndex, Piece.Pawn)) == 0) { isolatedPawnCount[currentColorIndex]++; }
+                        if ((BitboardHelper.isolatedPawnMask[index] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()) { isolatedPawnCount[currentColorIndex]++; }
                     } 
                     else if(pieceType == Piece.Rook)
                     {
-                        if((BitboardHelper.files[index % 8] & (board.allPiecesBitboard ^ 1ul << index)) == 0)
+                        if((BitboardHelper.files[index % 8] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty())
                         {
                             AddFeature(infos[(int)Tunables.ROOK_OPEN].startIndex, currentColor, features); 
                         }

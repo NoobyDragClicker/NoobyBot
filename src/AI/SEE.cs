@@ -16,8 +16,8 @@ public static class SEE
         balance -= SEEPieceVals[nextVictim];
         if(balance >= 0){ return true; }
 
-        Bitboard bishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
-        Bitboard rooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Queen)] | board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Queen)];
+        Bitboard bishops = board.GetPieces(Board.WhiteIndex, Piece.Bishop) | board.GetPieces(Board.BlackIndex, Piece.Bishop) | board.GetPieces(Board.WhiteIndex, Piece.Queen) | board.GetPieces(Board.BlackIndex, Piece.Queen);
+        Bitboard rooks = board.GetPieces(Board.WhiteIndex, Piece.Rook) | board.GetPieces(Board.BlackIndex, Piece.Rook) | board.GetPieces(Board.WhiteIndex, Piece.Queen) | board.GetPieces(Board.BlackIndex, Piece.Queen);
 
         //Update occupancy
         Bitboard allPieces = board.allPiecesBitboard;
@@ -35,12 +35,12 @@ public static class SEE
             if(myAttackers == 0){ break; }
             for(nextVictim = Piece.Pawn; nextVictim <= Piece.Queen; nextVictim++)
             {
-                if((myAttackers & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, nextVictim)]) != 0){ break; }
+                if((myAttackers & board.GetPieces(currentColorIndex, nextVictim)) != 0){ break; }
             }
 
 
             //Update occupancy
-            allPieces ^= 1ul << (myAttackers & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, nextVictim)]).GetLSB();
+            allPieces ^= 1ul << (myAttackers & board.GetPieces(currentColorIndex, nextVictim)).GetLSB();
 
             //A diagonal move can reveal a bishop or a queen attacker
             if(nextVictim == Piece.Pawn || nextVictim == Piece.Bishop || nextVictim == Piece.Queen)

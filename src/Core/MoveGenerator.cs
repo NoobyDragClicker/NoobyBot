@@ -29,15 +29,15 @@ public static class MoveGenerator
         int colorIndex = (attackingPieceColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
         int oppositeColorIndex = (colorIndex == Board.WhiteIndex) ? Board.BlackIndex : Board.WhiteIndex;
 
-        Bitboard attacks = BitboardHelper.GetAllPawnAttacks(board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Pawn)], attackingPieceColor);
-        attacks |= BitboardHelper.kingAttacks[board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)].GetLSB()];
+        Bitboard attacks = BitboardHelper.GetAllPawnAttacks(board.GetPieces(colorIndex, Piece.Pawn), attackingPieceColor);
+        attacks |= BitboardHelper.kingAttacks[board.GetPieces(colorIndex, Piece.King).GetLSB()];
         
 
-        Bitboard piecesExceptEnemyKing = board.allPiecesBitboard ^ board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.King)];
-        Bitboard queens = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Queen)];
-        Bitboard rooks = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Rook)];
-        Bitboard bishops = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Bishop)];
-        Bitboard knights = board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.Knight)];
+        Bitboard piecesExceptEnemyKing = board.allPiecesBitboard ^ board.GetPieces(oppositeColorIndex, Piece.King);
+        Bitboard queens = board.GetPieces(colorIndex, Piece.Queen);
+        Bitboard rooks = board.GetPieces(colorIndex, Piece.Rook);
+        Bitboard bishops = board.GetPieces(colorIndex, Piece.Bishop);
+        Bitboard knights = board.GetPieces(colorIndex, Piece.Knight);
 
         while (queens != 0)
         {
@@ -67,7 +67,7 @@ public static class MoveGenerator
 
     public static int GeneratePawnMoves(Span<Move> legalMoves, int currMoveIndex,  Board board, bool isCapturesOnly = false)
     {
-        Bitboard pawns = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Pawn)];
+        Bitboard pawns = board.GetPieces(board.currentColorIndex, Piece.Pawn);
         Bitboard blockers = board.allPiecesBitboard;
         Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
         Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
@@ -214,12 +214,12 @@ public static class MoveGenerator
         {
             int kingIndex = GetKingIndex(board.colorTurn, board);
             Bitboard attackingPiecesMask = BitboardHelper.GetRookAttacks(kingIndex, boardMinusPawnsInvolved);
-            return (attackingPiecesMask & (board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)])).Empty();
+            return (attackingPiecesMask & (board.GetPieces(board.oppositeColorIndex, Piece.Rook) | board.GetPieces(board.oppositeColorIndex, Piece.Queen))).Empty();
         }
     }
     public static int GenerateKnightMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
-        Bitboard knights = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Knight)];
+        Bitboard knights = board.GetPieces(board.currentColorIndex, Piece.Knight);
 
         Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
         Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
@@ -254,7 +254,7 @@ public static class MoveGenerator
     }
     public static int GenerateBishopMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
-        Bitboard bishops = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Queen)];
+        Bitboard bishops = board.GetPieces(board.currentColorIndex, Piece.Bishop) | board.GetPieces(board.currentColorIndex, Piece.Queen);
         Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
         Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
         Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
@@ -289,7 +289,7 @@ public static class MoveGenerator
         return currMoveIndex;
     }
     public static int GenerateRookMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly=false){
-        Bitboard rooks = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.Queen)];
+        Bitboard rooks = board.GetPieces(board.currentColorIndex, Piece.Rook) | board.GetPieces(board.currentColorIndex, Piece.Queen);
         Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
         Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
         Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
@@ -324,7 +324,7 @@ public static class MoveGenerator
     }
     public static int GenerateKingMoves(Span<Move> moves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
-        int index = board.pieceBitboards[Board.PieceBitboardIndex(board.currentColorIndex, Piece.King)].GetLSB();
+        int index = board.GetPieces(board.currentColorIndex, Piece.King).GetLSB();
 
         //Removing squares attacked by the enemy
         Bitboard kingMoves = BitboardHelper.kingAttacks[index];
@@ -373,8 +373,8 @@ public static class MoveGenerator
         Bitboard straightPins = 0;
         Bitboard diagPins = 0;
 
-        Bitboard straightAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
-        Bitboard diagAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
+        Bitboard straightAttackers = board.GetPieces(board.oppositeColorIndex, Piece.Rook) | board.GetPieces(board.oppositeColorIndex, Piece.Queen);
+        Bitboard diagAttackers = board.GetPieces(board.oppositeColorIndex, Piece.Bishop) | board.GetPieces(board.oppositeColorIndex, Piece.Queen);
 
         Bitboard friendlyPieces = board.sideBitboard[board.currentColorIndex];
         Bitboard straightBlockers = board.sideBitboard[board.oppositeColorIndex] & ~straightAttackers;
@@ -387,12 +387,12 @@ public static class MoveGenerator
         SlidersDetection(true, straightBlockers, friendlyPieces, straightAttackers, ref checkRays, ref straightPins);
         SlidersDetection(false, diagBlockers, friendlyPieces, diagAttackers, ref checkRays, ref diagPins);
 
-        Bitboard knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Knight)];
+        Bitboard knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.GetPieces(board.oppositeColorIndex, Piece.Knight);
         //Knight checks
         checkRays |= knightCheck;
         if(!knightCheck.Empty()) { numCheckingPieces++; }
 
-        Bitboard pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Pawn)];
+        Bitboard pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.GetPieces(board.oppositeColorIndex, Piece.Pawn);
         //Pawn checks
         checkRays |= pawnCheck;
         if(!pawnCheck.Empty()) { numCheckingPieces++; }
@@ -447,8 +447,8 @@ public static class MoveGenerator
         int colorTurn = board.colorTurn;
         int kingIndex = GetKingIndex(colorTurn, board);
 
-        Bitboard straightAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Rook)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
-        Bitboard diagAttackers = board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Bishop)] | board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Queen)];
+        Bitboard straightAttackers = board.GetPieces(board.oppositeColorIndex, Piece.Rook) | board.GetPieces(board.oppositeColorIndex, Piece.Queen);
+        Bitboard diagAttackers = board.GetPieces(board.oppositeColorIndex, Piece.Bishop) | board.GetPieces(board.oppositeColorIndex, Piece.Queen);
 
         //Any piece that can block that check, excludes the sliding pieces that would be checking
         Bitboard straightBlockers = (board.sideBitboard[board.oppositeColorIndex] | board.sideBitboard[board.currentColorIndex]) & ~straightAttackers;
@@ -462,17 +462,17 @@ public static class MoveGenerator
 
 
         //Knight checks
-        Bitboard knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Knight)];
+        Bitboard knightCheck = BitboardHelper.knightAttacks[kingIndex] & board.GetPieces(board.oppositeColorIndex, Piece.Knight);
         if (!knightCheck.Empty()) { return true; }
 
         //Pawn checks
-        Bitboard pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.pieceBitboards[Board.PieceBitboardIndex(board.oppositeColorIndex, Piece.Pawn)];
+        Bitboard pawnCheck = ((colorTurn == Piece.White) ? BitboardHelper.wPawnAttacks[kingIndex] : BitboardHelper.bPawnAttacks[kingIndex]) & board.GetPieces(board.oppositeColorIndex, Piece.Pawn);
         if (!pawnCheck.Empty()) { return true; }
         return false;
     }
     public static int GetKingIndex(int kingColor, Board board)
     {
         int colorIndex = (kingColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;
-        return board.pieceBitboards[Board.PieceBitboardIndex(colorIndex, Piece.King)].GetLSB();
+        return board.GetPieces(colorIndex, Piece.King).GetLSB();
     }
 }

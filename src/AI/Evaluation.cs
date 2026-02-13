@@ -77,14 +77,14 @@ public class Evaluation
         EvalPair score = new EvalPair(mgScore, egScore);
 
 
-        Bitboard whitePawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Pawn)];
-        Bitboard blackPawns = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Pawn)];
+        Bitboard whitePawns = board.GetPieces(Board.WhiteIndex, Piece.Pawn);
+        Bitboard blackPawns = board.GetPieces(Board.BlackIndex, Piece.Pawn);
 
-        Bitboard whiteBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Bishop)];
-        Bitboard blackBishops = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Bishop)];
+        Bitboard whiteBishops = board.GetPieces(Board.WhiteIndex, Piece.Bishop);
+        Bitboard blackBishops = board.GetPieces(Board.BlackIndex, Piece.Bishop);
 
-        Bitboard whiteRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.Rook)];
-        Bitboard blackRooks = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.Rook)];
+        Bitboard whiteRooks = board.GetPieces(Board.WhiteIndex, Piece.Rook);
+        Bitboard blackRooks = board.GetPieces(Board.BlackIndex, Piece.Rook);
 
         while (!whitePawns.Empty())
         {
@@ -123,8 +123,8 @@ public class Evaluation
         }
 
 
-        int whiteKingIndex = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)].GetLSB();
-        int blackKingIndex = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)].GetLSB();
+        int whiteKingIndex = board.GetPieces(Board.WhiteIndex, Piece.King).GetLSB();
+        int blackKingIndex = board.GetPieces(Board.BlackIndex, Piece.King).GetLSB();
         score += EvaluateKingSafety(board, whiteKingIndex, Piece.White);
         score -= EvaluateKingSafety(board, blackKingIndex, Piece.Black);
 
@@ -160,7 +160,7 @@ public class Evaluation
 
         if(frontSquare >= 0 && frontSquare <= 63)
         {
-            if(board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)].ContainsSquare(frontSquare))
+            if(board.GetPieces(currentColorIndex, Piece.Pawn).ContainsSquare(frontSquare))
             {
                 score += kingPawnShield;
             }
@@ -177,7 +177,7 @@ public class Evaluation
         int oppositeColorIndex = 1 - currentColorIndex;
         int currentColor = currentColorIndex == Board.WhiteIndex ? Piece.White : Piece.Black;
 
-        bool passer = (board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)] & BitboardHelper.pawnPassedMask[currentColorIndex, pawnIndex]).Empty();
+        bool passer = (board.GetPieces(oppositeColorIndex, Piece.Pawn) & BitboardHelper.pawnPassedMask[currentColorIndex, pawnIndex]).Empty();
         int pushSquare = pawnIndex + (currentColorIndex == Board.WhiteIndex ? -8 : 8);
         //Passed pawn
         if (passer) { 
@@ -188,7 +188,7 @@ public class Evaluation
 
         //Doubled pawn penalty
         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { egBonus += doubledPawnPenalty.eg; }
-        if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)]).Empty()) { isolatedPawnCount[currentColorIndex]++; }
+        if ((BitboardHelper.isolatedPawnMask[pawnIndex] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()) { isolatedPawnCount[currentColorIndex]++; }
 
         return new EvalPair(mgBonus, egBonus);
     }
@@ -207,7 +207,7 @@ public class Evaluation
         if((BitboardHelper.files[pieceIndex % 8] & (board.allPiecesBitboard ^ 1ul << pieceIndex)) == 0){ score += rookOpenFile; }
 
         Bitboard simpleRookMoves = BitboardHelper.GetRookAttacks(pieceIndex, board.allPiecesBitboard);
-        Bitboard rookAttacks = simpleRookMoves & BitboardHelper.kingRing[1 - colorIndex, board.pieceBitboards[Board.PieceBitboardIndex(1 - colorIndex, Piece.King)].GetLSB()];
+        Bitboard rookAttacks = simpleRookMoves & BitboardHelper.kingRing[1 - colorIndex, board.GetPieces(1 - colorIndex, Piece.King).GetLSB()];
         int numMoves = simpleRookMoves.PopCount();
         int numAttacks = rookAttacks.PopCount();
 

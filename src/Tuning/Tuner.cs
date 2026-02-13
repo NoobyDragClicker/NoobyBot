@@ -222,8 +222,8 @@ public class Tuner
             Dictionary<int, int> features = new Dictionary<int, int>();
             int[] isolatedPawnCount = new int[2];
             int[] kingIndex = new int[2];
-            kingIndex[Board.WhiteIndex] = board.pieceBitboards[Board.PieceBitboardIndex(Board.WhiteIndex, Piece.King)].GetLSB();
-            kingIndex[Board.BlackIndex] = board.pieceBitboards[Board.PieceBitboardIndex(Board.BlackIndex, Piece.King)].GetLSB();
+            kingIndex[Board.WhiteIndex] = board.GetPieces(Board.WhiteIndex, Piece.King).GetLSB();
+            kingIndex[Board.BlackIndex] = board.GetPieces(Board.BlackIndex, Piece.King).GetLSB();
 
             for(int index = 0; index < 64; index++)
             {
@@ -262,12 +262,12 @@ public class Tuner
                         int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;
 
                         //Passed pawn
-                        if ((board.pieceBitboards[Board.PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)] & BitboardHelper.pawnPassedMask[currentColorIndex, index]) == 0) { 
+                        if ((board.GetPieces(oppositeColorIndex, Piece.Pawn) & BitboardHelper.pawnPassedMask[currentColorIndex, index]) == 0) { 
                             AddFeature(infos[(int)Tunables.PASSER].startIndex + relativeIndex, currentColor, features); 
                         }
                         //Doubled pawn penalty
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
-                        if ((BitboardHelper.isolatedPawnMask[index] & board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)]) == 0) { isolatedPawnCount[currentColorIndex]++; }
+                        if ((BitboardHelper.isolatedPawnMask[index] & board.GetPieces(currentColorIndex, Piece.Pawn)) == 0) { isolatedPawnCount[currentColorIndex]++; }
                     } 
                     else if(pieceType == Piece.Rook)
                     {
@@ -301,7 +301,7 @@ public class Tuner
 
                         if(frontSquare >= 0 && frontSquare <= 63)
                         {
-                            if(board.pieceBitboards[Board.PieceBitboardIndex(currentColorIndex, Piece.Pawn)].ContainsSquare(frontSquare))
+                            if(board.GetPieces(currentColorIndex, Piece.Pawn).ContainsSquare(frontSquare))
                             {
                                 AddFeature(infos[(int)Tunables.KING_SHIELD].startIndex, currentColor, features);
                             }

@@ -796,6 +796,12 @@ public class Board
         return fen;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Bitboard GetPieces(int colorIndex, int pieceType)
+    {
+        return pieceBitboards[PieceBitboardIndex(colorIndex, pieceType)];
+    }
+
     public void GenerateMoveGenInfo()
     {
         if(!gameStateHistory[fullMoveClock].isMoveGenUpdated)
@@ -880,7 +886,7 @@ public class Board
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int PieceBitboardIndex(int colorIndex, int pieceType)
+    int PieceBitboardIndex(int colorIndex, int pieceType)
     {
         return (colorIndex * 7) + pieceType;
     }

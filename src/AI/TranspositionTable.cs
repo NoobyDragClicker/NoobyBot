@@ -18,8 +18,8 @@ public class TranspositionTable
     {
         this.board = board;
         int ttEntrySizeBytes = System.Runtime.InteropServices.Marshal.SizeOf<Bucket>();
-        int desiredTableSizeInBytes = sizeMB * 1024 * 1024;
-        int numEntries = desiredTableSizeInBytes / ttEntrySizeBytes;
+        ulong desiredTableSizeInBytes = (ulong)sizeMB * 1024ul * 1024ul;
+        ulong numEntries = desiredTableSizeInBytes / (ulong)ttEntrySizeBytes;
         count = (ulong)numEntries;
         entries = new Bucket[numEntries];
     }

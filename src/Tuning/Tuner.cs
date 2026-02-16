@@ -11,7 +11,8 @@ public class Tuner
 
     enum Tunables {
         PSQT, PASSER, ISOLATED, DOUBLED, 
-        BISHOP_PAIR, BISHOP_MOBILITY, ROOK_OPEN, ROOK_MOBILITY, ROOK_ATTACK,
+        BISHOP_PAIR, BISHOP_MOBILITY, 
+        ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK,
         KING_OPEN, KING_SHIELD
     };
 
@@ -21,6 +22,7 @@ public class Tuner
         new TuningInfo(64, true, true),
         new TuningInfo(9, false, true),
         new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -156,6 +158,8 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.BISHOP_MOBILITY]);
         Console.WriteLine("Rook open file");
         PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
+        Console.WriteLine("Rook semi open file");
+        PrintSpan(infos[(int)Tunables.ROOK_SEMI_OPEN]);
         Console.WriteLine("Rook mobility");
         PrintSpan(infos[(int)Tunables.ROOK_MOBILITY]);
         Console.WriteLine("Rook king ring attack");
@@ -271,9 +275,13 @@ public class Tuner
                     } 
                     else if(pieceType == Piece.Rook)
                     {
-                        if((BitboardHelper.files[index % 8] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty())
-                        {
-                            AddFeature(infos[(int)Tunables.ROOK_OPEN].startIndex, currentColor, features); 
+                        if ((BitboardHelper.files[index % 8] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()){ 
+                            //None of their pawns
+                            if((BitboardHelper.files[index % 8] & board.GetPieces(oppositeColorIndex, Piece.Pawn)).Empty())
+                            {
+                                AddFeature(infos[(int)Tunables.ROOK_OPEN].startIndex, currentColor, features);
+                            }
+                            else { AddFeature(infos[(int)Tunables.ROOK_SEMI_OPEN].startIndex, currentColor, features); }
                         }
                         
                         Bitboard simpleRookMoves = BitboardHelper.GetRookAttacks(index, board.allPiecesBitboard);

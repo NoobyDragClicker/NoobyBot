@@ -10,7 +10,7 @@ public class Tuner
     
 
     enum Tunables {
-        PSQT, PASSER, ISOLATED, DOUBLED, 
+        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED,
         BISHOP_PAIR, BISHOP_MOBILITY, 
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK,
         KING_OPEN, KING_SHIELD
@@ -22,6 +22,7 @@ public class Tuner
         new TuningInfo(64, true, true),
         new TuningInfo(9, false, true),
         new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -152,6 +153,8 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.ISOLATED]);
         Console.WriteLine("Doubled pawn");
         PrintSpan(infos[(int)Tunables.DOUBLED]);
+        Console.WriteLine("Protected pawn");
+        PrintSpan(infos[(int)Tunables.PROTECTED]);
         Console.WriteLine("Bishop pair");
         PrintSpan(infos[(int)Tunables.BISHOP_PAIR]);
         Console.WriteLine("Bishop mobility");
@@ -319,6 +322,11 @@ public class Tuner
                 }
             }
 
+            int whiteDefended = (BitboardHelper.GetAllPawnAttacks(board.GetPieces(Board.WhiteIndex, Piece.Pawn), Piece.White) & board.GetPieces(Board.WhiteIndex, Piece.Pawn)).PopCount();
+            int blackDefended = (BitboardHelper.GetAllPawnAttacks(board.GetPieces(Board.BlackIndex, Piece.Pawn), Piece.Black) & board.GetPieces(Board.BlackIndex, Piece.Pawn)).PopCount();
+            AddMultipleFeatures(infos[(int)Tunables.PROTECTED].startIndex, Piece.White, features, whiteDefended);
+            AddMultipleFeatures(infos[(int)Tunables.PROTECTED].startIndex, Piece.Black, features, blackDefended);
+            
             //Isolated pawns
             AddFeature(infos[(int)Tunables.ISOLATED].startIndex + isolatedPawnCount[Board.BlackIndex], Piece.Black, features);
             AddFeature(infos[(int)Tunables.ISOLATED].startIndex + isolatedPawnCount[Board.WhiteIndex], Piece.White, features);

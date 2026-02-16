@@ -50,7 +50,7 @@ public class Board
 
 
     //Moves the pieces
-    public void MakeMove(Move move, bool isSearch)
+    public void MakeMove(Move move)
     {
         fullMoveClock++;
         int oldCastlingRights = gameStateHistory[fullMoveClock - 1].castlingRights;
@@ -93,7 +93,6 @@ public class Board
         {
             int oldRookIndex = 0;
             int newRookIndex = 0;
-            int rook = 0;
             halfMoveClock++;
             //Once castles, you can't castle again
             if (colorTurn == Piece.White)
@@ -105,17 +104,13 @@ public class Board
                 {
                     oldRookIndex = 63;
                     newRookIndex = 61;
-                    rook = board[oldRookIndex];
                 }
                 //Long castles
                 else if (newPos == 58)
                 {
                     oldRookIndex = 56;
                     newRookIndex = 59;
-                    rook = board[oldRookIndex];
                 }
-
-
             }
             else if (colorTurn == Piece.Black)
             {
@@ -126,17 +121,16 @@ public class Board
                 {
                     oldRookIndex = 7;
                     newRookIndex = 5;
-                    rook = board[oldRookIndex];
                 }
                 //Long castles
                 else if (newPos == 2)
                 {
                     oldRookIndex = 0;
                     newRookIndex = 3;
-                    rook = board[oldRookIndex];
                 }
             }
             
+            int rook = board[oldRookIndex];
             //Updating rook position
             pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Rook)].ClearSquare(oldRookIndex);
             pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Rook)].SetSquare(newRookIndex);
@@ -146,26 +140,16 @@ public class Board
 
             board[newRookIndex] = rook;
             board[oldRookIndex] = 0;
-
-            //Updating king position
-            pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)].ClearSquare(startPos);
-            pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)].SetSquare(newPos);
-
-            sideBitboard[currentColorIndex].ClearSquare(startPos);
-            sideBitboard[currentColorIndex].SetSquare(newPos);
-
             if(colorTurn == Piece.White)
             {
-                mgValDifference += Evaluation.mg_PSQT[Piece.Rook, newRookIndex] + Evaluation.mg_PSQT[Piece.King, newPos] - Evaluation.mg_PSQT[Piece.Rook, oldRookIndex] - Evaluation.mg_PSQT[Piece.King, startPos];
-                egValDifference += Evaluation.eg_PSQT[Piece.Rook, newRookIndex] + Evaluation.eg_PSQT[Piece.King, newPos] - Evaluation.eg_PSQT[Piece.Rook, oldRookIndex] - Evaluation.eg_PSQT[Piece.King, startPos];
+                mgValDifference += Evaluation.mg_PSQT[Piece.Rook, newRookIndex] - Evaluation.mg_PSQT[Piece.Rook, oldRookIndex];
+                egValDifference += Evaluation.eg_PSQT[Piece.Rook, newRookIndex] - Evaluation.eg_PSQT[Piece.Rook, oldRookIndex];
             }
             else
             {
-                mgValDifference -= Evaluation.mg_PSQT[Piece.Rook, newRookIndex ^ 56] + Evaluation.mg_PSQT[Piece.King, newPos ^ 56] - Evaluation.mg_PSQT[Piece.Rook, oldRookIndex ^ 56] - Evaluation.mg_PSQT[Piece.King, startPos ^ 56];
-                egValDifference -= Evaluation.eg_PSQT[Piece.Rook, newRookIndex ^ 56] + Evaluation.eg_PSQT[Piece.King, newPos ^ 56] - Evaluation.eg_PSQT[Piece.Rook, oldRookIndex ^ 56] - Evaluation.eg_PSQT[Piece.King, startPos ^ 56];
+                mgValDifference -= Evaluation.mg_PSQT[Piece.Rook, newRookIndex ^ 56] - Evaluation.mg_PSQT[Piece.Rook, oldRookIndex ^ 56];
+                egValDifference -= Evaluation.eg_PSQT[Piece.Rook, newRookIndex ^ 56] - Evaluation.eg_PSQT[Piece.Rook, oldRookIndex ^ 56];
             }
-            board[newPos] = movedPiece;
-            board[startPos] = 0;
 
             zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, oldRookIndex];
             zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, newRookIndex];
@@ -173,32 +157,22 @@ public class Board
         //en passant
         else if (move.flag == Move.EnPassant)
         {
-            //Moving pawn
-            pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)].ClearSquare(startPos);
-            pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)].SetSquare(newPos);
-            
-            sideBitboard[currentColorIndex].ClearSquare(startPos);
-            sideBitboard[currentColorIndex].SetSquare(newPos);
-            board[newPos] = movedPiece;
-            board[startPos] = 0;
-
             //Removing attacked pawn
             int attackedPawnIndex = (colorTurn == Piece.White) ? newPos + 8 : newPos - 8;
             capturedPiece = board[attackedPawnIndex];
             board[attackedPawnIndex] = 0;
-
             pieceBitboards[PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)].ClearSquare(attackedPawnIndex);
             sideBitboard[oppositeColorIndex].ClearSquare(attackedPawnIndex);
 
             if(colorTurn == Piece.White)
             {
-                mgValDifference += Evaluation.mg_PSQT[Piece.Pawn, newPos] - Evaluation.mg_PSQT[Piece.Pawn, startPos] + Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex ^ 56];
-                egValDifference += Evaluation.eg_PSQT[Piece.Pawn, newPos] - Evaluation.eg_PSQT[Piece.Pawn, startPos] + Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex ^ 56];
+                mgValDifference += Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex ^ 56];
+                egValDifference += Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex ^ 56];
             }
             else
             {
-                mgValDifference -= Evaluation.mg_PSQT[Piece.Pawn, newPos ^ 56] - Evaluation.mg_PSQT[Piece.Pawn, startPos ^ 56] + Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex];
-                egValDifference -= Evaluation.eg_PSQT[Piece.Pawn, newPos ^ 56] - Evaluation.eg_PSQT[Piece.Pawn, startPos ^ 56] + Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex];
+                mgValDifference -= Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex];
+                egValDifference -= Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex];
             }
 
             zobristKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
@@ -249,6 +223,9 @@ public class Board
 
                 pieceBitboards[PieceBitboardIndex(oppositeColorIndex, capturedPieceType)].ClearSquare(newPos);
                 sideBitboard[oppositeColorIndex].ClearSquare(newPos);
+                zobristKey ^= Zobrist.piecesArray[capturedPieceType, oppositeColorIndex, newPos];
+                pieceCounts[oppositeColorIndex, capturedPieceType] -= 1;
+                halfMoveClock = 0;
 
                 //Removing castling rights if rook is captured on starting square
                 if (capturedPieceType == Piece.Rook && castlingRights > 0)
@@ -265,73 +242,50 @@ public class Board
                     }
                 }
 
-                zobristKey ^= Zobrist.piecesArray[capturedPieceType, oppositeColorIndex, newPos];
-
-                //Moving capturing piece
-                pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)].ClearSquare(startPos);
-                pieceBitboards[PieceBitboardIndex(currentColorIndex, newPieceType)].SetSquare(newPos);
-
-                sideBitboard[currentColorIndex].ClearSquare(startPos);
-                sideBitboard[currentColorIndex].SetSquare(newPos);
-
                 if(colorTurn == Piece.White)
                 {
-                    mgValDifference += Evaluation.mg_PSQT[newPieceType, newPos] - Evaluation.mg_PSQT[movedPieceType, startPos] + Evaluation.mg_PSQT[capturedPieceType, newPos ^ 56];
-                    egValDifference += Evaluation.eg_PSQT[newPieceType, newPos] - Evaluation.eg_PSQT[movedPieceType, startPos] + Evaluation.eg_PSQT[capturedPieceType, newPos ^ 56];
+                    mgValDifference += Evaluation.mg_PSQT[capturedPieceType, newPos ^ 56];
+                    egValDifference += Evaluation.eg_PSQT[capturedPieceType, newPos ^ 56];
                 }
                 else
                 {
-                    mgValDifference -= Evaluation.mg_PSQT[newPieceType, newPos ^ 56] - Evaluation.mg_PSQT[movedPieceType, startPos ^ 56] + Evaluation.mg_PSQT[capturedPieceType, newPos];
-                    egValDifference -= Evaluation.eg_PSQT[newPieceType, newPos ^ 56] - Evaluation.eg_PSQT[movedPieceType, startPos ^ 56] + Evaluation.eg_PSQT[capturedPieceType, newPos];
+                    mgValDifference -= Evaluation.mg_PSQT[capturedPieceType, newPos];
+                    egValDifference -= Evaluation.eg_PSQT[capturedPieceType, newPos];
                 }
-
-
-                board[newPos] = newPiece;
-                board[startPos] = 0;
-
-                pieceCounts[oppositeColorIndex, capturedPieceType] -= 1;
 
                 if (capturedPieceType == Piece.King)
                 {
                     logger.AddToLog("King captured", SearchLogger.LoggingLevel.Deadly);
                     logger.AddToLog(ConvertToFEN(), SearchLogger.LoggingLevel.Deadly);
                 }
-
-                //Capture resets counter
-                halfMoveClock = 0;
             }
             else
             {
-                pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)].ClearSquare(startPos);
-                pieceBitboards[PieceBitboardIndex(currentColorIndex, newPieceType)].SetSquare(newPos);
-
-                sideBitboard[currentColorIndex].ClearSquare(startPos);
-                sideBitboard[currentColorIndex].SetSquare(newPos);
-
-                if (colorTurn == Piece.White)
-                {
-                    mgValDifference += Evaluation.mg_PSQT[newPieceType, newPos] - Evaluation.mg_PSQT[movedPieceType, startPos];
-                    egValDifference += Evaluation.eg_PSQT[newPieceType, newPos] - Evaluation.eg_PSQT[movedPieceType, startPos];
-                }
-                else
-                {
-                    mgValDifference -= Evaluation.mg_PSQT[newPieceType, newPos ^ 56] - Evaluation.mg_PSQT[movedPieceType, startPos ^ 56];
-                    egValDifference -= Evaluation.eg_PSQT[newPieceType, newPos ^ 56] - Evaluation.eg_PSQT[movedPieceType, startPos ^ 56];
-                }
-                
-                board[newPos] = newPiece;
-                board[startPos] = 0;
-
                 //Pawn push resets counter
-                if (movedPieceType == Piece.Pawn)
-                {
-                    halfMoveClock = 0;
-                }
-                else
-                {
-                    halfMoveClock++;
-                }
+                if (movedPieceType == Piece.Pawn){ halfMoveClock = 0; }
+                else { halfMoveClock++; }
             }
+        }
+
+        //Move our normal piece
+        pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)].ClearSquare(startPos);
+        pieceBitboards[PieceBitboardIndex(currentColorIndex, newPieceType)].SetSquare(newPos);
+
+        sideBitboard[currentColorIndex].ClearSquare(startPos);
+        sideBitboard[currentColorIndex].SetSquare(newPos);
+
+        board[newPos] = newPiece;
+        board[startPos] = 0;
+
+        if (colorTurn == Piece.White)
+        {
+            mgValDifference += Evaluation.mg_PSQT[newPieceType, newPos] - Evaluation.mg_PSQT[movedPieceType, startPos];
+            egValDifference += Evaluation.eg_PSQT[newPieceType, newPos] - Evaluation.eg_PSQT[movedPieceType, startPos];
+        }
+        else
+        {
+            mgValDifference -= Evaluation.mg_PSQT[newPieceType, newPos ^ 56] - Evaluation.mg_PSQT[movedPieceType, startPos ^ 56];
+            egValDifference -= Evaluation.eg_PSQT[newPieceType, newPos ^ 56] - Evaluation.eg_PSQT[movedPieceType, startPos ^ 56];
         }
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
@@ -440,15 +394,6 @@ public class Board
                     sideBitboard[WhiteIndex].ClearSquare(59);
                     sideBitboard[WhiteIndex].SetSquare(56);
                 }
-                board[startPos] = movedPiece;
-                board[newPos] = 0;
-
-                pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)].ClearSquare(newPos);
-                pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)].SetSquare(startPos);
-
-                sideBitboard[WhiteIndex].ClearSquare(newPos);
-                sideBitboard[WhiteIndex].SetSquare(startPos);
-
             }
             else if (colorTurn == Piece.Black)
             {
@@ -476,29 +421,15 @@ public class Board
                     sideBitboard[BlackIndex].ClearSquare(3);
                     sideBitboard[BlackIndex].SetSquare(0);
                 }
-                board[startPos] = movedPiece;
-                board[newPos] = 0;
-                pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)].ClearSquare(newPos);
-                pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)].SetSquare(startPos);
-
-                sideBitboard[BlackIndex].ClearSquare(newPos);
-                sideBitboard[BlackIndex].SetSquare(startPos);
             }
-
+            board[startPos] = movedPiece;
+            board[newPos] = 0;
         }
         //en passant
         else if (move.flag == Move.EnPassant)
         {
-            //capture
             board[startPos] = movedPiece;
             board[newPos] = 0;
-
-            pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)].ClearSquare(newPos);
-            pieceBitboards[PieceBitboardIndex(currentColorIndex, Piece.Pawn)].SetSquare(startPos);
-
-            sideBitboard[currentColorIndex].ClearSquare(newPos);
-            sideBitboard[currentColorIndex].SetSquare(startPos);
-
 
             //Replacing the captured pawn
             int attackedPawnIndex = (colorTurn == Piece.White) ? newPos + 8 : newPos - 8;
@@ -506,7 +437,6 @@ public class Board
 
             pieceBitboards[PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)].SetSquare(attackedPawnIndex);
             sideBitboard[oppositeColorIndex].SetSquare(attackedPawnIndex);
-
             
             pieceCounts[oppositeColorIndex, Piece.Pawn] += 1;
         }
@@ -518,14 +448,8 @@ public class Board
                 int capturedPieceType = Piece.PieceType(capturedPiece);
                 //capture
                 board[startPos] = movedPiece;
-                pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)].ClearSquare(newPos);
-                pieceBitboards[PieceBitboardIndex(currentColorIndex, pieceTypeBeforeMove)].SetSquare(startPos);
-
-                sideBitboard[currentColorIndex].ClearSquare(newPos);
-                sideBitboard[currentColorIndex].SetSquare(startPos);
-
-
                 board[newPos] = capturedPiece;
+
                 pieceBitboards[PieceBitboardIndex(oppositeColorIndex, capturedPieceType)].SetSquare(newPos);
                 sideBitboard[oppositeColorIndex].SetSquare(newPos);
 
@@ -535,16 +459,14 @@ public class Board
             {
                 board[startPos] = movedPiece;
                 board[newPos] = 0;
-                pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)].ClearSquare(newPos);
-                pieceBitboards[PieceBitboardIndex(currentColorIndex, pieceTypeBeforeMove)].SetSquare(startPos);
-
-                sideBitboard[currentColorIndex].ClearSquare(newPos);
-                sideBitboard[currentColorIndex].SetSquare(startPos);
             }
         }
+        pieceBitboards[PieceBitboardIndex(currentColorIndex, movedPieceType)].ClearSquare(newPos);
+        pieceBitboards[PieceBitboardIndex(currentColorIndex, pieceTypeBeforeMove)].SetSquare(startPos);
+
+        sideBitboard[currentColorIndex].ClearSquare(newPos);
+        sideBitboard[currentColorIndex].SetSquare(startPos);
         
-        //sideBitboard[WhiteIndex] = pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(WhiteIndex, Piece.King)];
-        //sideBitboard[BlackIndex] = pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Pawn)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Knight)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Bishop)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Rook)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.Queen)] | pieceBitboards[PieceBitboardIndex(BlackIndex, Piece.King)];
         allPiecesBitboard = sideBitboard[WhiteIndex] | sideBitboard[BlackIndex];
     }
 

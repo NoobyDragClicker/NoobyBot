@@ -191,7 +191,7 @@ public class Perft
                 expectedCaptures++;
             }
             //make.Start();
-            board.MakeMove(moves[i], true);
+            board.MakeMove(moves[i]);
             //make.Stop();
 
             ulong numNodesFromThisPosition = Search(depth - 1, board, testQuiescence, batch);
@@ -223,7 +223,7 @@ public class Perft
 
         for (int i = 0; i < moves.Length; i++)
         {
-            board.MakeMove(moves[i], true);
+            board.MakeMove(moves[i]);
             ulong numMovesForThisNode = SearchDivide(startDepth, currentDepth - 1, board);
             numLocalNodes += numMovesForThisNode;
             board.UndoMove(moves[i]);

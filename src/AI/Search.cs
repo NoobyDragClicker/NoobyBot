@@ -282,7 +282,7 @@ public class Search
             if(depth < 5 && !SEE.EvaluateSEE(board, currentMove, seeMargin)){ continue; }
 
 
-            board.MakeMove(currentMove, true);
+            board.MakeMove(currentMove);
             logger.currentDiagnostics.nodesSearched++;
 
             //Check extension
@@ -414,7 +414,7 @@ public class Search
             //Delta pruning
             if ((standPat + GetCapturedPieceVal(currentMove) + QS_DELTA_PRUNING_MARGIN) < alpha){ continue; }
 
-            board.MakeMove(currentMove, true);
+            board.MakeMove(currentMove);
             logger.currentDiagnostics.nodesSearched++;
             int eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
             board.UndoMove(currentMove);
@@ -488,7 +488,7 @@ public class Search
             {
                 if (!entry.move.isNull())
                 {
-                    board.MakeMove(entry.move, true);
+                    board.MakeMove(entry.move);
                     moveList.Push(entry.move);
                     if (!board.IsSearchDraw())
                     {

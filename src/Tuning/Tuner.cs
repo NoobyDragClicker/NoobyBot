@@ -10,7 +10,7 @@ public class Tuner
     
 
     enum Tunables {
-        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED,
+        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, FRIENDLY_KING_PASSER,
         BISHOP_PAIR, BISHOP_MOBILITY, 
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK,
         KING_OPEN, KING_SHIELD
@@ -23,6 +23,7 @@ public class Tuner
         new TuningInfo(9, false, true),
         new TuningInfo(1, false, true),
         new TuningInfo(1, true, true),
+        new TuningInfo(8, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -59,6 +60,36 @@ public class Tuner
         }
     }
 
+    void PrintParams()
+    {
+        PrintPSQT();
+        Console.WriteLine("Passed pawn");
+        PrintSpan(infos[(int)Tunables.PASSER]);
+        Console.WriteLine("Isolated pawn");
+        PrintSpan(infos[(int)Tunables.ISOLATED]);
+        Console.WriteLine("Doubled pawn");
+        PrintSpan(infos[(int)Tunables.DOUBLED]);
+        Console.WriteLine("Protected pawn");
+        PrintSpan(infos[(int)Tunables.PROTECTED]);
+        Console.WriteLine("Friendly king distance passer");
+        PrintSpan(infos[(int)Tunables.FRIENDLY_KING_PASSER]);
+        Console.WriteLine("Bishop pair");
+        PrintSpan(infos[(int)Tunables.BISHOP_PAIR]);
+        Console.WriteLine("Bishop mobility");
+        PrintSpan(infos[(int)Tunables.BISHOP_MOBILITY]);
+        Console.WriteLine("Rook open file");
+        PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
+        Console.WriteLine("Rook semi open file");
+        PrintSpan(infos[(int)Tunables.ROOK_SEMI_OPEN]);
+        Console.WriteLine("Rook mobility");
+        PrintSpan(infos[(int)Tunables.ROOK_MOBILITY]);
+        Console.WriteLine("Rook king ring attack");
+        PrintSpan(infos[(int)Tunables.ROOK_ATTACK]);
+        Console.WriteLine("King open file");
+        PrintSpan(infos[(int)Tunables.KING_OPEN]);
+        Console.WriteLine("King pawn shield");
+        PrintSpan(infos[(int)Tunables.KING_SHIELD]);
+    }
     public void Tune(string path, int numEpoches, int batchSize)
     {
         LoadData(path);
@@ -146,31 +177,7 @@ public class Tuner
             }
             Console.WriteLine($"Epoch {epoch} complete: Training loss: {CalculateLoss()} Test loss: {CalculateTestLoss()}");
         }
-        PrintPSQT();
-        Console.WriteLine("Passed pawn");
-        PrintSpan(infos[(int)Tunables.PASSER]);
-        Console.WriteLine("Isolated pawn");
-        PrintSpan(infos[(int)Tunables.ISOLATED]);
-        Console.WriteLine("Doubled pawn");
-        PrintSpan(infos[(int)Tunables.DOUBLED]);
-        Console.WriteLine("Protected pawn");
-        PrintSpan(infos[(int)Tunables.PROTECTED]);
-        Console.WriteLine("Bishop pair");
-        PrintSpan(infos[(int)Tunables.BISHOP_PAIR]);
-        Console.WriteLine("Bishop mobility");
-        PrintSpan(infos[(int)Tunables.BISHOP_MOBILITY]);
-        Console.WriteLine("Rook open file");
-        PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
-        Console.WriteLine("Rook semi open file");
-        PrintSpan(infos[(int)Tunables.ROOK_SEMI_OPEN]);
-        Console.WriteLine("Rook mobility");
-        PrintSpan(infos[(int)Tunables.ROOK_MOBILITY]);
-        Console.WriteLine("Rook king ring attack");
-        PrintSpan(infos[(int)Tunables.ROOK_ATTACK]);
-        Console.WriteLine("King open file");
-        PrintSpan(infos[(int)Tunables.KING_OPEN]);
-        Console.WriteLine("King pawn shield");
-        PrintSpan(infos[(int)Tunables.KING_SHIELD]);
+        PrintParams();
     }
 
     Entry[] GetBatch(int batchSize)
@@ -263,6 +270,7 @@ public class Tuner
                     int currentColor = Piece.Color(piece);
                     int currentColorIndex = currentColor == Piece.White ? Board.WhiteIndex : Board.BlackIndex;
                     int oppositeColorIndex = 1 - currentColorIndex;
+                    int ourKing = board.GetPieces(currentColorIndex, Piece.King).GetLSB();
 
                     if(pieceType == Piece.Pawn)
                     {
@@ -271,6 +279,7 @@ public class Tuner
                         //Passed pawn
                         if ((board.GetPieces(oppositeColorIndex, Piece.Pawn) & BitboardHelper.pawnPassedMask[currentColorIndex, index]) == 0) { 
                             AddFeature(infos[(int)Tunables.PASSER].startIndex + relativeIndex, currentColor, features); 
+                            AddFeature(infos[(int)Tunables.FRIENDLY_KING_PASSER].startIndex + Coord.ChebyshevDist(ourKing, index), currentColor, features); 
                         }
                         //Doubled pawn penalty
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }

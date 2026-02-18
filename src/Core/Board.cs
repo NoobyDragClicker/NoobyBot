@@ -65,8 +65,7 @@ public class Board
         int newPiece; //Used for promotions
         int capturedPiece = 0;
 
-        int mgValDifference = 0;
-        int egValDifference = 0;
+        EvalPair evalDiff = new EvalPair();
 
 
         //Set to none 
@@ -140,16 +139,8 @@ public class Board
 
             board[newRookIndex] = rook;
             board[oldRookIndex] = 0;
-            if(colorTurn == Piece.White)
-            {
-                mgValDifference += Evaluation.mg_PSQT[Piece.Rook, newRookIndex] - Evaluation.mg_PSQT[Piece.Rook, oldRookIndex];
-                egValDifference += Evaluation.eg_PSQT[Piece.Rook, newRookIndex] - Evaluation.eg_PSQT[Piece.Rook, oldRookIndex];
-            }
-            else
-            {
-                mgValDifference -= Evaluation.mg_PSQT[Piece.Rook, newRookIndex ^ 56] - Evaluation.mg_PSQT[Piece.Rook, oldRookIndex ^ 56];
-                egValDifference -= Evaluation.eg_PSQT[Piece.Rook, newRookIndex ^ 56] - Evaluation.eg_PSQT[Piece.Rook, oldRookIndex ^ 56];
-            }
+            if(colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[Piece.Rook, newRookIndex] - Evaluation.PSQT[Piece.Rook, oldRookIndex]; }
+            else { evalDiff -= Evaluation.PSQT[Piece.Rook, newRookIndex ^ 56] - Evaluation.PSQT[Piece.Rook, oldRookIndex ^ 56]; }
 
             zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, oldRookIndex];
             zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, newRookIndex];
@@ -164,16 +155,8 @@ public class Board
             pieceBitboards[PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)].ClearSquare(attackedPawnIndex);
             sideBitboard[oppositeColorIndex].ClearSquare(attackedPawnIndex);
 
-            if(colorTurn == Piece.White)
-            {
-                mgValDifference += Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex ^ 56];
-                egValDifference += Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex ^ 56];
-            }
-            else
-            {
-                mgValDifference -= Evaluation.mg_PSQT[Piece.Pawn, attackedPawnIndex];
-                egValDifference -= Evaluation.eg_PSQT[Piece.Pawn, attackedPawnIndex];
-            }
+            if(colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[Piece.Pawn, attackedPawnIndex ^ 56]; }
+            else { evalDiff -= Evaluation.PSQT[Piece.Pawn, attackedPawnIndex];}
 
             zobristKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
 
@@ -242,16 +225,8 @@ public class Board
                     }
                 }
 
-                if(colorTurn == Piece.White)
-                {
-                    mgValDifference += Evaluation.mg_PSQT[capturedPieceType, newPos ^ 56];
-                    egValDifference += Evaluation.eg_PSQT[capturedPieceType, newPos ^ 56];
-                }
-                else
-                {
-                    mgValDifference -= Evaluation.mg_PSQT[capturedPieceType, newPos];
-                    egValDifference -= Evaluation.eg_PSQT[capturedPieceType, newPos];
-                }
+                if(colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[capturedPieceType, newPos ^ 56]; }
+                else { evalDiff -= Evaluation.PSQT[capturedPieceType, newPos]; }
 
                 if (capturedPieceType == Piece.King)
                 {
@@ -277,16 +252,8 @@ public class Board
         board[newPos] = newPiece;
         board[startPos] = 0;
 
-        if (colorTurn == Piece.White)
-        {
-            mgValDifference += Evaluation.mg_PSQT[newPieceType, newPos] - Evaluation.mg_PSQT[movedPieceType, startPos];
-            egValDifference += Evaluation.eg_PSQT[newPieceType, newPos] - Evaluation.eg_PSQT[movedPieceType, startPos];
-        }
-        else
-        {
-            mgValDifference -= Evaluation.mg_PSQT[newPieceType, newPos ^ 56] - Evaluation.mg_PSQT[movedPieceType, startPos ^ 56];
-            egValDifference -= Evaluation.eg_PSQT[newPieceType, newPos ^ 56] - Evaluation.eg_PSQT[movedPieceType, startPos ^ 56];
-        }
+        if (colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[newPieceType, newPos] - Evaluation.PSQT[movedPieceType, startPos]; }
+        else { evalDiff -= Evaluation.PSQT[newPieceType, newPos ^ 56] - Evaluation.PSQT[movedPieceType, startPos ^ 56]; }
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
 
@@ -298,8 +265,7 @@ public class Board
         gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
         gameStateHistory[fullMoveClock].castlingRights = castlingRights;
         gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
-        gameStateHistory[fullMoveClock].mgPSQTVal = gameStateHistory[fullMoveClock - 1].mgPSQTVal + mgValDifference;
-        gameStateHistory[fullMoveClock].egPSQTVal = gameStateHistory[fullMoveClock - 1].egPSQTVal + egValDifference;
+        gameStateHistory[fullMoveClock].PSQTVal = gameStateHistory[fullMoveClock - 1].PSQTVal + evalDiff;
         //Moving friendly piece
         zobristKey ^= Zobrist.piecesArray[movedPieceType, currentColorIndex, startPos];
         zobristKey ^= Zobrist.piecesArray[newPieceType, currentColorIndex, newPos];
@@ -487,8 +453,7 @@ public class Board
         gameStateHistory[fullMoveClock].isCurrentPlayerInDoubleCheck = false;
         gameStateHistory[fullMoveClock].isMoveGenUpdated = false;
         gameStateHistory[fullMoveClock].castlingRights = gameStateHistory[fullMoveClock - 1].castlingRights;
-        gameStateHistory[fullMoveClock].mgPSQTVal = gameStateHistory[fullMoveClock - 1].mgPSQTVal;
-        gameStateHistory[fullMoveClock].egPSQTVal = gameStateHistory[fullMoveClock - 1].egPSQTVal;
+        gameStateHistory[fullMoveClock].PSQTVal = gameStateHistory[fullMoveClock - 1].PSQTVal;
 
         enPassantIndex = -1;
 
@@ -542,8 +507,7 @@ public class Board
         //Part denoting position of each piece
         string posString = fenComponents[0];
         int index = 0;
-        int mgVal = 0;
-        int egVal = 0;
+        EvalPair PSQTVal = new EvalPair();
         foreach (char c in posString)
         {
             if (c == '/')
@@ -566,13 +530,11 @@ public class Board
 
                     if(pieceColour == Piece.White)
                     {
-                        mgVal += Evaluation.mg_PSQT[pieceType, index];
-                        egVal += Evaluation.eg_PSQT[pieceType, index];
+                        PSQTVal += Evaluation.PSQT[pieceType, index];
                     }
                     else
                     {
-                        mgVal -= Evaluation.mg_PSQT[pieceType, index ^ 56];
-                        egVal -= Evaluation.eg_PSQT[pieceType, index ^ 56];
+                        PSQTVal -= Evaluation.PSQT[pieceType, index ^ 56];
                     }
 
                     index++;
@@ -639,8 +601,7 @@ public class Board
         gameStateHistory[fullMoveClock].castlingRights = castlingRights;
         gameStateHistory[fullMoveClock].enPassantFile = 0;
         gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
-        gameStateHistory[fullMoveClock].mgPSQTVal = mgVal;
-        gameStateHistory[fullMoveClock].egPSQTVal = egVal;
+        gameStateHistory[fullMoveClock].PSQTVal = PSQTVal;
         return position;
     }
 
@@ -884,6 +845,5 @@ public struct GameState {
     public bool isInCheck;
     public bool isMoveGenUpdated;
     public bool isCurrentPlayerInDoubleCheck;
-    public int mgPSQTVal;
-    public int egPSQTVal;
+    public EvalPair PSQTVal;
 }

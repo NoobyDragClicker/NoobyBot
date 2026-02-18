@@ -64,34 +64,20 @@ public class Tuner
     void PrintParams()
     {
         PrintPSQT();
-        Console.WriteLine("Passed pawn");
-        PrintSpan(infos[(int)Tunables.PASSER]);
-        Console.WriteLine("Isolated pawn");
-        PrintSpan(infos[(int)Tunables.ISOLATED]);
-        Console.WriteLine("Doubled pawn");
-        PrintSpan(infos[(int)Tunables.DOUBLED]);
-        Console.WriteLine("Protected pawn");
-        PrintSpan(infos[(int)Tunables.PROTECTED]);
-        Console.WriteLine("Friendly king distance passer");
-        PrintSpan(infos[(int)Tunables.FRIENDLY_KING_PASSER]);
-        Console.WriteLine("Enemy king distance passer");
-        PrintSpan(infos[(int)Tunables.ENEMY_KING_PASSER]);
-        Console.WriteLine("Bishop pair");
-        PrintSpan(infos[(int)Tunables.BISHOP_PAIR]);
-        Console.WriteLine("Bishop mobility");
-        PrintSpan(infos[(int)Tunables.BISHOP_MOBILITY]);
-        Console.WriteLine("Rook open file");
-        PrintSpan(infos[(int)Tunables.ROOK_OPEN]);
-        Console.WriteLine("Rook semi open file");
-        PrintSpan(infos[(int)Tunables.ROOK_SEMI_OPEN]);
-        Console.WriteLine("Rook mobility");
-        PrintSpan(infos[(int)Tunables.ROOK_MOBILITY]);
-        Console.WriteLine("Rook king ring attack");
-        PrintSpan(infos[(int)Tunables.ROOK_ATTACK]);
-        Console.WriteLine("King open file");
-        PrintSpan(infos[(int)Tunables.KING_OPEN]);
-        Console.WriteLine("King pawn shield");
-        PrintSpan(infos[(int)Tunables.KING_SHIELD]);
+        PrintSpan(infos[(int)Tunables.PASSER], "passedPawnBonuses");
+        PrintSpan(infos[(int)Tunables.ISOLATED], "isolatedPawnPenalty");
+        PrintSpan(infos[(int)Tunables.DOUBLED], "doubledPawnPenalty");
+        PrintSpan(infos[(int)Tunables.PROTECTED], "protectedPawn");
+        PrintSpan(infos[(int)Tunables.FRIENDLY_KING_PASSER], "friendlyKingDistPasser");
+        PrintSpan(infos[(int)Tunables.ENEMY_KING_PASSER], "enemyKingDistPasser");
+        PrintSpan(infos[(int)Tunables.BISHOP_PAIR], "bishopPairBonus");
+        PrintSpan(infos[(int)Tunables.BISHOP_MOBILITY], "bishopMobility");
+        PrintSpan(infos[(int)Tunables.ROOK_OPEN], "rookOpenFile");
+        PrintSpan(infos[(int)Tunables.ROOK_SEMI_OPEN], "rookSemiOpenFile");
+        PrintSpan(infos[(int)Tunables.ROOK_MOBILITY], "rookMobility");
+        PrintSpan(infos[(int)Tunables.ROOK_ATTACK], "rookKingRingAttack");
+        PrintSpan(infos[(int)Tunables.KING_OPEN], "kingOpenFile");
+        PrintSpan(infos[(int)Tunables.KING_SHIELD], "kingPawnShield");
     }
     public void Tune(string path, int numEpoches, int batchSize)
     {
@@ -183,16 +169,6 @@ public class Tuner
         PrintParams();
     }
 
-    Entry[] GetBatch(int batchSize)
-    {
-        Entry[] batch = new Entry[batchSize];
-        for(int index = 0; index < batchSize; index++)
-        {
-            batch[index] = entries[rng.Next(0, entries.Length - 1)];
-        }
-        return batch;   
-    }
-
     //Gets the current evaluation of a position
     float Evaluate(Entry entry)
     {
@@ -205,24 +181,7 @@ public class Tuner
         }
         return eval;
     }
-
-
-    float Sigmoid(float x) {
-        return 1.0f / (1.0f + (float)Math.Exp(-x / K));
-    }
-
-    void LoadData(string path)
-    {
-        string[] rawData = File.ReadAllLines(path);
-        data = new (string, double)[rawData.Length];
-        for (int index = 0; index < rawData.Length; index++)
-        {
-            string[] split = rawData[index].Split("[");
-            data[index].Item1 = split[0];
-            data[index].Item2 = split[1].Contains("1.0") ? 1.0 : split[1].Contains("0.5") ? 0.5 : 0.0;
-        }
-    }
-
+    
     void ConvertEntries()
     {
         Board board = new Board();
@@ -386,50 +345,76 @@ public class Tuner
         }
     }
 
+    void LoadData(string path)
+    {
+        string[] rawData = File.ReadAllLines(path);
+        data = new (string, double)[rawData.Length];
+        for (int index = 0; index < rawData.Length; index++)
+        {
+            string[] split = rawData[index].Split("[");
+            data[index].Item1 = split[0];
+            data[index].Item2 = split[1].Contains("1.0") ? 1.0 : split[1].Contains("0.5") ? 0.5 : 0.0;
+        }
+    }
+
+    Entry[] GetBatch(int batchSize)
+    {
+        Entry[] batch = new Entry[batchSize];
+        for(int index = 0; index < batchSize; index++)
+        {
+            batch[index] = entries[rng.Next(0, entries.Length - 1)];
+        }
+        return batch;   
+    }
+
     int PSQTIndex(int pieceType, int index)
     {
         pieceType--;
         return (pieceType * 64) + index;
     }
 
+    float Sigmoid(float x) {
+        return 1.0f / (1.0f + (float)Math.Exp(-x / K));
+    }
 
     void PrintPSQT()
     {
-        string mg = "mg: {";
-        string eg = "eg: {";
+        string msg = "public static EvalPair[,] PSQT = {\n";
+        msg += "{\n(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), \n(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), \n(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), \n(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), \n (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), \n(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), \n (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), \n(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0) \n},\n{\n";
         int index = 0;
         for(int pieceNum = 0; pieceNum < 6; pieceNum++)
         {
             for(int i = 0; i < 64; i++)
             {
-                mg += Math.Round(weights[index].mg.weight);
-                eg += Math.Round(weights[index].eg.weight);
+                msg += $"({Math.Round(weights[index].mg.weight)}, {Math.Round(weights[index].eg.weight)})";
                 index++;
-                if(i != 63) {mg += ", "; eg += ", ";}
+                if(i != 63) {
+                    msg += ", ";
+                    if((i + 1) % 8 == 0){msg += "\n";}
+                }
+                else
+                {
+                    msg += "\n";
+                }
             }
-            mg += "}";
-            eg += "}";
-            if(pieceNum != 5){ mg += ", \n{"; eg += ", \n{"; }
+            msg += " }";
+            if(pieceNum != 5){ msg += ", \n{\n ";}
         }
-        Console.WriteLine(mg);
-        Console.WriteLine(eg);
+        msg += "\n};";
+        Console.WriteLine(msg);
     }
 
-    void PrintSpan(TuningInfo info)
+    void PrintSpan(TuningInfo info, string varName)
     {
-        if(info.length == 1){ Console.WriteLine($"({Math.Round(weights[info.startIndex].mg.weight)}, {Math.Round(weights[info.startIndex].eg.weight)})"); return;}
-        string mg = "{";
-        string eg = "{";
+        if(info.length == 1){ Console.WriteLine($"public static EvalPair {varName} = ({Math.Round(weights[info.startIndex].mg.weight)}, {Math.Round(weights[info.startIndex].eg.weight)});"); return;}
+        string msg = $"public static EvalPair[] {varName} = " + "{";
         for(int index = info.startIndex; index < info.startIndex + info.length; index++)
         {
-            mg += Math.Round(weights[index].mg.weight);
-            eg += Math.Round(weights[index].eg.weight);
-            if(index != info.startIndex + info.length - 1){ mg += ", "; eg += ", "; }
+            msg += $"({Math.Round(weights[index].mg.weight)}, {Math.Round(weights[index].eg.weight)})";
+            if(index != info.startIndex + info.length - 1){ msg += ", "; }
         }
-        mg += "}, ";
-        eg += "}";
-        Console.WriteLine(mg);
-        Console.WriteLine(eg);
+        msg += "};";
+        Console.WriteLine(msg);
     }
 
     void AddFeature(int key, int color, Dictionary<int, int> features)

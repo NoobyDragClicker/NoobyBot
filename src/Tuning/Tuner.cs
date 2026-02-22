@@ -21,7 +21,7 @@ public class Tuner
         new TuningInfo(64*6, true, true),
         new TuningInfo(64, true, true),
         new TuningInfo(9, false, true),
-        new TuningInfo(1, true, true),
+        new TuningInfo(4, true, true),
         new TuningInfo(1, false, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -253,7 +253,7 @@ public class Tuner
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
                         if ((BitboardHelper.isolatedPawnMask[index] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()) { 
                             isolatedPawnCount[currentColorIndex]++; 
-                            AddFeature(infos[(int)Tunables.ISOLATED].startIndex, currentColor, features);
+                            AddFeature(infos[(int)Tunables.ISOLATED].startIndex + Coord.DistToEdge(index), currentColor, features);
                             if((stoppers & BitboardHelper.files[index%8]).Empty())
                             {
                                 AddFeature(infos[(int)Tunables.ISOLATED_EXPOSED].startIndex, currentColor, features);

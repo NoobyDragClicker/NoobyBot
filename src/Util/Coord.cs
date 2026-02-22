@@ -44,6 +44,12 @@ public static class Coord
         return start + "" + end + promotion;
     }
 
+    public static int DistToEdge(int index)
+    {
+        int file = index % 8;
+        return Math.Min(file, file ^ 7);
+    }
+
     public static int ChebyshevDist(int squareA, int squareB)
     {
         int rankDist = Math.Abs(IndexToRank(squareA) - IndexToRank(squareB));

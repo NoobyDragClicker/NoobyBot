@@ -10,8 +10,8 @@ public class Tuner
     
 
     enum Tunables {
-        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, FRIENDLY_KING_PASSER, ENEMY_KING_PASSER,
-        BISHOP_PAIR, BISHOP_MOBILITY, 
+        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED,
+        FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, 
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK,
         KING_OPEN, KING_SHIELD
     };
@@ -22,6 +22,7 @@ public class Tuner
         new TuningInfo(64, true, true),
         new TuningInfo(9, false, true),
         new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(8, true, true),
         new TuningInfo(8, true, true),
@@ -68,6 +69,7 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.ISOLATED], "isolatedPawnPenalty");
         PrintSpan(infos[(int)Tunables.DOUBLED], "doubledPawnPenalty");
         PrintSpan(infos[(int)Tunables.PROTECTED], "protectedPawn");
+        PrintSpan(infos[(int)Tunables.ISOLATED_EXPOSED], "isolatedExposed");
         PrintSpan(infos[(int)Tunables.FRIENDLY_KING_PASSER], "friendlyKingDistPasser");
         PrintSpan(infos[(int)Tunables.ENEMY_KING_PASSER], "enemyKingDistPasser");
         PrintSpan(infos[(int)Tunables.BISHOP_PAIR], "bishopPairBonus");
@@ -238,16 +240,22 @@ public class Tuner
                     if(pieceType == Piece.Pawn)
                     {
                         int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;
-
+                        Bitboard stoppers = board.GetPieces(oppositeColorIndex, Piece.Pawn) & BitboardHelper.pawnPassedMask[currentColorIndex, index];
                         //Passed pawn
-                        if ((board.GetPieces(oppositeColorIndex, Piece.Pawn) & BitboardHelper.pawnPassedMask[currentColorIndex, index]) == 0) { 
+                        if (stoppers.Empty()) { 
                             AddFeature(infos[(int)Tunables.PASSER].startIndex + relativeIndex, currentColor, features); 
                             AddFeature(infos[(int)Tunables.FRIENDLY_KING_PASSER].startIndex + Coord.ChebyshevDist(ourKing, index), currentColor, features); 
                             AddFeature(infos[(int)Tunables.ENEMY_KING_PASSER].startIndex + Coord.ChebyshevDist(theirKing, index), currentColor, features); 
                         }
                         //Doubled pawn penalty
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
-                        if ((BitboardHelper.isolatedPawnMask[index] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()) { isolatedPawnCount[currentColorIndex]++; }
+                        if ((BitboardHelper.isolatedPawnMask[index] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()) { 
+                            isolatedPawnCount[currentColorIndex]++; 
+                            if((stoppers & BitboardHelper.files[index%8]).Empty())
+                            {
+                                AddFeature(infos[(int)Tunables.ISOLATED_EXPOSED].startIndex, currentColor, features);
+                            }
+                        }
                     } 
                     else if(pieceType == Piece.Rook)
                     {

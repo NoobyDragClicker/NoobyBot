@@ -10,7 +10,7 @@ public class Tuner
     
 
     enum Tunables {
-        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED,
+        PSQT, PASSER, ISOLATED_COUNT, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED,
         FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, 
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK,
         KING_OPEN, KING_SHIELD
@@ -21,6 +21,7 @@ public class Tuner
         new TuningInfo(64*6, true, true),
         new TuningInfo(64, true, true),
         new TuningInfo(9, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, false, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -66,6 +67,7 @@ public class Tuner
     {
         PrintPSQT();
         PrintSpan(infos[(int)Tunables.PASSER], "passedPawnBonuses");
+        PrintSpan(infos[(int)Tunables.ISOLATED_COUNT], "isolatedPawnCounts");
         PrintSpan(infos[(int)Tunables.ISOLATED], "isolatedPawnPenalty");
         PrintSpan(infos[(int)Tunables.DOUBLED], "doubledPawnPenalty");
         PrintSpan(infos[(int)Tunables.PROTECTED], "protectedPawn");
@@ -251,6 +253,7 @@ public class Tuner
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
                         if ((BitboardHelper.isolatedPawnMask[index] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()) { 
                             isolatedPawnCount[currentColorIndex]++; 
+                            AddFeature(infos[(int)Tunables.ISOLATED].startIndex, currentColor, features);
                             if((stoppers & BitboardHelper.files[index%8]).Empty())
                             {
                                 AddFeature(infos[(int)Tunables.ISOLATED_EXPOSED].startIndex, currentColor, features);
@@ -309,8 +312,8 @@ public class Tuner
             AddMultipleFeatures(infos[(int)Tunables.PROTECTED].startIndex, Piece.Black, features, blackDefended);
             
             //Isolated pawns
-            AddFeature(infos[(int)Tunables.ISOLATED].startIndex + isolatedPawnCount[Board.BlackIndex], Piece.Black, features);
-            AddFeature(infos[(int)Tunables.ISOLATED].startIndex + isolatedPawnCount[Board.WhiteIndex], Piece.White, features);
+            AddFeature(infos[(int)Tunables.ISOLATED_COUNT].startIndex + isolatedPawnCount[Board.BlackIndex], Piece.Black, features);
+            AddFeature(infos[(int)Tunables.ISOLATED_COUNT].startIndex + isolatedPawnCount[Board.WhiteIndex], Piece.White, features);
 
             //Bishop Pair
             if(board.pieceCounts[Board.WhiteIndex, Piece.Bishop] >= 2)

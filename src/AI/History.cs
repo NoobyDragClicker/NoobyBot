@@ -32,6 +32,16 @@ public class History
             ApplyContHistBonus(move, bonus);
         }
     }
+    public void UpdateQuietHistories(Move move, int depth)
+    {
+        int bonus = HISTORY_MULTIPLE * depth - HISTORY_SUB;
+        ApplyHistoryBonus(move, bonus);
+
+        if(board.fullMoveClock > 0)
+        {
+            ApplyContHistBonus(move, bonus);
+        }
+    }
 
     public void ApplyQuietPenalties(ref Span<Move> moves, int startNum, int depth)
     {

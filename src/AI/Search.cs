@@ -170,7 +170,7 @@ public class Search
                 {
                     if(ttScore >= beta && !ttMove.isCapture())
                     {
-                        history.UpdateQuietTables(ttMove, ttInfo.depth);
+                        history.UpdateQuietHistories(ttMove, ttInfo.depth);
                     }
                     if (plyFromRoot == 0)
                     {

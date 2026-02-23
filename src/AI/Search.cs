@@ -161,7 +161,7 @@ public class Search
             ttHit = true;
             ttScore = tt.RetrieveEval(ttInfo.eval, plyFromRoot);
             ttMove = ttInfo.move;
-            if (ttInfo.depth >= depth)
+            if (ttInfo.depth >= depth && !isPV)
             {
                 //The exact eval
                 if (ttInfo.nodeType == TranspositionTable.Exact 

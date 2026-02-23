@@ -168,6 +168,10 @@ public class Search
                     || (ttInfo.nodeType == TranspositionTable.UpperBound && ttScore <= alpha) 
                     || (ttInfo.nodeType == TranspositionTable.LowerBound && ttScore >= beta))
                 {
+                    if(ttScore >= beta && !ttMove.isCapture())
+                    {
+                        history.UpdateQuietTables(ttMove, ttInfo.depth);
+                    }
                     if (plyFromRoot == 0)
                     {
                         bestMoveThisIteration = ttMove;

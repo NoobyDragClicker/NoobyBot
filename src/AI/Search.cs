@@ -156,7 +156,7 @@ public class Search
         int ttScore = 0;
         bool ttHit = false;
 
-        if(ttInfo.nodeType != 3)
+        if(ttInfo.nodeType != 3 && !isPV)
         {
             ttHit = true;
             ttScore = tt.RetrieveEval(ttInfo.eval, plyFromRoot);

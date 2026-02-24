@@ -1,4 +1,5 @@
-using System.Transactions;
+using System.Runtime.Intrinsics.X86;
+
 
 public class TranspositionTable
 {
@@ -22,6 +23,17 @@ public class TranspositionTable
         ulong numEntries = desiredTableSizeInBytes / (ulong)ttEntrySizeBytes;
         count = (ulong)numEntries;
         entries = new Bucket[numEntries];
+    }
+
+    public unsafe void PrefetchBucket()
+    {
+        if (Sse.IsSupported)
+        {
+            fixed (Bucket* ptr = &entries[Index])
+            {
+                Sse.Prefetch0(ptr);
+            }
+        }
     }
 
     public Entry LookupEvaluation()

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -287,6 +288,7 @@ public class Search
 
 
             board.MakeMove(currentMove);
+            tt.PrefetchBucket();
             logger.currentDiagnostics.nodesSearched++;
 
             //Check extension

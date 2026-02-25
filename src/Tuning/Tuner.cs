@@ -20,7 +20,7 @@ public class Tuner
     {
         new TuningInfo(64*6, true, true),
         new TuningInfo(64, true, true),
-        new TuningInfo(9, false, true),
+        new TuningInfo(9, true, true),
         new TuningInfo(1, false, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),

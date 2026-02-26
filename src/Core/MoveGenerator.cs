@@ -219,16 +219,12 @@ public static class MoveGenerator
     }
     public static int GenerateKnightMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
-        Bitboard knights = board.GetPieces(board.currentColorIndex, Piece.Knight);
-
-        Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
-        Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
+        Bitboard knights = board.GetPieces(board.currentColorIndex, Piece.Knight)  & ~(board.gameStateHistory[board.fullMoveClock].diagPins | board.gameStateHistory[board.fullMoveClock].straightPins);
         Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
 
         while (!knights.Empty())
         {
             int index = knights.PopLSB();
-            if (diagPins.ContainsSquare(index) | straightPins.ContainsSquare(index)){ continue; }
             Bitboard attackedSquares = BitboardHelper.knightAttacks[index] & ~board.sideBitboard[board.currentColorIndex];
             
             if (board.gameStateHistory[board.fullMoveClock].isInCheck) { attackedSquares &= checkIndexes; }
@@ -254,22 +250,19 @@ public static class MoveGenerator
     }
     public static int GenerateBishopMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly = false)
     {
-        Bitboard bishops = board.GetPieces(board.currentColorIndex, Piece.Bishop) | board.GetPieces(board.currentColorIndex, Piece.Queen);
+        Bitboard bishops = (board.GetPieces(board.currentColorIndex, Piece.Bishop) | board.GetPieces(board.currentColorIndex, Piece.Queen)) & ~board.gameStateHistory[board.fullMoveClock].straightPins;
         Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
-        Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
         Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
 
         while (!bishops.Empty())
         {
             int index = bishops.PopLSB();
             Bitboard attackedSquares = BitboardHelper.GetBishopAttacks(index, board.allPiecesBitboard) & ~board.sideBitboard[board.currentColorIndex];
-            if (straightPins.ContainsSquare(index)) { continue; }
-            else if (diagPins.ContainsSquare(index)){ attackedSquares &= diagPins; }
+            if (diagPins.ContainsSquare(index)){ attackedSquares &= diagPins; }
 
             if (board.gameStateHistory[board.fullMoveClock].isInCheck) { attackedSquares &= checkIndexes; }
 
             Bitboard captures = attackedSquares & board.sideBitboard[board.oppositeColorIndex];
-            attackedSquares &= ~board.sideBitboard[board.oppositeColorIndex];
 
             while (!captures.Empty())
             {
@@ -279,6 +272,7 @@ public static class MoveGenerator
 
             if (!isCapturesOnly)
             {
+                attackedSquares &= ~board.sideBitboard[board.oppositeColorIndex];
                 while (!attackedSquares.Empty())
                 {
                     int newIndex = attackedSquares.PopLSB();
@@ -289,8 +283,7 @@ public static class MoveGenerator
         return currMoveIndex;
     }
     public static int GenerateRookMoves(Span<Move> legalMoves, int currMoveIndex, Board board, bool isCapturesOnly=false){
-        Bitboard rooks = board.GetPieces(board.currentColorIndex, Piece.Rook) | board.GetPieces(board.currentColorIndex, Piece.Queen);
-        Bitboard diagPins = board.gameStateHistory[board.fullMoveClock].diagPins;
+        Bitboard rooks = (board.GetPieces(board.currentColorIndex, Piece.Rook) | board.GetPieces(board.currentColorIndex, Piece.Queen)) & ~board.gameStateHistory[board.fullMoveClock].diagPins;
         Bitboard straightPins = board.gameStateHistory[board.fullMoveClock].straightPins;
         Bitboard checkIndexes = board.gameStateHistory[board.fullMoveClock].checkIndexes;
 
@@ -298,12 +291,11 @@ public static class MoveGenerator
         {
             int index = rooks.PopLSB();
             Bitboard attackedSquares = BitboardHelper.GetRookAttacks(index, board.allPiecesBitboard) & ~board.sideBitboard[board.currentColorIndex];
-            if (diagPins.ContainsSquare(index)) { continue; }
-            else if (straightPins.ContainsSquare(index)){ attackedSquares &= straightPins; }
+            if (straightPins.ContainsSquare(index)){ attackedSquares &= straightPins; }
             if (board.gameStateHistory[board.fullMoveClock].isInCheck){ attackedSquares &= checkIndexes; }
 
             Bitboard captures = attackedSquares & board.sideBitboard[board.oppositeColorIndex];
-            attackedSquares &= ~board.sideBitboard[board.oppositeColorIndex];
+            
 
             while (!captures.Empty())
             {
@@ -313,6 +305,7 @@ public static class MoveGenerator
 
             if (!isCapturesOnly)
             {
+                attackedSquares &= ~board.sideBitboard[board.oppositeColorIndex];
                 while (!attackedSquares.Empty())
                 {
                     int newIndex = attackedSquares.PopLSB();

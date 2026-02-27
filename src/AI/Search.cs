@@ -38,6 +38,8 @@ public class Search
     const int RFP_MARGIN = 150;
     const int RFP_IMPROVING_MARGIN = 100;
     const int FP_MARGIN = 150;
+    const int LMP_HISTORY_DIVISOR = 64;
+    const int MAX_LMP_HISTORY = 6;
     const int HISTORY_MARGIN = -3000;
     const int LMR_IMPROVING = 512;
     const int LMR_HISTORY_DIVISOR = 16;
@@ -277,7 +279,12 @@ public class Search
                 //Futility pruning
                 if (depth < 4 && (staticEval + (FP_MARGIN * depth)) < alpha) { continue; }
                 //Late Move pruning
-                if(moveNum > 10 + depth * depth ){ continue; }
+                int lmpThreshold = 10 + depth * depth;
+                int histAdj = moveHistory / LMP_HISTORY_DIVISOR;
+                histAdj = Math.Clamp(histAdj, -MAX_LMP_HISTORY, MAX_LMP_HISTORY);
+                lmpThreshold += histAdj;
+                //Late Move pruning
+                if(moveNum > lmpThreshold){ continue; }
                 //History pruning
                 if(depth <= 4 && moveHistory < HISTORY_MARGIN * depth){ continue; }
             }

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
-
+using System.Runtime.CompilerServices;
 public static class BitboardHelper
 {
     public static readonly Bitboard FILE_1 = 0x0101010101010101;
@@ -121,11 +121,13 @@ public static class BitboardHelper
         return bitboard;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Bitboard GetRookAttacks(int square, Bitboard pieceBitboards)
     {
         ulong key = ((pieceBitboards & rookMasks[square]) * Magics.rookMagics[square]) >> Magics.rookShifts[square];
         return rookAttacks[square][key];
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Bitboard GetBishopAttacks(int square, Bitboard pieceBitboards)
     {
         ulong key = ((pieceBitboards & bishopMasks[square]) * Magics.bishopMagics[square]) >> Magics.bishopShifts[square];

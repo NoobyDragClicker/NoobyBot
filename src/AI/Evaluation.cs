@@ -1,8 +1,4 @@
-using System;
-using System.Drawing;
-using System.Linq.Expressions;
-using System.Net.Security;
-
+using System.Runtime.CompilerServices;
 public class Evaluation
 {
 
@@ -308,6 +304,7 @@ public struct EvalPair
     }
     public static implicit operator EvalPair((int mg, int eg) value)=> new EvalPair(value.mg, value.eg);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static EvalPair operator +(EvalPair a, EvalPair b)
     {
         return new EvalPair
@@ -316,6 +313,7 @@ public struct EvalPair
             eg = a.eg + b.eg
         };
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static EvalPair operator -(EvalPair a, EvalPair b)
     {
         return new EvalPair

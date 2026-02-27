@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 
 public static class MoveGenerator
@@ -441,15 +442,12 @@ public static class MoveGenerator
         int kingIndex = GetKingIndex(colorTurn, board);
 
         Bitboard straightAttackers = board.GetPieces(board.oppositeColorIndex, Piece.Rook) | board.GetPieces(board.oppositeColorIndex, Piece.Queen);
-        Bitboard diagAttackers = board.GetPieces(board.oppositeColorIndex, Piece.Bishop) | board.GetPieces(board.oppositeColorIndex, Piece.Queen);
-
-        //Any piece that can block that check, excludes the sliding pieces that would be checking
-        Bitboard straightBlockers = (board.sideBitboard[board.oppositeColorIndex] | board.sideBitboard[board.currentColorIndex]) & ~straightAttackers;
-        Bitboard diagBlockers = (board.sideBitboard[board.oppositeColorIndex] | board.sideBitboard[board.currentColorIndex]) & ~diagAttackers;
-
+        Bitboard straightBlockers = board.allPiecesBitboard & ~straightAttackers;
         Bitboard straightCheckers = straightAttackers & BitboardHelper.GetRookAttacks(kingIndex, straightBlockers);
         if (!straightCheckers.Empty()) { return true; }
 
+        Bitboard diagAttackers = board.GetPieces(board.oppositeColorIndex, Piece.Bishop) | board.GetPieces(board.oppositeColorIndex, Piece.Queen);
+        Bitboard diagBlockers = board.allPiecesBitboard & ~diagAttackers;
         Bitboard diagonalCheckers = diagAttackers & BitboardHelper.GetBishopAttacks(kingIndex, diagBlockers);
         if (!diagonalCheckers.Empty()) { return true; }
 
@@ -463,6 +461,7 @@ public static class MoveGenerator
         if (!pawnCheck.Empty()) { return true; }
         return false;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetKingIndex(int kingColor, Board board)
     {
         int colorIndex = (kingColor == Piece.White) ? Board.WhiteIndex : Board.BlackIndex;

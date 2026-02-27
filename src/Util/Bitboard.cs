@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 public struct Bitboard : IEquatable<Bitboard>
 {
     private ulong _value;
@@ -10,8 +11,10 @@ public struct Bitboard : IEquatable<Bitboard>
 
     public static Bitboard FromSquare(int sq) => new Bitboard(1UL << sq);
     public void Clear() => _value = 0;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Empty() => _value == 0;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Count()
     {
         ulong temp = _value;
@@ -24,6 +27,7 @@ public struct Bitboard : IEquatable<Bitboard>
         return count;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int PopCount()
     {
         int count = 0;
@@ -35,42 +39,53 @@ public struct Bitboard : IEquatable<Bitboard>
         return count;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int PopLSB()
     {
         int i = BitOperations.TrailingZeroCount(_value);
         _value &= _value - 1;
         return i;
     }
-    
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]   
     public int GetLSB()
     {
         return BitOperations.TrailingZeroCount(_value);
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSquare(int sq)
     {
         _value |= 1ul << sq;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ClearSquare(int sq)
     {
         _value &= ~(1ul << sq);
     }
-    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ContainsSquare(int square)
     {
         return ((_value >> square) & 1) != 0;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator ulong(Bitboard b) => b._value;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Bitboard(ulong v) => new Bitboard(v);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(Bitboard a, Bitboard b) => a._value == b._value;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(Bitboard a, Bitboard b) => a._value != b._value;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Bitboard operator <<(Bitboard bb, int other) => new Bitboard(bb._value << other);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Bitboard operator >>(Bitboard bb, int other) => new Bitboard(bb._value >> other);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Bitboard operator &(Bitboard a, Bitboard b) => new Bitboard(a._value & b._value);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Bitboard operator |(Bitboard a, Bitboard b) => new Bitboard(a._value | b._value);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Bitboard operator ^(Bitboard a, Bitboard b) => new Bitboard(a._value ^ b._value);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Bitboard operator ~(Bitboard bb) => new Bitboard(~bb._value);
     public bool Equals(Bitboard other) => _value == other._value;
     public override bool Equals(object? obj)=> obj is Bitboard other && Equals(other);

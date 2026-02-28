@@ -279,7 +279,7 @@ public class Search
                 //Futility pruning
                 if (depth < 4 && (staticEval + (FP_MARGIN * depth)) < alpha) { continue; }
                 //Late Move pruning
-                int lmpThreshold = 10 + depth * depth;
+                int lmpThreshold = 10 + depth * depth * (isImproving ? 2 : 1);
                 int histAdj = moveHistory / LMP_HISTORY_DIVISOR;
                 histAdj = Math.Clamp(histAdj, -MAX_LMP_HISTORY, MAX_LMP_HISTORY);
                 lmpThreshold += histAdj;

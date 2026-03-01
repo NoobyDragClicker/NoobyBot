@@ -9,26 +9,22 @@ public class AIPlayer : Player
     AISettings aiSettings;
 
     public Search search;
-    public SearchLogger logger;
-    public SearchDiagnostics currentDiagnostics;
-
     public TimeSpan hardCap;
     public TimeSpan softCap;
     private CancellationTokenSource hardCapToken;
     private CancellationTokenSource softCapToken;
 
 
-    public AIPlayer(string name, SearchLogger logger)
+    public AIPlayer(string name)
     {
         this.name = name;
-        this.logger = logger;
     }
 
     public override void NewGame(Board board, AISettings aiSettings)
     {
         this.board = board;
         this.aiSettings = aiSettings;
-        search = new Search(board, aiSettings, logger);
+        search = new Search(board, aiSettings);
         search.onSearchComplete += OnSearchComplete;
     }
     
@@ -58,7 +54,6 @@ public class AIPlayer : Player
             Task.Run(() => MonitorSoftCap(softCapToken.Token));
             Task.Run(() => MonitorHardCap(hardCapToken.Token));
         }
-        logger.startNewSearch();
         Task.Run(() => search.StartSearch(true));
     }
 

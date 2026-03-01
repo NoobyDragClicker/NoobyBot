@@ -187,7 +187,6 @@ public class Tuner
     void ConvertEntries()
     {
         Board board = new Board();
-        SearchLogger logger = new SearchLogger("tune", SearchLogger.LoggingLevel.Deadly);
         int numTrainingData = (int) (data.Length * 0.9);
         entries = new Entry[numTrainingData];
         test = new Entry[data.Length - numTrainingData];
@@ -195,7 +194,7 @@ public class Tuner
         for(int posIndex = 0; posIndex < data.Length; posIndex++)
         {
             (string, double) pos = data[posIndex];
-            board.setPosition(pos.Item1, logger);
+            board.setPosition(pos.Item1);
             int phase = 0;
             Dictionary<int, int> features = new Dictionary<int, int>();
             int[] isolatedPawnCount = new int[2];

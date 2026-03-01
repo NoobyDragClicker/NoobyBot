@@ -21,6 +21,7 @@ public class Search
     int bestEval;
     int[] staticEvals = new int[MAX_GAME_PLY];
     int selDepth;
+    public ulong nodeCount;
 
     bool abortSearch = false;
     bool softCapHit = true;
@@ -31,7 +32,6 @@ public class Search
     public event Action<Move> onSearchComplete;
 
     Stopwatch searchTimer = new Stopwatch();
-    SearchLogger logger;
 
     //PARAMS:
     const int ASP_WINDOW = 50;
@@ -53,18 +53,18 @@ public class Search
     const int SEE_QUIET_MARGIN = -100;
     const int SEE_NOISY_MARGIN = -50;
 
-    public Search(Board board, AISettings aiSettings, SearchLogger logger)
+    public Search(Board board, AISettings aiSettings)
     {
-        this.logger = logger;
         this.board = board;
         this.aiSettings = aiSettings;
-        evaluation = new Evaluation(logger);
+        evaluation = new Evaluation();
         tt = new TranspositionTable(board, aiSettings.ttSize);
         history = new History(board);
     }
 
     public void StartSearch(bool writeInfoLine)
     {
+        nodeCount = 0;
         bestMove = nullMove;
         abortSearch = false;
         softCapHit = false;
@@ -114,14 +114,7 @@ public class Search
             alpha = bestEval - delta;
             beta = bestEval + delta;
             
-            if (bestMoveThisIteration.isNull())
-            {
-                if (!abortSearch)
-                {
-                    logger.AddToLog($"No move found at depth {depth}", SearchLogger.LoggingLevel.Warning);
-                }
-            }
-            else
+            if (!bestMoveThisIteration.isNull())
             {
                 bestMove = bestMoveThisIteration;
             }
@@ -131,19 +124,17 @@ public class Search
             pv = ExtractPV();
             string scoreString = IsMateScore(bestEval) ? $"mate {(bestEval < 0 ? "-" : "")}{POSITIVE_INFINITY - 1 - Math.Abs(bestEval)}" : $"cp {bestEval}";
 
-            infoLine = $"info depth {depth} seldepth {selDepth} time {searchTimer.ElapsedMilliseconds} nodes {logger.currentDiagnostics.nodesSearched} nps {logger.currentDiagnostics.nodesSearched / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000f} score {scoreString} pv {pv}";
+            infoLine = $"info depth {depth} seldepth {selDepth} time {searchTimer.ElapsedMilliseconds} nodes {nodeCount} nps {nodeCount / ((ulong)searchTimer.ElapsedMilliseconds + 1) * 1000f} score {scoreString} pv {pv}";
 
             if (writeInfoLine)
             {
                 Console.WriteLine(infoLine);
             }
-            logger.AddToLog(infoLine, SearchLogger.LoggingLevel.Info);
 
             if (abortSearch) { break; }
             if(softCapHit){ break; }
             if (IsMateScore(bestEvalThisIteration)){ break; }
         }
-        logger.currentDiagnostics.totalSearchTime = searchTimer.Elapsed;
 
         return bestEvalThisIteration;
     }
@@ -296,7 +287,7 @@ public class Search
 
             board.MakeMove(currentMove);
             tt.PrefetchBucket();
-            logger.currentDiagnostics.nodesSearched++;
+            nodeCount++;
 
             //Check extension
             int extension = (numLegalMoves == 1) ? 1 : 0;
@@ -438,7 +429,7 @@ public class Search
             if ((standPat + GetCapturedPieceVal(currentMove) + QS_DELTA_PRUNING_MARGIN) < alpha){ continue; }
 
             board.MakeMove(currentMove);
-            logger.currentDiagnostics.nodesSearched++;
+            nodeCount++;
             int eval = -QuiescenceSearch(-beta, -alpha, plyFromRoot + 1);
             board.UndoMove(currentMove);
             

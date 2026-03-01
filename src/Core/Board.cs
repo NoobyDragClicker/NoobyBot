@@ -34,14 +34,11 @@ public class Board
 
     public ulong[] zobristHistory = new ulong[Search.MAX_GAME_PLY];
     public ulong zobristKey;
-    
-    SearchLogger logger;
     public string startFen;
 
 
-    public void setPosition(string fenPosition, SearchLogger logger)
+    public void setPosition(string fenPosition)
     {
-        this.logger = logger;
         board = ConvertFromFEN(fenPosition);
         zobristKey = Zobrist.CalculateZobrist(this);
         zobristHistory[fullMoveClock] = zobristKey;
@@ -227,12 +224,6 @@ public class Board
 
                 if(colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[capturedPieceType, newPos ^ 56]; }
                 else { evalDiff -= Evaluation.PSQT[capturedPieceType, newPos]; }
-
-                if (capturedPieceType == Piece.King)
-                {
-                    logger.AddToLog("King captured", SearchLogger.LoggingLevel.Deadly);
-                    logger.AddToLog(ConvertToFEN(), SearchLogger.LoggingLevel.Deadly);
-                }
             }
             else
             {

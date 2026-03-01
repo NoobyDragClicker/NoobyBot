@@ -7,9 +7,6 @@ public class Engine
     AIPlayer player;
     AISettings aiSettings = new AISettings(100, 0, 16);
     Board board;
-    //BookLoader bookLoader;
-    SearchLogger logger;
-    SearchLogger testingLogger;
     bool hasStartedGame = false;
     const string name = "Nooby Bot Dev";
     public const string chessRoot = "C:/Users/Spencer/Desktop/Chess";
@@ -26,9 +23,7 @@ public class Engine
     public Engine()
     {
         board = new Board();
-        logger = new SearchLogger(name, SearchLogger.LoggingLevel.Warning);
-        testingLogger = new SearchLogger(name + "test", SearchLogger.LoggingLevel.Diagnostics);
-        player = new AIPlayer(name, logger);
+        player = new AIPlayer(name);
         player.onMoveChosen += MakeMove;
     }
 
@@ -36,7 +31,6 @@ public class Engine
     {
         command = command.Trim();
         string messageType = command.Split(' ')[0].ToLower();
-        if (messageType != "isready") { player.logger.AddToLog("Received: " + command, SearchLogger.LoggingLevel.Info);}
 
         switch (messageType)
         {
@@ -46,7 +40,6 @@ public class Engine
                 Console.WriteLine("option name Hash type spin default 16 min 1 max 4096 ");
                 Console.WriteLine("option name Threads type spin default 1 min 1 max 1 ");
                 Console.WriteLine("uciok");
-                player.logger.AddToLog("uciok", SearchLogger.LoggingLevel.Info);
                 break;
             case "isready":
                 Console.WriteLine("readyok");
@@ -68,7 +61,7 @@ public class Engine
                 hasStartedGame = true;
                 break;
             case "bench":
-                SearchTester tester = new SearchTester(logger);
+                SearchTester tester = new SearchTester();
                 tester.RunBench();
                 break;
             case "position":
@@ -97,7 +90,6 @@ public class Engine
                 player.NotifyGameOver();
                 break;
             default:
-                player.logger.AddToLog($"Unrecognized command: {messageType}", SearchLogger.LoggingLevel.Warning);
                 break;
         }
     }
@@ -113,16 +105,12 @@ public class Engine
         // FEN
         if (message.ToLower().Contains("startpos"))
         {
-            board.setPosition(Board.startPos, player.logger);
+            board.setPosition(Board.startPos);
         }
         else if (message.ToLower().Contains("fen"))
         {
             string customFen = TryGetLabelledValue(message, "fen", positionLabels);
-            board.setPosition(customFen, player.logger);
-        }
-        else
-        {
-            player.logger.AddToLog("Invalid position command (expected 'startpos' or 'fen')", SearchLogger.LoggingLevel.Warning);
+            board.setPosition(customFen);
         }
 
         // Moves
@@ -141,7 +129,7 @@ public class Engine
     {
         if (message.Contains("perft"))
         {
-            Perft perft = new Perft(testingLogger);
+            Perft perft = new Perft();
             int depth = 6;
             if (message.Contains("depth"))
             {
@@ -162,24 +150,8 @@ public class Engine
         }
         else if (message.Contains("static"))
         {
-            Evaluation evaluator = new Evaluation(testingLogger);
+            Evaluation evaluator = new Evaluation();
             Console.WriteLine(evaluator.EvaluatePosition(board));
-        }
-        else if (message.Contains("search"))
-        {
-            SearchTester tester = new SearchTester(testingLogger);
-            int targetDepth = 6;
-            int numPositions = 500;
-
-            if (message.Contains("depth"))
-            {
-                targetDepth = TryGetLabelledValueInt(message, "depth", searchLabels);
-            }
-            if (message.Contains("positions"))
-            {
-                numPositions = TryGetLabelledValueInt(message, "positions", searchLabels);
-            }
-            tester.RunSearchSuite(numPositions, targetDepth);
         }
     }
 

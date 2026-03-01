@@ -4,8 +4,6 @@ public class Evaluation
 
     int colorTurn;
 
-    SearchLogger logger;
-
     //Unused in actual eval
     public static int pawnValue = 90;
     public static int knightValue = 336;
@@ -104,10 +102,6 @@ public class Evaluation
 
 
     int playerTurnMultiplier;
-    public Evaluation(SearchLogger logger)
-    {
-        this.logger = logger;
-    }
     public int EvaluatePosition(Board board)
     {
         colorTurn = board.colorTurn;

@@ -19,40 +19,19 @@ public class Perft
     ulong numTotal;
     ulong endNodesSearched;
     bool hasQuiescencePassed = true;
-    SearchLogger logger;
     Stopwatch genTimer = new Stopwatch();
     Stopwatch make = new Stopwatch();
     Stopwatch unmake = new Stopwatch();
 
-    public Perft(SearchLogger logger)
-    {
-        this.logger = logger;
-    }
 
     public void StartSearchDivide(Board board, int maxDepth)
     {
-        try
-        {
-            Task.Factory.StartNew(() => SearchDivide(maxDepth, maxDepth, board), TaskCreationOptions.LongRunning);
-        }
-        catch (Exception e)
-        {
-            logger.AddToLog(e.Message, SearchLogger.LoggingLevel.Deadly);
-            Console.WriteLine(e);
-        }
+        Task.Factory.StartNew(() => SearchDivide(maxDepth, maxDepth, board), TaskCreationOptions.LongRunning);
     }
 
     public void StartSuite(int numPositions, int maxDepth, bool testQuiescence)
     {
-        try
-        {
-            Task.Factory.StartNew(() => RunSuite(numPositions, maxDepth, testQuiescence), TaskCreationOptions.LongRunning);
-        }
-        catch (Exception e)
-        {
-            logger.AddToLog(e.Message, SearchLogger.LoggingLevel.Deadly);
-            Console.WriteLine(e);
-        }
+        Task.Factory.StartNew(() => RunSuite(numPositions, maxDepth, testQuiescence), TaskCreationOptions.LongRunning);
         Console.WriteLine($"Started suite, depth {maxDepth}");
     }
 
@@ -75,7 +54,7 @@ public class Perft
             string fenString = fenAndExpectedResult.ElementAt(x).Key;
             ulong expected = fenAndExpectedResult.ElementAt(x).Value;
             Board board = new Board();
-            board.setPosition(fenString, logger);
+            board.setPosition(fenString);
             ulong result = 0;
             try
             {
@@ -83,7 +62,6 @@ public class Perft
             }
             catch (Exception e)
             {
-                logger.AddToLog(e.Message, SearchLogger.LoggingLevel.Deadly);
                 Console.WriteLine(e);
             }
 
@@ -113,27 +91,17 @@ public class Perft
         Console.WriteLine("Total end nodes searched: " + endNodesSearched);
         Console.WriteLine("Nodes/second: " + (float)endNodesSearched / moveGenTimer.ElapsedMilliseconds * 1000f);
 
-        logger.AddToLog("Passed " + numPassed, SearchLogger.LoggingLevel.Info);
-        logger.AddToLog("Failed " + (numTotal - (ulong)numPassed), SearchLogger.LoggingLevel.Info);
-        logger.AddToLog("Quiescence Failed " + failedQuiescence.Count, SearchLogger.LoggingLevel.Info);
-        logger.AddToLog("Total time: " + moveGenTimer.Elapsed, SearchLogger.LoggingLevel.Info);
-        logger.AddToLog("Total end nodes searched: " + endNodesSearched, SearchLogger.LoggingLevel.Info);
-        logger.AddToLog("Nodes/second: " + (float)endNodesSearched / moveGenTimer.ElapsedMilliseconds * 1000f, SearchLogger.LoggingLevel.Info);
 
         Console.WriteLine("Failed:");
-        logger.AddToLog("Failed:", SearchLogger.LoggingLevel.Info);
         for (int x = 0; x < failedFenPositions.Count; x++)
         {
             Console.WriteLine(failedFenPositions[x]);
-            logger.AddToLog(failedFenPositions[x], SearchLogger.LoggingLevel.Info);
         }
 
         Console.WriteLine("Failed Quiescence:");
-        logger.AddToLog("Failed Quiescence:", SearchLogger.LoggingLevel.Info);
         for (int x = 0; x < failedQuiescence.Count; x++)
         {
             Console.WriteLine(failedQuiescence[x]);
-            logger.AddToLog(failedQuiescence[x], SearchLogger.LoggingLevel.Info);
         }
 
     }
@@ -231,11 +199,9 @@ public class Perft
             if (currentDepth == startDepth)
             {
                 numTotal += numMovesForThisNode;
-                logger.AddToLog(Coord.GetUCIMoveNotation(moves[i]) + " " + numMovesForThisNode, SearchLogger.LoggingLevel.Info);
                 Console.WriteLine(Coord.GetUCIMoveNotation(moves[i]) + " " + numMovesForThisNode);
                 if (i == moves.Length - 1)
                 {
-                    logger.AddToLog(numTotal.ToString(), SearchLogger.LoggingLevel.Info);
                     Console.WriteLine(numTotal.ToString());
                 }
             }

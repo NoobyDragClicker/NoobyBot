@@ -25,9 +25,6 @@ public class Engine
         board = new Board();
         player = new AIPlayer(name);
         player.onMoveChosen += MakeMove;
-        Console.WriteLine(System.Runtime.InteropServices.Marshal.SizeOf<TranspositionTable.Bucket>());
-        Console.WriteLine(System.Runtime.InteropServices.Marshal.SizeOf<TranspositionTable.Entry>());
-        Console.WriteLine(System.Runtime.InteropServices.Marshal.SizeOf<Move>());
     }
 
     public void ReceiveCommand(string command)

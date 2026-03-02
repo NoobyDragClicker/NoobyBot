@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 public struct Move
 {
     public byte oldIndex;
@@ -59,12 +60,12 @@ public struct Move
     {
         return capture;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator ushort(Move move)
     {
         return (ushort)(move.oldIndex | (move.newIndex << 6) | (move.flag << 12) | ((move.capture ? 1 : 0) << 15));
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator int(Move move)
     {
         return move.oldIndex | (move.newIndex << 6) | (move.flag << 12) | ((move.capture ? 1 : 0) << 15);

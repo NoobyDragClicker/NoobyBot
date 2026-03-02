@@ -1,11 +1,12 @@
 public struct Move
 {
-    public int oldIndex;
-    public int newIndex;
+    public byte oldIndex;
+    public byte newIndex;
+    public byte flag;
+
     bool capture;
 
     //0 = none, 1 = promote to queen, 2 = promote to bishop, 3 = promote to knight, 4 = promote to rook, 5 = castle, 6 = double pawn push, 7 = enpeasent
-    public int flag;
 
     public const int None = 0;
     public const int QueenPromo = 1;
@@ -16,16 +17,24 @@ public struct Move
     public const int DoublePawnPush = 6;
     public const int EnPassant = 7;
     
+    public Move(ushort bits)
+    {
+        oldIndex = (byte)(bits & 0b0000000000111111);
+        newIndex = (byte)((bits >> 6) & 0b0000000000111111);
+        flag = (byte)((bits >> 12) & 0b0000000000000111);
+        capture = ((bits >> 15) & 1) != 0;
+    }
+
     public Move(int prevIndex, int currIndex, bool capture, int flag)
     {
-        oldIndex = prevIndex;
-        newIndex = currIndex;
+        oldIndex = (byte)prevIndex;
+        newIndex = (byte)currIndex;
+        this.flag = (byte)flag;
         this.capture = capture;
-        this.flag = flag;
     }
     public Move(int prevIndex, int currIndex, bool capture){
-        oldIndex = prevIndex;
-        newIndex = currIndex;
+        oldIndex = (byte)prevIndex;
+        newIndex = (byte)currIndex;
         flag = None;
         this.capture = capture;
     }
@@ -51,8 +60,14 @@ public struct Move
         return capture;
     }
 
-    public int GetIntValue(){
-        return oldIndex + (newIndex << 6) + (flag << 12) + ((capture ? 1 : 0) << 15);
+    public static implicit operator ushort(Move move)
+    {
+        return (ushort)(move.oldIndex | (move.newIndex << 6) | (move.flag << 12) | ((move.capture ? 1 : 0) << 15));
+    }
+
+    public static implicit operator int(Move move)
+    {
+        return move.oldIndex | (move.newIndex << 6) | (move.flag << 12) | ((move.capture ? 1 : 0) << 15);
     }
 
     public bool isPromotion(){

@@ -98,8 +98,8 @@ public class TranspositionTable
 
     public Move GetStoredMove()
     {
-        if (entries[Index].depthPreferred.key == board.zobristKey) { return entries[Index].depthPreferred.move; }
-        else if (entries[Index].alwaysReplace.key == board.zobristKey) { return entries[Index].alwaysReplace.move; }
+        if (entries[Index].depthPreferred.key == board.zobristKey) { return new Move(entries[Index].depthPreferred.move); }
+        else if (entries[Index].alwaysReplace.key == board.zobristKey) { return new Move(entries[Index].alwaysReplace.move); }
         else{ return Search.nullMove; }
     }
 
@@ -107,15 +107,15 @@ public class TranspositionTable
     public struct Entry
     {
         public readonly ulong key;
+        public readonly ushort move;
+        public readonly short eval;
         public readonly byte depth;
         public readonly byte nodeType;
-        public readonly Move move;
-        public readonly int eval;
 
         public Entry(ulong key, int evaluation, byte depth, byte nodeType, Move move)
         {
             this.key = key;
-            eval = evaluation;
+            eval = (short)evaluation;
             this.depth = depth;
             this.nodeType = nodeType;
             this.move = move;

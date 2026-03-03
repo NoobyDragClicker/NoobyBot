@@ -34,11 +34,11 @@ public class MovePicker
         {
             Move move = moves[x];
             int score = 0;
-            if (!firstMove.isNull() && move.GetIntValue() == firstMove.GetIntValue())
+            if (!firstMove.isNull() && (int)move == (int)firstMove)
             {
                 score = 8 * million;
             }
-            else if (!history.killers[board.fullMoveClock].isNull() && move.GetIntValue() == history.killers[board.fullMoveClock].GetIntValue())
+            else if (!history.killers[board.fullMoveClock].isNull() && (int)move == (int)history.killers[board.fullMoveClock])
             {
                 score = million;
             }

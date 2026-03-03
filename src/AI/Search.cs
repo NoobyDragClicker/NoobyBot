@@ -25,9 +25,9 @@ public class Search
 
     bool abortSearch = false;
     bool softCapHit = true;
-    const int POSITIVE_INFINITY = 99999;
-    const int NEGATIVE_INFINITY = -99999;
-    const int CHECKMATE = -99998;
+    const int POSITIVE_INFINITY = 32767;
+    const int NEGATIVE_INFINITY = -32767;
+    const int CHECKMATE = -32766;
     public const int MAX_GAME_PLY = 1024;
     public event Action<Move> onSearchComplete;
 
@@ -154,7 +154,7 @@ public class Search
         {
             ttHit = true;
             ttScore = tt.RetrieveEval(ttInfo.eval, plyFromRoot);
-            ttMove = ttInfo.move;
+            ttMove = new Move(ttInfo.move);
             if (ttInfo.depth >= depth && !isPV)
             {
                 //The exact eval
@@ -500,13 +500,14 @@ public class Search
             TranspositionTable.Entry entry = tt.GetEntryForPos();
             if (entry.key == board.zobristKey && entry.nodeType == TranspositionTable.Exact)
             {
-                if (!entry.move.isNull())
+                Move move = new Move(entry.move);
+                if (!move.isNull())
                 {
-                    board.MakeMove(entry.move);
-                    moveList.Push(entry.move);
+                    board.MakeMove(move);
+                    moveList.Push(move);
                     if (!board.IsSearchDraw())
                     {
-                        pv += Coord.GetUCIMoveNotation(entry.move) + " ";
+                        pv += Coord.GetUCIMoveNotation(move) + " ";
                     } else{ breakInPv = true; }
                 }
                 else { breakInPv = true; }

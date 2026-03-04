@@ -1,74 +1,107 @@
 using System.Runtime.Intrinsics.X86;
+using System.Runtime.InteropServices;
 
 
-public class TranspositionTable
+public unsafe class TranspositionTable
 {
-    //For when we don't have a usable transposition in the table
-    public const int LookupFailed = -1;
     public const int Exact = 0;
     public const int LowerBound = 1;
     public const int UpperBound = 2;
     public ulong numStored;
 
     Board board;
-    public Bucket[] entries;
+    public unsafe Bucket* entries;
     //How many can be stored    
     public readonly ulong count;
 
     public TranspositionTable(Board board, int sizeMB)
     {
         this.board = board;
-        int ttEntrySizeBytes = System.Runtime.InteropServices.Marshal.SizeOf<Bucket>();
+
         ulong desiredTableSizeInBytes = (ulong)sizeMB * 1024ul * 1024ul;
-        ulong numEntries = desiredTableSizeInBytes / (ulong)ttEntrySizeBytes;
-        count = (ulong)numEntries;
-        entries = new Bucket[numEntries];
+        ulong numEntries = desiredTableSizeInBytes / (ulong)sizeof(Bucket);
+
+        count = numEntries;
+
+        entries = (Bucket*)NativeMemory.Alloc((nuint)numEntries, (nuint)sizeof(Bucket));
+        NativeMemory.Clear(entries, (nuint)numEntries * (nuint)sizeof(Bucket));
     }
 
     public unsafe void PrefetchBucket()
     {
         if (Sse.IsSupported)
         {
-            fixed (Bucket* ptr = &entries[Index])
-            {
-                Sse.Prefetch0(ptr);
-            }
+            Bucket* ptr = &entries[Index];
+            Sse.Prefetch0(ptr);
         }
     }
 
-    public Entry LookupEvaluation()
+    public bool ProbeTT(out Entry ttentry)
 	{
-        Bucket bucket = entries[Index];
+        Bucket* bucket = &entries[Index];
+        Entry* e = (Entry*)bucket;
 
-        if (bucket.depthPreferred.key == board.zobristKey)
+        if (e[0].key == board.zobristKey)
         {
-            return bucket.depthPreferred; 
+            ttentry = e[0];
+            return true;
         }
-        else if (bucket.alwaysReplace.key == board.zobristKey)
+        else if (e[1].key == board.zobristKey)
         {
-            return bucket.alwaysReplace; 
+            ttentry = e[1];
+            return true;
         }
-        return new Entry(0, 0, 0, 3, Search.nullMove); 
+        ttentry = new Entry();
+        return false; 
     }
 
-    public Entry GetEntryForPos()
+    public unsafe Entry GetEntryForPos()
     {
         ulong index = Index;
-        if (board.zobristKey == entries[index].depthPreferred.key) { return entries[index].depthPreferred; }
-        else{ return entries[index].alwaysReplace; }
-    }
-    
-    public void StoreEvaluation(int depth, int numPlySearched, int eval, int evalType, Move move)
-    {
-        ulong index = Index;
-        if(entries[index].depthPreferred.depth <= depth)
+
+        Bucket* bucket = &entries[index];
+        Entry* e = (Entry*)bucket;
+
+        if (e[0].key == board.zobristKey)
         {
-            entries[index].depthPreferred = new Entry(board.zobristKey, CorrectMateEvalForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
+            return e[0];
         }
         else
         {
-            entries[index].alwaysReplace = new Entry(board.zobristKey, CorrectMateEvalForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
+            return e[1];
         }
+    }
+    
+    public unsafe void StoreEvaluation(int depth, int numPlySearched, int eval, int evalType, Move move)
+    {
+        ulong index = Index;
+        Bucket* bucket = &entries[index];
+        Entry* e = (Entry*)bucket;
+
+        int replaceIndex = -1;
+        int currQuality = int.MaxValue;
+        //Taken from Sirius :)
+        for (int i = 0; i < 2; i++)
+        {
+            if (e[i].key == board.zobristKey)
+            {
+                replaceIndex = i;
+                break;
+            }
+
+            if(e[i].depth < currQuality)
+            {
+                replaceIndex = i;
+                currQuality = e[i].depth;
+            }
+        }
+
+        Entry* replace = &e[replaceIndex];
+        replace->key = board.zobristKey;
+        replace->depth = (byte)depth;
+        replace->eval = (short)CorrectMateEvalForStorage(eval, numPlySearched);
+        replace->move = (ushort)move;
+        replace->nodeType = (byte)evalType;
     }
 
     //Returning it to its new mate value, based on how far away this mate is
@@ -96,21 +129,16 @@ public class TranspositionTable
         }
 	}
 
-    public Move GetStoredMove()
-    {
-        if (entries[Index].depthPreferred.key == board.zobristKey) { return new Move(entries[Index].depthPreferred.move); }
-        else if (entries[Index].alwaysReplace.key == board.zobristKey) { return new Move(entries[Index].alwaysReplace.move); }
-        else{ return Search.nullMove; }
-    }
 
-    
+    [StructLayout(LayoutKind.Explicit, Size = 16)]
     public struct Entry
     {
-        public readonly ulong key;
-        public readonly ushort move;
-        public readonly short eval;
-        public readonly byte depth;
-        public readonly byte nodeType;
+        [FieldOffset(0)]  public ulong key;      // 8
+        [FieldOffset(8)]  public ushort move;    // 2
+        [FieldOffset(10)] public short eval;     // 2
+        [FieldOffset(12)] public byte depth;     // 1
+        [FieldOffset(13)] public byte nodeType;  // 1
+        [FieldOffset(14)] private ushort _pad;   // 2 (pad to 16)
 
         public Entry(ulong key, int evaluation, byte depth, byte nodeType, Move move)
         {
@@ -121,17 +149,21 @@ public class TranspositionTable
             this.move = move;
         }
     }
-    public struct Bucket
+    [StructLayout(LayoutKind.Explicit, Size = 32)]
+    public unsafe struct Bucket
     {
-        public Entry depthPreferred;
-        public Entry alwaysReplace;
+        [FieldOffset(0)]  private Entry _elem0;
+        [FieldOffset(16)] private Entry _elem1;
     }
-    
-    
 
-    public void DeleteEntries(){
-        entries = null;
-    }
+    public void DeleteEntries()
+    {
+        if (entries != null)
+        {
+            NativeMemory.Free(entries);
+            entries = null;
+        }
+    }   
 }
 
 

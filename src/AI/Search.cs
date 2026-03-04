@@ -145,14 +145,12 @@ public class Search
         if (plyFromRoot > 0 && board.IsSearchDraw()) { return 0; }
 
         //Check the TT for a valid entry
-        TranspositionTable.Entry ttInfo = tt.LookupEvaluation();
+        bool ttHit = tt.ProbeTT(out TranspositionTable.Entry ttInfo);
         Move ttMove = nullMove;
         int ttScore = 0;
-        bool ttHit = false;
 
-        if(ttInfo.nodeType != 3)
+        if(ttHit)
         {
-            ttHit = true;
             ttScore = tt.RetrieveEval(ttInfo.eval, plyFromRoot);
             ttMove = new Move(ttInfo.move);
             if (ttInfo.depth >= depth && !isPV)

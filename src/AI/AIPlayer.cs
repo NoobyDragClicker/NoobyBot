@@ -24,6 +24,7 @@ public class AIPlayer : Player
     {
         this.board = board;
         this.aiSettings = aiSettings;
+        search.tt.DeleteEntries();
         search = new Search(board, aiSettings);
         search.onSearchComplete += OnSearchComplete;
     }

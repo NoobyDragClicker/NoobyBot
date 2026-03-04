@@ -27,6 +27,7 @@ public class SearchTester
             board.setPosition(pos);
             search = new Search(board, aiSettings);
             search.StartSearch(false);
+            search.tt.DeleteEntries();
             nodes += search.nodeCount;
         }
         watch.Stop();

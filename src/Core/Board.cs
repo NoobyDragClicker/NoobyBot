@@ -273,7 +273,7 @@ public class Board
             pawnKey ^= Zobrist.piecesArray[movedPieceType, currentColorIndex, startPos];
             if(newPieceType == Piece.Pawn)
             {
-                zobristKey ^= Zobrist.piecesArray[newPieceType, currentColorIndex, newPos];
+                pawnKey ^= Zobrist.piecesArray[newPieceType, currentColorIndex, newPos];
             }
         }
         gameStateHistory[fullMoveClock].pawnKey = pawnKey;

@@ -49,7 +49,9 @@ public class Board
     //Moves the pieces
     public void MakeMove(Move move)
     {
+        
         fullMoveClock++;
+        ulong pawnKey = gameStateHistory[fullMoveClock - 1].pawnKey;
         int oldCastlingRights = gameStateHistory[fullMoveClock - 1].castlingRights;
         int castlingRights = oldCastlingRights;
 
@@ -156,6 +158,7 @@ public class Board
             else { evalDiff -= Evaluation.PSQT[Piece.Pawn, attackedPawnIndex];}
 
             zobristKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
+            pawnKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
 
             pieceCounts[oppositeColorIndex, Piece.Pawn] -= 1;
             halfMoveClock = 0;
@@ -204,6 +207,11 @@ public class Board
                 pieceBitboards[PieceBitboardIndex(oppositeColorIndex, capturedPieceType)].ClearSquare(newPos);
                 sideBitboard[oppositeColorIndex].ClearSquare(newPos);
                 zobristKey ^= Zobrist.piecesArray[capturedPieceType, oppositeColorIndex, newPos];
+                if (capturedPieceType == Piece.Pawn)
+                {
+                    pawnKey ^= Zobrist.piecesArray[capturedPieceType, oppositeColorIndex, newPos];
+                }
+
                 pieceCounts[oppositeColorIndex, capturedPieceType] -= 1;
                 halfMoveClock = 0;
 
@@ -260,6 +268,15 @@ public class Board
         //Moving friendly piece
         zobristKey ^= Zobrist.piecesArray[movedPieceType, currentColorIndex, startPos];
         zobristKey ^= Zobrist.piecesArray[newPieceType, currentColorIndex, newPos];
+        if (movedPieceType == Piece.Pawn)
+        {
+            pawnKey ^= Zobrist.piecesArray[movedPieceType, currentColorIndex, startPos];
+            if(newPieceType == Piece.Pawn)
+            {
+                zobristKey ^= Zobrist.piecesArray[newPieceType, currentColorIndex, newPos];
+            }
+        }
+        gameStateHistory[fullMoveClock].pawnKey = pawnKey;
 
         oppositeColorIndex = currentColorIndex;
         currentColorIndex = 1 - currentColorIndex;
@@ -481,6 +498,7 @@ public class Board
         pieceCounts = new int[2, 7];
         sideBitboard = new Bitboard[2];
         allPiecesBitboard = 0;
+        ulong pawnKey = 0;
 
         Dictionary<char, int> pieceTypeFromSymbol = new Dictionary<char, int>()
         {
@@ -515,6 +533,11 @@ public class Board
 
                     int pieceType = pieceTypeFromSymbol[char.ToLower(c)];
                     position[index] = pieceType | pieceColour;
+
+                    if (pieceType == Piece.Pawn)
+                    {
+                        pawnKey ^= Zobrist.piecesArray[Piece.Pawn, colorIndex, index];
+                    }
                     
                     pieceBitboards[PieceBitboardIndex(colorIndex, pieceType)].SetSquare(index);
                     pieceCounts[colorIndex, pieceType] += 1;
@@ -593,6 +616,7 @@ public class Board
         gameStateHistory[fullMoveClock].enPassantFile = 0;
         gameStateHistory[fullMoveClock].halfMoveClock = halfMoveClock;
         gameStateHistory[fullMoveClock].PSQTVal = PSQTVal;
+        gameStateHistory[fullMoveClock].pawnKey = pawnKey;
         return position;
     }
 
@@ -837,4 +861,5 @@ public struct GameState {
     public bool isMoveGenUpdated;
     public bool isCurrentPlayerInDoubleCheck;
     public EvalPair PSQTVal;
+    public ulong pawnKey;
 }

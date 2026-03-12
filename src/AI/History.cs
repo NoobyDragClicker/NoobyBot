@@ -1,3 +1,5 @@
+using System.Drawing;
+
 public class History
 {
     const int HISTORY_MAX = 32768;
@@ -14,6 +16,8 @@ public class History
     public int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
     //Color turn, to, moved piece, captured piece
     public int[,,,] captureHistory = new int[2, 64, 7, 7];
+
+    public int[,] corrhistPawn = new int[2, (1<<14)];
 
     public History(Board board)
     {
@@ -89,6 +93,21 @@ public class History
     {
         int contHistIndex = FlattenConthistIndex(board.oppositeColorIndex, movesAndPieceTypes[board.fullMoveClock - 1].Item2, movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(move), move.newIndex);
         continuationHistory[contHistIndex] = CalculateNewScore(continuationHistory[contHistIndex], bonus);
+    }
+
+    const int corrhistSize = (1<<14) - 1;
+    public void UpdateCorrhist(Board board, int score)
+    {
+        score = Math.Clamp(score, -300, 300);
+        int index = (int)(board.gameStateHistory[board.fullMoveClock].pawnKey & corrhistSize);
+		corrhistPawn[board.currentColorIndex, index] +=
+			score - corrhistPawn[board.currentColorIndex, index] * Math.Abs(score) / 300;
+    }
+
+    public int GetCorrhistScore(Board board)
+    {
+        int index = (int)(board.gameStateHistory[board.fullMoveClock].pawnKey & corrhistSize);
+		return (50 * corrhistPawn[board.currentColorIndex, index]) / 300;
     }
     
     public int FlattenConthistIndex(int prevColor, int prevPiece, int prevTo, int currColor, int currPiece, int currTo)

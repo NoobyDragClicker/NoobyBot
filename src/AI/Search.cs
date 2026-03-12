@@ -189,6 +189,7 @@ public class Search
         }
 
         int staticEval = evaluation.EvaluatePosition(board);
+        staticEval += history.GetCorrhistScore(board);
         staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
         bool isImproving = IsPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
@@ -325,8 +326,6 @@ public class Search
                 eval = -SearchMoves(newDepth, plyFromRoot + 1, -beta, -alpha, numCheckExtensions, true);
             }
 
-            
-
             board.UndoMove(currentMove);
 
             if (abortSearch) { return 0; }
@@ -374,10 +373,18 @@ public class Search
                 {
                     history.ApplyNoisyPenalties(ref legalMoves, moveNum, depth);
                 }
+
+                if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion())
+                {
+                    history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
+                }
                 return bestScore;
             }
         }
-        
+        if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion())
+        {
+            history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
+        }
         tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
         return bestScore;
     }
@@ -392,7 +399,7 @@ public class Search
 
         int bestEval = 0;
         bestEval = evaluation.EvaluatePosition(board);
-        
+        bestEval += history.GetCorrhistScore(board);
         int standPat = bestEval;
 
         //Cutoffs

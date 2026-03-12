@@ -374,14 +374,18 @@ public class Search
                     history.ApplyNoisyPenalties(ref legalMoves, moveNum, depth);
                 }
 
-                if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion())
+                if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion()
+                    && !(bestScore >= beta && bestScore <= staticEval)
+                    && !(bestMoveInThisPosition.isNull()  && bestScore >= staticEval))
                 {
                     history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
                 }
                 return bestScore;
             }
         }
-        if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion())
+        if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion()
+            && !(bestScore >= beta && bestScore <= staticEval)
+            && !(bestMoveInThisPosition.isNull()  && bestScore >= staticEval))
         {
             history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
         }

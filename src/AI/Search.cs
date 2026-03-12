@@ -188,8 +188,8 @@ public class Search
             depth--;
         }
 
-        int staticEval = evaluation.EvaluatePosition(board);
-        staticEval += history.GetCorrhistScore(board);
+        int rawEval = evaluation.EvaluatePosition(board);
+        int staticEval = rawEval + history.GetCorrhistScore(board);
         staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
         bool isImproving = IsPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
 
@@ -351,8 +351,9 @@ public class Search
             //Move is too good, would be prevented by a previous move
             if (eval >= beta)
             {
+                evaluationBound = TranspositionTable.LowerBound;
                 //Exiting search early, so it is a lower bound
-                tt.StoreEvaluation(depth, plyFromRoot, bestScore, TranspositionTable.LowerBound, currentMove);
+                tt.StoreEvaluation(depth, plyFromRoot, bestScore, evaluationBound, currentMove);
                 
                 //Update capthist
                 if (currentMove.isCapture())
@@ -374,20 +375,24 @@ public class Search
                     history.ApplyNoisyPenalties(ref legalMoves, moveNum, depth);
                 }
 
-                if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion()
-                    && !(bestScore >= beta && bestScore <= staticEval)
-                    && !(bestMoveInThisPosition.isNull()  && bestScore >= staticEval))
+                if(!board.gameStateHistory[board.fullMoveClock].isInCheck && ((!bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion()) || bestMoveInThisPosition.isNull()))
                 {
-                    history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
+                    staticEval = rawEval + history.GetCorrhistScore(board);
+                    if (evaluationBound == TranspositionTable.Exact || bestScore < staticEval)
+                    {
+                        history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
+                    }
                 }
                 return bestScore;
             }
         }
-        if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion()
-            && !(bestScore >= beta && bestScore <= staticEval)
-            && !(bestMoveInThisPosition.isNull()  && bestScore >= staticEval))
+        if(!board.gameStateHistory[board.fullMoveClock].isInCheck && ((!bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion()) || bestMoveInThisPosition.isNull()))
         {
-            history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
+            staticEval = rawEval + history.GetCorrhistScore(board);
+            if (evaluationBound == TranspositionTable.Exact || bestScore < staticEval)
+            {
+                history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
+            }
         }
         tt.StoreEvaluation(depth + ((numLegalMoves == 1) ? 1 : 0), plyFromRoot, bestScore, evaluationBound, bestMoveInThisPosition);
         return bestScore;

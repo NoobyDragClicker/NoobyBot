@@ -378,7 +378,7 @@ public class Search
                 if(!board.gameStateHistory[board.fullMoveClock].isInCheck && ((!bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion()) || bestMoveInThisPosition.isNull()))
                 {
                     staticEval = rawEval + history.GetCorrhistScore(board);
-                    if (evaluationBound == TranspositionTable.Exact || bestScore > staticEval)
+                    if (evaluationBound == TranspositionTable.Exact || (evaluationBound == TranspositionTable.LowerBound && bestScore > staticEval) || (evaluationBound == TranspositionTable.UpperBound && bestScore < staticEval))
                     {
                         history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
                     }
@@ -389,7 +389,7 @@ public class Search
         if(!board.gameStateHistory[board.fullMoveClock].isInCheck && ((!bestMoveInThisPosition.isCapture() && !bestMoveInThisPosition.isPromotion()) || bestMoveInThisPosition.isNull()))
         {
             staticEval = rawEval + history.GetCorrhistScore(board);
-            if (evaluationBound == TranspositionTable.Exact || bestScore > staticEval)
+            if (evaluationBound == TranspositionTable.Exact || (evaluationBound == TranspositionTable.LowerBound && bestScore > staticEval) || (evaluationBound == TranspositionTable.UpperBound && bestScore < staticEval))
             {
                 history.UpdateCorrhist(board, (bestScore - staticEval) * depth / 8);
             }

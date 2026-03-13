@@ -183,7 +183,7 @@ public class Search
         }
 
         //IIR
-        if(depth >= IIR_DEPTH && ttMove.isNull())
+        if(depth >= IIR_DEPTH && !ttHit)
         {
             depth--;
         }
@@ -334,7 +334,6 @@ public class Search
             if (eval > bestScore)
             {
                 bestScore = eval;
-                bestMoveInThisPosition = currentMove;
                 //If this is a root move, set it to the best move
                 if (plyFromRoot == 0)
                 {
@@ -344,6 +343,7 @@ public class Search
                 //This move is better than the current move
                 if (eval > alpha)
                 {
+                    bestMoveInThisPosition = currentMove;
                     evaluationBound = TranspositionTable.Exact;
                     alpha = eval;
                 }

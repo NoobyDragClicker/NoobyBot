@@ -393,7 +393,19 @@ public class Search
         int bestEval = 0;
         bestEval = evaluation.EvaluatePosition(board);
         
-        int standPat = bestEval;
+        int qsDeltaMargin = bestEval + QS_DELTA_PRUNING_MARGIN;
+
+        TranspositionTable.Entry ttInfo = tt.LookupEvaluation();
+        if(ttInfo.nodeType != 3)
+        {
+            int ttScore = tt.RetrieveEval(ttInfo.eval, plyFromRoot);
+            if (ttInfo.nodeType == TranspositionTable.Exact 
+                || (ttInfo.nodeType == TranspositionTable.UpperBound && ttScore <= alpha) 
+                || (ttInfo.nodeType == TranspositionTable.LowerBound && ttScore >= beta))
+            {
+                return ttScore;
+            }
+        }
 
         //Cutoffs
         if (bestEval >= beta)
@@ -426,7 +438,7 @@ public class Search
             if(!SEE.EvaluateSEE(board, currentMove, 0)){ continue; }
 
             //Delta pruning
-            if ((standPat + GetCapturedPieceVal(currentMove) + QS_DELTA_PRUNING_MARGIN) < alpha){ continue; }
+            if ((qsDeltaMargin + GetCapturedPieceVal(currentMove)) < alpha){ continue; }
 
             board.MakeMove(currentMove);
             nodeCount++;

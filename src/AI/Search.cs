@@ -43,7 +43,7 @@ public class Search
     const int HISTORY_MARGIN = -3000;
     const int LMR_IMPROVING = 512;
     const int LMR_HISTORY_DIVISOR = 16;
-    const int LMR_TT_CAPTURE = 1024;
+    const int LMR_TT_CAPTURE = 512;
 
     const int QS_DELTA_PRUNING_MARGIN = 150;
 

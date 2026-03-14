@@ -306,7 +306,7 @@ public class Search
             {
                 reductions = 1024 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 3) + (isImproving ? 0 : LMR_IMPROVING) - moveHistory/LMR_HISTORY_DIVISOR;
                 reductions /= 1024;
-                reductions = Math.Clamp(reductions, 0, newDepth);
+                reductions = Math.Min(reductions, newDepth);
 
                 eval = -SearchMoves(newDepth - reductions, plyFromRoot + 1, -alpha-1, -alpha, numCheckExtensions, false);
 

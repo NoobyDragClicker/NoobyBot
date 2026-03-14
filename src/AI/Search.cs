@@ -363,10 +363,11 @@ public class Search
                 //Updating quiet histories
                 else
                 {
-                    history.UpdateQuietTables(currentMove, depth);
+                    int historyDepth = depth + (!board.gameStateHistory[board.fullMoveClock].isInCheck && ttAdjustedEval < alpha ? 1 : 0);
+                    history.UpdateQuietTables(currentMove, historyDepth);
                     if (moveNum > 0)
                     {
-                        history.ApplyQuietPenalties(ref legalMoves, moveNum, depth);
+                        history.ApplyQuietPenalties(ref legalMoves, moveNum, historyDepth);
                     }
                 }
                 

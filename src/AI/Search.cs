@@ -426,6 +426,7 @@ public class Search
             //Skip a move with a bad SEE
             if(!SEE.EvaluateSEE(board, currentMove, 0)){ continue; }
 
+            if(standPat + 100 <= alpha && !SEE.EvaluateSEE(board, currentMove, 1)){ continue; }
             //Delta pruning
             if ((standPat + GetCapturedPieceVal(currentMove) + QS_DELTA_PRUNING_MARGIN) < alpha){ continue; }
 

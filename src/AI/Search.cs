@@ -43,6 +43,7 @@ public class Search
     const int HISTORY_MARGIN = -3000;
     const int LMR_IMPROVING = 512;
     const int LMR_HISTORY_DIVISOR = 16;
+    const int LMR_TT_CAPTURE = 1024;
 
     const int QS_DELTA_PRUNING_MARGIN = 150;
 
@@ -304,7 +305,10 @@ public class Search
             //LMR
             if (moveNum > 0 && depth > 3 && !isTactical)
             {
-                reductions = 1024 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 3) + (isImproving ? 0 : LMR_IMPROVING) - moveHistory/LMR_HISTORY_DIVISOR;
+                reductions = 1024 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 3) 
+                    + (isImproving ? 0 : LMR_IMPROVING) 
+                    - moveHistory/LMR_HISTORY_DIVISOR
+                    + (ttMove.isCapture() ? LMR_TT_CAPTURE : 0);
                 reductions /= 1024;
                 reductions = Math.Clamp(reductions, 0, newDepth);
 

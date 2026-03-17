@@ -302,9 +302,18 @@ public class Search
             int newDepth = depth + extension - 1;
             int eval = 0;
             //LMR
-            if (moveNum > 0 && depth > 3 && !isTactical)
+            if (moveNum > 0 && depth > 3)
             {
-                reductions = 1024 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 3) + (isImproving ? 0 : LMR_IMPROVING) - moveHistory/LMR_HISTORY_DIVISOR;
+                if(!isTactical)
+                {
+                    reductions = 1024 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 3) 
+                    + (isImproving ? 0 : LMR_IMPROVING) 
+                    - moveHistory/LMR_HISTORY_DIVISOR;
+                }
+                else
+                {
+                    reductions = 512 + (int)(Math.Log(moveNum) * Math.Log(depth) * 1024 / 4);
+                }
                 reductions /= 1024;
                 reductions = Math.Clamp(reductions, 0, newDepth);
 

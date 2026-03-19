@@ -13,7 +13,7 @@ public class Tuner
         PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED,
         FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, 
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK,
-        KING_OPEN, KING_SHIELD
+        KING_OPEN, KING_SHIELD, TEMPO
     };
 
     TuningInfo[] infos =
@@ -26,6 +26,7 @@ public class Tuner
         new TuningInfo(1, true, true),
         new TuningInfo(8, true, true),
         new TuningInfo(8, true, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -80,6 +81,7 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.ROOK_ATTACK], "rookKingRingAttack");
         PrintSpan(infos[(int)Tunables.KING_OPEN], "kingOpenFile");
         PrintSpan(infos[(int)Tunables.KING_SHIELD], "kingPawnShield");
+        PrintSpan(infos[(int)Tunables.TEMPO], "tempo");
     }
     public void Tune(string path, int numEpoches, int batchSize)
     {
@@ -201,6 +203,14 @@ public class Tuner
             int[] kingIndex = new int[2];
             kingIndex[Board.WhiteIndex] = board.GetPieces(Board.WhiteIndex, Piece.King).GetLSB();
             kingIndex[Board.BlackIndex] = board.GetPieces(Board.BlackIndex, Piece.King).GetLSB();
+            if(board.colorTurn == Piece.White)
+            {
+                AddFeature(infos[(int)Tunables.TEMPO].startIndex, Piece.White, features);
+            }
+            else
+            {
+                AddFeature(infos[(int)Tunables.TEMPO].startIndex, Piece.Black, features);
+            }
 
             for(int index = 0; index < 64; index++)
             {

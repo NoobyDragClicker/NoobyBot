@@ -13,6 +13,7 @@ public class History
     
     //Color turn, from, to
     public int[,,] quietHistory = new int[2, 64, 64];
+    public int[,,] pieceToHistory = new int[2, 7, 64];
     public int[] continuationHistory = new int[7 * 64 * 7 * 64 * 2];
     //Color turn, to, moved piece, captured piece
     public int[,,,] captureHistory = new int[2, 64, 7, 7];
@@ -68,6 +69,7 @@ public class History
 
     void ApplyHistoryBonus(Move move, int bonus)
     {
+        pieceToHistory[board.currentColorIndex, board.MovedPieceType(move), move.newIndex] = CalculateNewScore(pieceToHistory[board.currentColorIndex, board.MovedPieceType(move), move.newIndex], bonus);
         quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex] = CalculateNewScore(quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex], bonus);
     }
 

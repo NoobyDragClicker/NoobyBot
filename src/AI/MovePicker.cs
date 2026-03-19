@@ -60,7 +60,9 @@ public class MovePicker
             }
             else
             {
-                score = history.quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex] + history.GetConthistScores(move);
+                score = history.quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex] 
+                    + history.GetConthistScores(move) 
+                    + history.pieceToHistory[board.currentColorIndex, board.MovedPieceType(move), move.newIndex];
             }
             
             moveScores[x] = score;

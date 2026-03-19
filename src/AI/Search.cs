@@ -262,7 +262,7 @@ public class Search
 
             bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
 
-            int moveHistory = isTactical ? 0 : (history.quietHistory[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] + history.GetConthistScores(currentMove));
+            int moveHistory = isTactical ? 0 : (history.quietHistory[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] + history.GetConthistScores(currentMove) + history.pieceToHistory[board.currentColorIndex, board.MovedPieceType(currentMove), currentMove.newIndex]);
 
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {

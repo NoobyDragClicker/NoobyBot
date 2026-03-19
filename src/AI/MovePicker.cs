@@ -60,11 +60,7 @@ public class MovePicker
             }
             else
             {
-                score = history.quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex];
-                if(board.fullMoveClock > 0)
-                {
-                    score += history.continuationHistory[history.FlattenConthistIndex(board.oppositeColorIndex, history.movesAndPieceTypes[board.fullMoveClock - 1].Item2, history.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(move), move.newIndex)];
-                }
+                score = history.quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex] + history.GetConthistScores(move);
             }
             
             moveScores[x] = score;

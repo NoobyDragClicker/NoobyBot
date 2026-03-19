@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 public class History
 {
     const int HISTORY_MAX = 32768;
@@ -11,7 +13,7 @@ public class History
     
     //Color turn, from, to
     public int[,,] quietHistory = new int[2, 64, 64];
-    public int[] continuationHistory = new int[2 * 7 * 64 * 2 * 7 * 64];
+    public int[] continuationHistory = new int[7 * 64 * 7 * 64 * 2];
     //Color turn, to, moved piece, captured piece
     public int[,,,] captureHistory = new int[2, 64, 7, 7];
 
@@ -26,21 +28,13 @@ public class History
 
         int bonus = HISTORY_MULTIPLE * depth - HISTORY_SUB;
         ApplyHistoryBonus(move, bonus);
-
-        if(board.fullMoveClock > 0)
-        {
-            ApplyContHistBonus(move, bonus);
-        }
+        ApplyConthistBonuses(move, bonus); 
     }
     public void UpdateQuietHistories(Move move, int depth)
     {
         int bonus = HISTORY_MULTIPLE * depth - HISTORY_SUB;
         ApplyHistoryBonus(move, bonus);
-
-        if(board.fullMoveClock > 0)
-        {
-            ApplyContHistBonus(move, bonus);
-        }
+        ApplyConthistBonuses(move, bonus);
     }
 
     public void ApplyQuietPenalties(ref Span<Move> moves, int startNum, int depth)
@@ -50,10 +44,7 @@ public class History
             if (!moves[i].isCapture())
             {
                 ApplyHistoryBonus(moves[i], -(300 * depth - 250));
-                if(board.fullMoveClock > 0)
-                {
-                    ApplyContHistBonus(moves[i], -(300 * depth - 250));
-                }
+                ApplyConthistBonuses(moves[i], -(300 * depth - 250));
             }
         }
     }
@@ -64,7 +55,7 @@ public class History
         {
             if (moves[i].isCapture())
             {
-                ApplyCaptHistBonus(moves[i], -(300 * depth - 250));
+                ApplyCapthistBonus(moves[i], -(300 * depth - 250));
             }
         }
     }
@@ -80,20 +71,33 @@ public class History
         quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex] = CalculateNewScore(quietHistory[board.currentColorIndex, move.oldIndex, move.newIndex], bonus);
     }
 
-    public void ApplyCaptHistBonus(Move move, int bonus)
+    public void ApplyCapthistBonus(Move move, int bonus)
     {
         captureHistory[board.currentColorIndex, move.newIndex, board.MovedPieceType(move), board.PieceAt(move.newIndex)] = CalculateNewScore(captureHistory[board.currentColorIndex, move.newIndex, board.MovedPieceType(move), board.PieceAt(move.newIndex)], bonus);
     }
 
-    void ApplyContHistBonus(Move move, int bonus)
+    void ApplyConthistBonuses(Move move, int bonus)
     {
-        int contHistIndex = FlattenConthistIndex(board.oppositeColorIndex, movesAndPieceTypes[board.fullMoveClock - 1].Item2, movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(move), move.newIndex);
-        continuationHistory[contHistIndex] = CalculateNewScore(continuationHistory[contHistIndex], bonus);
+        if (board.fullMoveClock > 0)
+        {
+            int contHistIndex = FlattenConthistIndex(movesAndPieceTypes[board.fullMoveClock - 1].Item2, movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.MovedPieceType(move), move.newIndex, board.currentColorIndex);
+            continuationHistory[contHistIndex] = CalculateNewScore(continuationHistory[contHistIndex], bonus);
+        }
+    }
+
+    public int GetConthistScores(Move move)
+    {
+        if(board.fullMoveClock > 0)
+        {
+            return continuationHistory[FlattenConthistIndex(movesAndPieceTypes[board.fullMoveClock - 1].Item2, movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.MovedPieceType(move), move.newIndex, board.currentColorIndex)];
+        }
+        return 0;
     }
     
-    public int FlattenConthistIndex(int prevColor, int prevPiece, int prevTo, int currColor, int currPiece, int currTo)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int FlattenConthistIndex(int prevPiece, int prevTo, int currPiece, int currTo, int currColor)
     {
-        return ((((prevColor * 7 + prevPiece) * 64 + prevTo) * 2 + currColor) * 7 + currPiece) * 64 + currTo;
+        return (((prevPiece * 64 + prevTo) * 7 + currPiece) * 64 + currTo) * 2 + currColor;
     }
 
     

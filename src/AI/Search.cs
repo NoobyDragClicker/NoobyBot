@@ -262,8 +262,7 @@ public class Search
 
             bool isTactical = currentMove.isCapture() || currentMove.isPromotion();
 
-            int moveHistory = isTactical ? 0 : (history.quietHistory[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] 
-            + (plyFromRoot > 0 ? history.continuationHistory[history.FlattenConthistIndex(board.oppositeColorIndex, history.movesAndPieceTypes[board.fullMoveClock - 1].Item2, history.movesAndPieceTypes[board.fullMoveClock - 1].Item1.newIndex, board.currentColorIndex, board.MovedPieceType(currentMove), currentMove.newIndex)] : 0));
+            int moveHistory = isTactical ? 0 : (history.quietHistory[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] + history.GetConthistScores(currentMove));
 
             if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
             {
@@ -367,7 +366,7 @@ public class Search
                 //Update capthist
                 if (currentMove.isCapture())
                 {
-                    history.ApplyCaptHistBonus(currentMove, 300 * depth - 250);
+                    history.ApplyCapthistBonus(currentMove, 300 * depth - 250);
                 }
                 //Updating quiet histories
                 else

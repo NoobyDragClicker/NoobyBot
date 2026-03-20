@@ -242,6 +242,8 @@ public class Search
             else { return 0; }
         }
 
+        history.killers[board.fullMoveClock + 1] = nullMove;
+
         //Move ordering
         int[] moveScores = movePicker.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
 

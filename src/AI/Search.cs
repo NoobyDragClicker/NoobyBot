@@ -188,9 +188,11 @@ public class Search
             depth--;
         }
 
+        bool isInCheck = board.gameStateHistory[board.fullMoveClock].isInCheck;
+
         int staticEval = evaluation.EvaluatePosition(board);
-        staticEvals[board.fullMoveClock] = board.gameStateHistory[board.fullMoveClock].isInCheck ? NEGATIVE_INFINITY : staticEval;
-        bool isImproving = IsPositionImproving(board.fullMoveClock, board.gameStateHistory[board.fullMoveClock].isInCheck);
+        staticEvals[board.fullMoveClock] =  isInCheck ? NEGATIVE_INFINITY : staticEval;
+        bool isImproving = IsPositionImproving(board.fullMoveClock, isInCheck);
 
         int ttAdjustedEval = staticEval;
         if (ttHit && 
@@ -204,7 +206,7 @@ public class Search
         if (plyFromRoot > 0 )
         {
             //RFP
-            if (depth < 4 && !board.gameStateHistory[board.fullMoveClock].isInCheck && ttAdjustedEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
+            if (depth < 4 && !isInCheck && ttAdjustedEval >= beta + (isImproving ? RFP_IMPROVING_MARGIN : RFP_MARGIN) * depth )
             {
                 return ttAdjustedEval;
             }
@@ -212,7 +214,7 @@ public class Search
             if (depth > 2)
             {
                 int nonPawnCount = board.pieceCounts[board.currentColorIndex, Piece.Knight] + board.pieceCounts[board.currentColorIndex, Piece.Bishop] + board.pieceCounts[board.currentColorIndex, Piece.Rook] + board.pieceCounts[board.currentColorIndex, Piece.Queen];
-                if (!board.gameStateHistory[board.fullMoveClock].isInCheck && nonPawnCount > 0 && ttAdjustedEval > beta)
+                if (!isInCheck && nonPawnCount > 0 && ttAdjustedEval > beta)
                 {
                     int r = (depth + 2) / 3;
                     r += Math.Min((ttAdjustedEval - beta) / 200, 3);
@@ -238,7 +240,7 @@ public class Search
         //Check for mate or stalemate
         if (numLegalMoves == 0)
         {
-            if (board.gameStateHistory[board.fullMoveClock].isInCheck){ return CHECKMATE + plyFromRoot;}
+            if (isInCheck){ return CHECKMATE + plyFromRoot;}
             else { return 0; }
         }
 
@@ -266,7 +268,7 @@ public class Search
 
             int moveHistory = isTactical ? 0 : (history.quietHistory[board.currentColorIndex, currentMove.oldIndex, currentMove.newIndex] + history.GetConthistScores(currentMove));
 
-            if(!board.gameStateHistory[board.fullMoveClock].isInCheck && !isTactical)
+            if(!isInCheck && !isTactical)
             {
                 //Futility pruning
                 if (depth < 4 && (staticEval + (FP_MARGIN * depth)) < alpha) { continue; }
@@ -373,7 +375,7 @@ public class Search
                 //Updating quiet histories
                 else
                 {
-                    int historyDepth = depth + (!board.gameStateHistory[board.fullMoveClock].isInCheck && ttAdjustedEval < alpha ? 1 : 0);
+                    int historyDepth = depth + (!isInCheck && ttAdjustedEval < alpha ? 1 : 0);
                     history.UpdateQuietTables(currentMove, historyDepth);
                     if (moveNum > 0)
                     {

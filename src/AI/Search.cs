@@ -364,9 +364,8 @@ public class Search
             //Move is too good, would be prevented by a previous move
             if (eval >= beta)
             {
-                //Exiting search early, so it is a lower bound
-                tt.StoreEvaluation(depth, plyFromRoot, bestScore, TranspositionTable.LowerBound, currentMove);
-                
+                evaluationBound = TranspositionTable.LowerBound;   
+
                 //Update capthist
                 if (currentMove.isCapture())
                 {
@@ -387,7 +386,7 @@ public class Search
                 {
                     history.ApplyNoisyPenalties(ref legalMoves, moveNum, depth);
                 }
-                return bestScore;
+                break;
             }
         }
         

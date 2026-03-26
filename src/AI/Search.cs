@@ -246,8 +246,9 @@ public class Search
 
         history.killers[board.fullMoveClock + 1] = nullMove;
 
+        Span<int> moveScores = stackalloc int[numLegalMoves];
         //Move ordering
-        int[] moveScores = movePicker.ScoreMoves(board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
+        movePicker.ScoreMoves(moveScores, board, legalMoves, (plyFromRoot == 0) ? bestMove : ttMove);
 
         int evaluationBound = TranspositionTable.UpperBound;
         Move bestMoveInThisPosition = nullMove;
@@ -422,7 +423,8 @@ public class Search
         MovePicker movePicker = new MovePicker(history);
         Span<Move> legalMoves = stackalloc Move[218];
         int numMoves = MoveGenerator.GenerateLegalMoves(board, ref legalMoves, true);
-        int[] moveScores = movePicker.ScoreCaptures(board, legalMoves);
+        Span<int> moveScores = stackalloc int[numMoves];
+        movePicker.ScoreCaptures(moveScores, board, legalMoves);
 
         MovePicker.Stage stage = MovePicker.Stage.Other;
         if(numMoves == 0){ stage++; }

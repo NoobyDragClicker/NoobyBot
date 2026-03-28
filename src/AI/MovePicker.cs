@@ -27,9 +27,8 @@ public class MovePicker
         this.history = history;
     }
 
-    public int[] ScoreMoves(Board board, Span<Move> moves, Move firstMove)
+    public void ScoreMoves(Span<int> moveScores, Board board, Span<Move> moves, Move firstMove)
     {
-        int[] moveScores = new int[moves.Length];
         for (int x = 0; x < moves.Length; x++)
         {
             Move move = moves[x];
@@ -65,12 +64,10 @@ public class MovePicker
             
             moveScores[x] = score;
         }
-        return moveScores;
     }
 
-    public int[] ScoreCaptures(Board board, Span<Move> captures)
+    public void ScoreCaptures(Span<int> moveScores, Board board, Span<Move> captures)
     {
-        int[] moveScores = new int[captures.Length];
         for (int x = 0; x < captures.Length; x++)
         {
             int capturedPieceType;
@@ -91,11 +88,9 @@ public class MovePicker
             score = MVV_LVA[(movedPieceType * 7) + capturedPieceType];
             moveScores[x] = score;
         }
-
-        return moveScores;
     }
 
-    public Move GetNextBestMove(int[] moveScores, Span<Move> moves, int currentMoveIndex)
+    public Move GetNextBestMove(Span<int> moveScores, Span<Move> moves, int currentMoveIndex)
     {
         if(currentMoveIndex > moves.Length - 1){ Console.WriteLine("issue"); }
         //Take the index the search is currently at

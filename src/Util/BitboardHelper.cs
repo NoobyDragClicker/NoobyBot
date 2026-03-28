@@ -30,6 +30,7 @@ public static class BitboardHelper
     public static readonly Bitboard[] wPawnDouble;
     public static readonly Bitboard[] wPawnDoubleMask;
     public static readonly Bitboard[,] pawnPassedMask;
+    public static readonly Bitboard[,] pawnForwardFill;
 
     public static readonly Bitboard[] bPawnAttacks;
     public static readonly Bitboard[] bPawnMoves;
@@ -164,6 +165,7 @@ public static class BitboardHelper
         wPawnDoubleMask = new Bitboard[64];
         bPawnDoubleMask = new Bitboard[64];
         pawnPassedMask = new Bitboard[2, 64];
+        pawnForwardFill = new Bitboard[2, 64];
         kingRing = new Bitboard[2, 64];
         isolatedPawnMask = new Bitboard[64];
         files = new Bitboard[8];
@@ -257,6 +259,9 @@ public static class BitboardHelper
                 if (x != 7) { pawnPassedMask[Board.WhiteIndex, startIndex] |= singleWhiteFile << 1; }
                 ;
                 if (startIndex < 8) { pawnPassedMask[Board.WhiteIndex, startIndex] = 0; }
+
+                pawnForwardFill[Board.BlackIndex, startIndex] = FILE_1 << startIndex + 8;
+                pawnForwardFill[Board.WhiteIndex, startIndex] = singleWhiteFile;
 
                 //Black Pawn
                 if (ValidSquareIndex(x + 1, y + 1, out attackIndex))

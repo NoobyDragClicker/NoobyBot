@@ -245,10 +245,10 @@ public class Tuner
                     int oppositeColorIndex = 1 - currentColorIndex;
                     int ourKing = board.GetPieces(currentColorIndex, Piece.King).GetLSB();
                     int theirKing = board.GetPieces(oppositeColorIndex, Piece.King).GetLSB();
+                    Bitboard ourPawns = board.GetPieces(currentColorIndex, Piece.Pawn);
 
                     if(pieceType == Piece.Pawn)
                     {
-                        int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;
                         Bitboard stoppers = board.GetPieces(oppositeColorIndex, Piece.Pawn) & BitboardHelper.pawnPassedMask[currentColorIndex, index];
                         //Passed pawn
                         if (stoppers.Empty()) { 
@@ -257,7 +257,7 @@ public class Tuner
                             AddFeature(infos[(int)Tunables.ENEMY_KING_PASSER].startIndex + Coord.ChebyshevDist(theirKing, index), currentColor, features); 
                         }
                         //Doubled pawn penalty
-                        if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
+                        if (!(ourPawns & BitboardHelper.pawnForwardFill[currentColorIndex, index]).Empty()) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }
                         if ((BitboardHelper.isolatedPawnMask[index] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()) { 
                             isolatedPawnCount[currentColorIndex]++; 
                             if((stoppers & BitboardHelper.files[index%8]).Empty())

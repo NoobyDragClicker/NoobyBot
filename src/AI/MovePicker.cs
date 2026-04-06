@@ -29,15 +29,17 @@ public class MovePicker
 
     public void ScoreMoves(Span<int> moveScores, Board board, Span<Move> moves, Move firstMove)
     {
+        int firstMoveNum = (int)firstMove;
+        int killer = (int)history.killers[board.fullMoveClock];
         for (int x = 0; x < moves.Length; x++)
         {
             Move move = moves[x];
             int score = 0;
-            if (!firstMove.isNull() && (int)move == (int)firstMove)
+            if ((int)move == firstMoveNum)
             {
                 score = 8 * million;
             }
-            else if (!history.killers[board.fullMoveClock].isNull() && (int)move == (int)history.killers[board.fullMoveClock])
+            else if ((int)move == killer)
             {
                 score = million;
             }

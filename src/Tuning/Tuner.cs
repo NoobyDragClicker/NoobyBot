@@ -12,7 +12,7 @@ public class Tuner
     enum Tunables {
         PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED,
         FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, 
-        ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK,
+        ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK, ROOK_THREATS,
         KING_OPEN, KING_SHIELD, TEMPO
     };
 
@@ -32,6 +32,7 @@ public class Tuner
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
+        new TuningInfo(7, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true)
@@ -79,6 +80,7 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.ROOK_SEMI_OPEN], "rookSemiOpenFile");
         PrintSpan(infos[(int)Tunables.ROOK_MOBILITY], "rookMobility");
         PrintSpan(infos[(int)Tunables.ROOK_ATTACK], "rookKingRingAttack");
+        PrintSpan(infos[(int)Tunables.ROOK_THREATS], "rookThreats");
         PrintSpan(infos[(int)Tunables.KING_OPEN], "kingOpenFile");
         PrintSpan(infos[(int)Tunables.KING_SHIELD], "kingPawnShield");
         PrintSpan(infos[(int)Tunables.TEMPO], "tempo");
@@ -278,9 +280,18 @@ public class Tuner
                         }
                         
                         Bitboard simpleRookMoves = BitboardHelper.GetRookAttacks(index, board.allPiecesBitboard);
+                        Bitboard threats = simpleRookMoves & board.sideBitboard[oppositeColorIndex];
                         Bitboard rookAttacks = simpleRookMoves & BitboardHelper.kingRing[oppositeColorIndex, kingIndex[oppositeColorIndex]];
                         int numMoves = simpleRookMoves.PopCount();
                         int numAttacks = rookAttacks.PopCount();
+
+                        while (!threats.Empty())
+                        {
+                            int threatIndex = threats.PopLSB();
+                            int threatenedPieceType = board.PieceAt(threatIndex);
+                            AddFeature(infos[(int)Tunables.ROOK_THREATS].startIndex + threatenedPieceType, currentColor, features);
+                        }
+
                         AddMultipleFeatures(infos[(int)Tunables.ROOK_MOBILITY].startIndex, currentColor, features, numMoves);
                         AddMultipleFeatures(infos[(int)Tunables.ROOK_ATTACK].startIndex, currentColor, features, numAttacks);
                     }

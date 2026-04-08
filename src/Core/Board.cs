@@ -802,11 +802,13 @@ public class Board
             );
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int PieceAt(int index)
     {
         return Piece.PieceType(board[index]);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int ColorAt(int index)
     {
         return Piece.Color(board[index]);

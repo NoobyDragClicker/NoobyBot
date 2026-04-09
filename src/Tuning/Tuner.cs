@@ -10,7 +10,7 @@ public class Tuner
     
 
     enum Tunables {
-        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED,
+        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED, PAWN_THREATS,
         FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, BISHOP_THREATS,
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK, ROOK_THREATS,
         KING_OPEN, KING_SHIELD, TEMPO
@@ -24,6 +24,7 @@ public class Tuner
         new TuningInfo(1, false, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
+        new TuningInfo(7, true, true),
         new TuningInfo(8, true, true),
         new TuningInfo(8, true, true),
         new TuningInfo(1, true, true),
@@ -73,6 +74,7 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.DOUBLED], "doubledPawnPenalty");
         PrintSpan(infos[(int)Tunables.PROTECTED], "protectedPawn");
         PrintSpan(infos[(int)Tunables.ISOLATED_EXPOSED], "isolatedExposed");
+        PrintSpan(infos[(int)Tunables.PAWN_THREATS], "pawnThreats");
         PrintSpan(infos[(int)Tunables.FRIENDLY_KING_PASSER], "friendlyKingDistPasser");
         PrintSpan(infos[(int)Tunables.ENEMY_KING_PASSER], "enemyKingDistPasser");
         PrintSpan(infos[(int)Tunables.BISHOP_PAIR], "bishopPairBonus");
@@ -308,7 +310,7 @@ public class Tuner
                             int threatenedPieceType = board.PieceAt(threatIndex);
                             AddFeature(infos[(int)Tunables.BISHOP_THREATS].startIndex + threatenedPieceType, currentColor, features);
                         }
-                        
+
                         int numMoves = simpleBishopMoves.PopCount();
                         AddMultipleFeatures(infos[(int)Tunables.BISHOP_MOBILITY].startIndex, currentColor, features, numMoves);
                     }
@@ -331,6 +333,22 @@ public class Tuner
                     }
 
                 }
+            }
+            
+            Bitboard whiteThreats = BitboardHelper.GetAllPawnAttacks(board.GetPieces(Board.WhiteIndex, Piece.Pawn), Piece.White) & board.sideBitboard[Board.BlackIndex];
+            Bitboard blackThreats = BitboardHelper.GetAllPawnAttacks(board.GetPieces(Board.BlackIndex, Piece.Pawn), Piece.Black) & board.sideBitboard[Board.WhiteIndex];
+            while (!whiteThreats.Empty())
+            {
+                int threatIndex = whiteThreats.PopLSB();
+                int threatenedPieceType = board.PieceAt(threatIndex);
+                AddFeature(infos[(int)Tunables.PAWN_THREATS].startIndex + threatenedPieceType, Piece.White, features);
+            }
+            
+            while (!blackThreats.Empty())
+            {
+                int threatIndex = blackThreats.PopLSB();
+                int threatenedPieceType = board.PieceAt(threatIndex);
+                AddFeature(infos[(int)Tunables.PAWN_THREATS].startIndex + threatenedPieceType, Piece.Black, features);
             }
 
             int whiteDefended = (BitboardHelper.GetAllPawnAttacks(board.GetPieces(Board.WhiteIndex, Piece.Pawn), Piece.White) & board.GetPieces(Board.WhiteIndex, Piece.Pawn)).PopCount();

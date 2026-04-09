@@ -11,7 +11,7 @@ public class Tuner
 
     enum Tunables {
         PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED, PAWN_THREATS,
-        FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, BISHOP_THREATS,
+        FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, BISHOP_THREATS, KNIGHT_THREATS,
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK, ROOK_THREATS,
         KING_OPEN, KING_SHIELD, TEMPO
     };
@@ -29,6 +29,7 @@ public class Tuner
         new TuningInfo(8, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
+        new TuningInfo(7, true, true),
         new TuningInfo(7, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -80,6 +81,7 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.BISHOP_PAIR], "bishopPairBonus");
         PrintSpan(infos[(int)Tunables.BISHOP_MOBILITY], "bishopMobility");
         PrintSpan(infos[(int)Tunables.BISHOP_THREATS], "bishopThreats");
+        PrintSpan(infos[(int)Tunables.KNIGHT_THREATS], "knightThreats");
         PrintSpan(infos[(int)Tunables.ROOK_OPEN], "rookOpenFile");
         PrintSpan(infos[(int)Tunables.ROOK_SEMI_OPEN], "rookSemiOpenFile");
         PrintSpan(infos[(int)Tunables.ROOK_MOBILITY], "rookMobility");
@@ -313,6 +315,17 @@ public class Tuner
 
                         int numMoves = simpleBishopMoves.PopCount();
                         AddMultipleFeatures(infos[(int)Tunables.BISHOP_MOBILITY].startIndex, currentColor, features, numMoves);
+                    }
+                    else if (pieceType == Piece.Knight)
+                    {
+                        
+                        Bitboard threats = BitboardHelper.knightAttacks[index] & board.sideBitboard[oppositeColorIndex];
+                        while (!threats.Empty())
+                        {
+                            int threatIndex = threats.PopLSB();
+                            int threatenedPieceType = board.PieceAt(threatIndex);
+                            AddFeature(infos[(int)Tunables.KNIGHT_THREATS].startIndex + threatenedPieceType, currentColor, features);
+                        }
                     }
                     else if (pieceType == Piece.King)
                     {

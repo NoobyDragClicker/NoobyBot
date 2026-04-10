@@ -10,7 +10,7 @@ public class Tuner
     
 
     enum Tunables {
-        PSQT, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED, PAWN_THREATS,
+        PSQT, PIECES, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED, PAWN_THREATS,
         FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, BISHOP_THREATS, KNIGHT_THREATS,
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK, ROOK_THREATS,
         KING_OPEN, KING_SHIELD, TEMPO
@@ -19,6 +19,7 @@ public class Tuner
     TuningInfo[] infos =
     {
         new TuningInfo(64*6, true, true),
+        new TuningInfo(5, true, true),
         new TuningInfo(64, true, true),
         new TuningInfo(9, true, true),
         new TuningInfo(1, false, true),
@@ -70,6 +71,7 @@ public class Tuner
     void PrintParams()
     {
         PrintPSQT();
+        PrintSpan(infos[(int)Tunables.PIECES], "pieceValues");
         PrintSpan(infos[(int)Tunables.PASSER], "passedPawnBonuses");
         PrintSpan(infos[(int)Tunables.ISOLATED], "isolatedPawnPenalty");
         PrintSpan(infos[(int)Tunables.DOUBLED], "doubledPawnPenalty");
@@ -254,6 +256,10 @@ public class Tuner
                     int ourKing = board.GetPieces(currentColorIndex, Piece.King).GetLSB();
                     int theirKing = board.GetPieces(oppositeColorIndex, Piece.King).GetLSB();
 
+                    if (pieceType != Piece.King)
+                    {
+                        AddFeature(infos[(int)Tunables.PIECES].startIndex + pieceType - 1, currentColor, features); 
+                    }
                     if(pieceType == Piece.Pawn)
                     {
                         int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;

@@ -136,8 +136,8 @@ public class Board
 
             board[newRookIndex] = rook;
             board[oldRookIndex] = 0;
-            if(colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[Piece.Rook, newRookIndex] - Evaluation.PSQT[Piece.Rook, oldRookIndex]; }
-            else { evalDiff -= Evaluation.PSQT[Piece.Rook, newRookIndex ^ 56] - Evaluation.PSQT[Piece.Rook, oldRookIndex ^ 56]; }
+            if(colorTurn == Piece.White) { evalDiff += EvalConstants.PSQT[Piece.Rook, newRookIndex] - EvalConstants.PSQT[Piece.Rook, oldRookIndex]; }
+            else { evalDiff -= EvalConstants.PSQT[Piece.Rook, newRookIndex ^ 56] - EvalConstants.PSQT[Piece.Rook, oldRookIndex ^ 56]; }
 
             zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, oldRookIndex];
             zobristKey ^= Zobrist.piecesArray[Piece.Rook, currentColorIndex, newRookIndex];
@@ -152,8 +152,8 @@ public class Board
             pieceBitboards[PieceBitboardIndex(oppositeColorIndex, Piece.Pawn)].ClearSquare(attackedPawnIndex);
             sideBitboard[oppositeColorIndex].ClearSquare(attackedPawnIndex);
 
-            if(colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[Piece.Pawn, attackedPawnIndex ^ 56]; }
-            else { evalDiff -= Evaluation.PSQT[Piece.Pawn, attackedPawnIndex];}
+            if(colorTurn == Piece.White) { evalDiff += EvalConstants.PSQT[Piece.Pawn, attackedPawnIndex ^ 56]; }
+            else { evalDiff -= EvalConstants.PSQT[Piece.Pawn, attackedPawnIndex];}
 
             zobristKey ^= Zobrist.piecesArray[Piece.Pawn, oppositeColorIndex, attackedPawnIndex];
 
@@ -222,8 +222,8 @@ public class Board
                     }
                 }
 
-                if(colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[capturedPieceType, newPos ^ 56]; }
-                else { evalDiff -= Evaluation.PSQT[capturedPieceType, newPos]; }
+                if(colorTurn == Piece.White) { evalDiff += EvalConstants.PSQT[capturedPieceType, newPos ^ 56]; }
+                else { evalDiff -= EvalConstants.PSQT[capturedPieceType, newPos]; }
             }
             else
             {
@@ -243,8 +243,8 @@ public class Board
         board[newPos] = newPiece;
         board[startPos] = 0;
 
-        if (colorTurn == Piece.White) { evalDiff += Evaluation.PSQT[newPieceType, newPos] - Evaluation.PSQT[movedPieceType, startPos]; }
-        else { evalDiff -= Evaluation.PSQT[newPieceType, newPos ^ 56] - Evaluation.PSQT[movedPieceType, startPos ^ 56]; }
+        if (colorTurn == Piece.White) { evalDiff += EvalConstants.PSQT[newPieceType, newPos] - EvalConstants.PSQT[movedPieceType, startPos]; }
+        else { evalDiff -= EvalConstants.PSQT[newPieceType, newPos ^ 56] - EvalConstants.PSQT[movedPieceType, startPos ^ 56]; }
 
         colorTurn = (colorTurn == Piece.White) ? Piece.Black : Piece.White;
 
@@ -521,11 +521,11 @@ public class Board
 
                     if(pieceColour == Piece.White)
                     {
-                        PSQTVal += Evaluation.PSQT[pieceType, index];
+                        PSQTVal += EvalConstants.PSQT[pieceType, index];
                     }
                     else
                     {
-                        PSQTVal -= Evaluation.PSQT[pieceType, index ^ 56];
+                        PSQTVal -= EvalConstants.PSQT[pieceType, index ^ 56];
                     }
 
                     index++;

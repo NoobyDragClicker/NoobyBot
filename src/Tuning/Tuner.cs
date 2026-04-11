@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using Microsoft.VisualBasic;
@@ -98,8 +99,11 @@ public class Tuner
         LoadData(path);
         int dataSize = data.Length;
         Console.WriteLine($"Data loaded: {dataSize} positions found");
+        Stopwatch convertWatch = new Stopwatch();
+        convertWatch.Start();
         ConvertEntries();
-        Console.WriteLine("Entries loaded, starting tuning");
+        convertWatch.Stop();
+        Console.WriteLine($"Entries loaded in {convertWatch.Elapsed} ({(ulong)(dataSize * 1000)/(ulong)convertWatch.ElapsedMilliseconds} pos/s), starting tuning");
         float learningRate = 0.015f;
         float beta1 = 0.9f;
         float beta2 = 0.99f;
@@ -109,6 +113,8 @@ public class Tuner
         int t = 0;
         for (int epoch = 0; epoch < numEpoches; epoch++)
         {
+            Stopwatch epochTimer = new Stopwatch();
+            epochTimer.Restart();
             //Full cycle through the data
             for(int batchNum = 0; batchNum < dataSize/batchSize; batchNum++)
             {
@@ -178,7 +184,8 @@ public class Tuner
                     weights[paramIndex].eg.gradient = 0;
                 }
             }
-            Console.WriteLine($"Epoch {epoch} complete: Training loss: {CalculateLoss()} Test loss: {CalculateTestLoss()}");
+            epochTimer.Stop();
+            Console.WriteLine($"Epoch {epoch} complete: Training loss: {CalculateLoss()} Test loss: {CalculateTestLoss()} Time: {epochTimer.Elapsed} Pos/s {((ulong)dataSize * 1000ul)/(ulong)epochTimer.ElapsedMilliseconds}");
         }
         PrintParams();
     }
@@ -229,24 +236,6 @@ public class Tuner
                 if(piece != 0)
                 {
                     int pieceType = Piece.PieceType(piece);
-                    switch (pieceType)
-                    {
-                        case Piece.Knight:
-                            phase += 1;
-                            break;
-                        case Piece.Bishop:
-                            phase += 1;
-                            break;
-                        case Piece.Rook:
-                            phase += 2;
-                            break;
-                        case Piece.Queen:
-                            phase += 4;
-                            break;
-                        default: 
-                            break;
-                    }
-
                     int relativeIndex = Piece.Color(piece) == Piece.White ? index : index ^ 56;
                     //Add middlegame and endgame psqt weight
                     AddFeature(PSQTIndex(Piece.PieceType(piece), relativeIndex), Piece.Color(piece), features);
@@ -260,6 +249,7 @@ public class Tuner
                     {
                         AddFeature(infos[(int)Tunables.PIECES].startIndex + pieceType - 1, currentColor, features); 
                     }
+
                     if(pieceType == Piece.Pawn)
                     {
                         int pushSquare =  currentColorIndex == Board.WhiteIndex ? index - 8 :  index + 8;
@@ -282,6 +272,7 @@ public class Tuner
                     } 
                     else if(pieceType == Piece.Rook)
                     {
+                        phase += 2;
                         if ((BitboardHelper.files[index % 8] & board.GetPieces(currentColorIndex, Piece.Pawn)).Empty()){ 
                             //None of their pawns
                             if((BitboardHelper.files[index % 8] & board.GetPieces(oppositeColorIndex, Piece.Pawn)).Empty())
@@ -309,7 +300,7 @@ public class Tuner
                     }
                     else if (pieceType == Piece.Bishop)
                     {
-                        
+                        phase += 1;
                         Bitboard simpleBishopMoves = BitboardHelper.GetBishopAttacks(index, board.allPiecesBitboard);
                         Bitboard threats = simpleBishopMoves & board.sideBitboard[oppositeColorIndex];
                         while (!threats.Empty())
@@ -324,7 +315,7 @@ public class Tuner
                     }
                     else if (pieceType == Piece.Knight)
                     {
-                        
+                        phase += 1;
                         Bitboard threats = BitboardHelper.knightAttacks[index] & board.sideBitboard[oppositeColorIndex];
                         while (!threats.Empty())
                         {
@@ -349,6 +340,9 @@ public class Tuner
                                 AddFeature(infos[(int)Tunables.KING_SHIELD].startIndex, currentColor, features);
                             }
                         }
+                    } else if (pieceType == Piece.Queen)
+                    {
+                        phase += 4;
                     }
 
                 }

@@ -183,7 +183,7 @@ public class Search
         }
 
         //IIR
-        if(depth >= IIR_DEPTH && ttMove.isNull())
+        if(depth >= IIR_DEPTH && !ttHit)
         {
             depth--;
         }

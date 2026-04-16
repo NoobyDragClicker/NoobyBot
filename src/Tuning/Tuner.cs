@@ -23,7 +23,7 @@ public class Tuner
         new TuningInfo(5, true, true),
         new TuningInfo(64, true, true),
         new TuningInfo(9, true, true),
-        new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(7, true, true),
@@ -103,7 +103,7 @@ public class Tuner
         convertWatch.Start();
         ConvertEntries();
         convertWatch.Stop();
-        Console.WriteLine($"Entries loaded in {convertWatch.Elapsed} ({(ulong)(dataSize * 1000)/(ulong)convertWatch.ElapsedMilliseconds} pos/s), starting tuning");
+        Console.WriteLine($"Entries loaded in {convertWatch.Elapsed} ({((ulong)dataSize * 1000ul)/(ulong)convertWatch.ElapsedMilliseconds} pos/s), starting tuning");
         float learningRate = 0.015f;
         float beta1 = 0.9f;
         float beta2 = 0.99f;

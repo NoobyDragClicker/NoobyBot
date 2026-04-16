@@ -169,7 +169,7 @@ public class Evaluation
                 score += EvalConstants.enemyKingDistPasser[Coord.ChebyshevDist(theirKing, index)]; 
             }
 
-            if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { score.eg += EvalConstants.doubledPawnPenalty.eg; }
+            if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { score += EvalConstants.doubledPawnPenalty; }
             if ((BitboardHelper.isolatedPawnMask[index] & ourPawns).Empty()) { 
                 isolatedPawnCount++; 
                 if ((stoppers & BitboardHelper.files[index%8]).Empty())

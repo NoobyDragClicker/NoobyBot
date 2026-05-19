@@ -36,8 +36,8 @@ public class Search
     //PARAMS:
     const int ASP_WINDOW = 50;
     const int RFP_MARGIN = 150;
-    const int RFP_IMPROVING_MARGIN = 100;
-    const int FP_MARGIN = 150;
+    const int RFP_IMPROVING_MARGIN = 50;
+    const int FP_MARGIN = 75;
     const int LMP_HISTORY_DIVISOR = 64;
     const int MAX_LMP_HISTORY = 6;
     const int HISTORY_MARGIN = -3000;

@@ -34,7 +34,7 @@ public class Search
     Stopwatch searchTimer = new Stopwatch();
 
     //PARAMS:
-    const int ASP_WINDOW = 50;
+    const int ASP_WINDOW = 20;
     const int RFP_MARGIN = 150;
     const int RFP_IMPROVING_MARGIN = 50;
     const int FP_MARGIN = 75;

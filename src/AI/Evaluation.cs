@@ -189,6 +189,10 @@ public class Evaluation
             score += EvalConstants.pawnThreats[pieceType];
         }
         int defended = (ourAttacks & ourPawns).PopCount();
+
+        Bitboard phalanx = ourPawns & ((ourPawns << 1) & ~BitboardHelper.FILE_1);
+        score += phalanx.PopCount() * EvalConstants.pawnPhalanx;
+
         score.mg += defended * EvalConstants.protectedPawn.mg;
         score.eg += defended * EvalConstants.protectedPawn.eg;
         return score;
@@ -283,6 +287,15 @@ public struct EvalPair
         {
             mg = a.mg - b.mg,
             eg = a.eg - b.eg
+        };
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static EvalPair operator *(int a, EvalPair b)
+    {
+        return new EvalPair
+        {
+            mg = a * b.mg,
+            eg = a * b.eg
         };
     }
 }

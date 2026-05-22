@@ -11,7 +11,7 @@ public class Tuner
     
 
     enum Tunables {
-        PSQT, PIECES, PASSER, ISOLATED, DOUBLED, PROTECTED, ISOLATED_EXPOSED, PHALANX, PAWN_THREATS,
+        PSQT, PIECES, PASSER, ISOLATED, DOUBLED, BLOCKED, PROTECTED, ISOLATED_EXPOSED, PHALANX, PAWN_THREATS,
         FRIENDLY_KING_PASSER, ENEMY_KING_PASSER, BISHOP_PAIR, BISHOP_MOBILITY, BISHOP_THREATS, KNIGHT_THREATS,
         ROOK_OPEN, ROOK_SEMI_OPEN, ROOK_MOBILITY, ROOK_ATTACK, ROOK_THREATS,
         KING_OPEN, KING_SHIELD, TEMPO
@@ -24,6 +24,7 @@ public class Tuner
         new TuningInfo(64, true, true),
         new TuningInfo(9, true, true),
         new TuningInfo(1, false, true),
+        new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
         new TuningInfo(1, true, true),
@@ -77,6 +78,7 @@ public class Tuner
         PrintSpan(infos[(int)Tunables.PASSER], "passedPawnBonuses");
         PrintSpan(infos[(int)Tunables.ISOLATED], "isolatedPawnPenalty");
         PrintSpan(infos[(int)Tunables.DOUBLED], "doubledPawnPenalty");
+        PrintSpan(infos[(int)Tunables.BLOCKED], "blockedPasser");
         PrintSpan(infos[(int)Tunables.PROTECTED], "protectedPawn");
         PrintSpan(infos[(int)Tunables.ISOLATED_EXPOSED], "isolatedExposed");
         PrintSpan(infos[(int)Tunables.PHALANX], "pawnPhalanx");
@@ -261,6 +263,10 @@ public class Tuner
                             AddFeature(infos[(int)Tunables.PASSER].startIndex + relativeIndex, currentColor, features); 
                             AddFeature(infos[(int)Tunables.FRIENDLY_KING_PASSER].startIndex + Coord.ChebyshevDist(ourKing, index), currentColor, features); 
                             AddFeature(infos[(int)Tunables.ENEMY_KING_PASSER].startIndex + Coord.ChebyshevDist(theirKing, index), currentColor, features); 
+                            if (board.board[pushSquare] != 0)
+                            {
+                                AddFeature(infos[(int)Tunables.BLOCKED].startIndex, currentColor, features); 
+                            }
                         }
                         //Doubled pawn penalty
                         if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { AddFeature(infos[(int)Tunables.DOUBLED].startIndex, currentColor, features); }

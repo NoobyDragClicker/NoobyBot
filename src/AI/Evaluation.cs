@@ -167,6 +167,10 @@ public class Evaluation
                 score += EvalConstants.passedPawnBonuses[psqtIndex]; 
                 score += EvalConstants.friendlyKingDistPasser[Coord.ChebyshevDist(ourKing, index)]; 
                 score += EvalConstants.enemyKingDistPasser[Coord.ChebyshevDist(theirKing, index)]; 
+                if (board.board[pushSquare] != 0)
+                {
+                    score += EvalConstants.blockedPasser;
+                }
             }
 
             if (board.PieceAt(pushSquare) == Piece.Pawn && board.ColorAt(pushSquare) == currentColor) { score.eg += EvalConstants.doubledPawnPenalty.eg; }

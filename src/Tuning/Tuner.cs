@@ -123,27 +123,68 @@ public class Tuner
             for(int batchNum = 0; batchNum < dataSize/batchSize; batchNum++)
             {
                 Entry[] batch = GetBatch(batchSize);
-                for (int entryNum = 0; entryNum < batchSize; entryNum++)
+                int weightCount = weights.Length;
+                int threadCount = Environment.ProcessorCount;
+
+                // Per-thread gradient buffers
+                float[][] mgLocal = new float[threadCount][];
+                float[][] egLocal = new float[threadCount][];
+
+                for (int i = 0; i < threadCount; i++)
                 {
-                    Entry entry = batch[entryNum];
-                    float eval = Evaluate(entry);
-                    float pred = Sigmoid(eval);
-                    float error = pred - (float)entry.result;
+                    mgLocal[i] = new float[weightCount];
+                    egLocal[i] = new float[weightCount];
+                }
 
-                    for(int featureIndex = 0; featureIndex < entry.features.Length; featureIndex++)
+                Parallel.For(
+                    0,
+                    batchSize,
+                    new ParallelOptions { MaxDegreeOfParallelism = threadCount },
+                    () => Thread.GetCurrentProcessorId() % threadCount,
+                    (entryNum, state, threadId) =>
                     {
-                        int weightIndex = entry.features[featureIndex].Item1;
-                        if (weights[weightIndex].mg.tune)
-                        {
-                            weights[weightIndex].mg.gradient += 2 * error * entry.features[featureIndex].Item2 * ((float)entry.phase)/MAX_PHASE;
-                        }
-                        if (weights[weightIndex].eg.tune)
-                        {
-                            weights[weightIndex].eg.gradient += 2 * error * entry.features[featureIndex].Item2 * ((float)MAX_PHASE-entry.phase)/MAX_PHASE;
-                        }
-                    }
+                        Entry entry = batch[entryNum];
 
-                } 
+                        float eval = Evaluate(entry);
+                        float pred = Sigmoid(eval);
+                        float error = pred - (float)entry.result;
+
+                        float mgScale = ((float)entry.phase) / MAX_PHASE;
+                        float egScale = ((float)(MAX_PHASE - entry.phase)) / MAX_PHASE;
+
+                        foreach (var feature in entry.features)
+                        {
+                            int weightIndex = feature.Item1;
+                            float value = feature.Item2;
+
+                            float grad = 2f * error * value;
+
+                            if (weights[weightIndex].mg.tune)
+                            {
+                                mgLocal[threadId][weightIndex] += grad * mgScale;
+                            }
+
+                            if (weights[weightIndex].eg.tune)
+                            {
+                                egLocal[threadId][weightIndex] += grad * egScale;
+                            }
+                        }
+
+                        return threadId;
+                    },
+                    _ => { }
+                );
+
+                // Reduction step
+                for (int i = 0; i < threadCount; i++)
+                {
+                    for (int j = 0; j < weightCount; j++)
+                    {
+                        weights[j].mg.gradient += mgLocal[i][j];
+                        weights[j].eg.gradient += egLocal[i][j];
+                    }
+                }
+            
                 
                 for (int paramIndex = 0; paramIndex < weights.Length; paramIndex++)
                 {

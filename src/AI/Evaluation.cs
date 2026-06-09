@@ -197,8 +197,7 @@ public class Evaluation
         Bitboard phalanx = ourPawns & ((ourPawns << 1) & ~BitboardHelper.FILE_1);
         score += phalanx.PopCount() * EvalConstants.pawnPhalanx;
 
-        score.mg += defended * EvalConstants.protectedPawn.mg;
-        score.eg += defended * EvalConstants.protectedPawn.eg;
+        score += defended * EvalConstants.protectedPawn;
         return score;
     }
 
@@ -238,8 +237,7 @@ public class Evaluation
         int numMoves = simpleRookMoves.PopCount();
         int numAttacks = rookAttacks.PopCount();
 
-        score.mg += numMoves * EvalConstants.rookMobility.mg + numAttacks * EvalConstants.rookKingRingAttack.mg;
-        score.eg += numMoves * EvalConstants.rookMobility.eg + numAttacks * EvalConstants.rookKingRingAttack.eg;
+        score += numMoves * EvalConstants.rookMobility + numAttacks * EvalConstants.rookKingRingAttack;
 
         while (!threats.Empty())
         {

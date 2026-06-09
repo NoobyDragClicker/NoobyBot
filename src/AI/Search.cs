@@ -347,7 +347,6 @@ public class Search
             if (eval > bestScore)
             {
                 bestScore = eval;
-                bestMoveInThisPosition = currentMove;
                 //If this is a root move, set it to the best move
                 if (plyFromRoot == 0)
                 {
@@ -358,6 +357,7 @@ public class Search
                 if (eval > alpha)
                 {
                     evaluationBound = TranspositionTable.Exact;
+                    bestMoveInThisPosition = currentMove;
                     alpha = eval;
                 }
             }
